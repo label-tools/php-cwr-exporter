@@ -1,0 +1,20 @@
+{
+    "name": "label-tools/php-cwr-exporter",
+    "description": "Modular Common Works Registration (CWR) exporter for PHP",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "LabelTools\\PhpCwrExporter\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Julian Castaneda",
+            "email": "juliancc@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "illuminate/support": "^10.0"
+    }
+}
