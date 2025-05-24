@@ -12,16 +12,7 @@ interface VersionInterface
      */
     public function getVersion(): string;
 
-    /**
-     * Build the control records for the entire file:
-     *  - HDR (file header)
-     *  - GRH (group header) / GRT (group trailer) if applicable
-     *  - TRL (file trailer)
-     *
-     * @param  array  $works  Collection of work data to export
-     * @return RecordInterface[]
-     */
-    public function buildControlRecords(array $works): array;
+    public function buildControlRecords(array $works, array $options = []): array;
 
     /**
      * Build all records for a single work transaction:

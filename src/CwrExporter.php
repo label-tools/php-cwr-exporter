@@ -21,22 +21,20 @@ class CwrExporter
      * @param  array  $works  List of work data (models or arrays)
      * @return string         Full CWR flat-file contents (lines separated by \r\n)
      */
-    public function export(array $works): string
+    public function export(array $works, array $options = []): string
     {
-        // 1) Build the file-level control records (HDR, GRH, GRT, TRL)
-        $lines = $this->version->buildControlRecords($works);
+        // Pass $options through to the Version implementation:
+        $records = $this->version->buildControlRecords($works, $options);
 
-        // 2) Build each work transaction
-        $transaction = 0;
+        $txn = 0;
         foreach ($works as $work) {
-            $transaction++;
-            $lines = array_merge(
-                $lines,
-                $this->version->buildWorkRecords($work, $transaction)
+            $txn++;
+            $records = array_merge(
+                $records,
+                $this->version->buildWorkRecords($work, $txn)
             );
         }
 
-        // 3) Join with CRLF and ensure file ends with a newline
-        return implode("\r\n", $lines) . "\r\n";
+        return implode("\r\n", $records) . "\r\n";
     }
 }
