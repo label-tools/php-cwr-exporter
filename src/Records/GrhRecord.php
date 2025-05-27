@@ -2,32 +2,81 @@
 
 namespace LabelTools\PhpCwrExporter\Records;
 
-use LabelTools\PhpCwrExporter\Contracts\RecordInterface;
+use LabelTools\PhpCwrExporter\Enums\TransactionType;
 
-/**
- * v2.2 Group Header (GRH) record — 167 chars
- */
-class GrhRecord implements RecordInterface
+class GrhRecord extends Record
 {
+
+    protected static string $recordType = 'GRH'; // Always "GRH" *A{3}
+    protected string $stringFormat = "%-3s%-3s%05d";
+
     public function __construct(
-        protected string $transactionType,
-        protected int    $groupId,
-        protected string $versionNumber   = '02.10',
-        protected ?string $batchRequest   = '',
-        protected ?string $submissionType = ''
-    ) {}
+        ?string $transactionType = null,
+        ?int $groupId = null,
+    ) {
+        parent::__construct();
 
-    public function toString(int $transactionSequence, int $recordSequence): string
+        if (!is_null($transactionType)) {
+            $this->setTransactionType($transactionType);
+        }
+        if (!is_null($groupId)) {
+            $this->setGroupId($groupId);
+        }
+    }
+
+    public function setTransactionType(string $transactionType): self
     {
-        $line  = str_pad('GRH', 3);                                         // Record Type
-        $line .= str_pad($this->transactionType, 3);                       // Transaction Type
-        $line .= str_pad((string) $this->groupId, 5, '0', STR_PAD_LEFT);    // Group ID
-        $line .= str_pad($this->versionNumber, 5);                         // Version Number  [oai_citation:1‡CWR19-1070R1_Functional_specifications_CWR_version_2-2_Rev2_2022-02-03_EN.pdf](file-service://file-PER8KbcWdAGez32gAw9FAW)
-        $line .= str_pad($this->batchRequest   ?? '', 10);                 // Batch Request (opt)
-        $line .= str_pad($this->submissionType ?? '', 2);                  // Submission/Distribution Type (opt)
-        // pad out to full 167-char record length
-        $line .= str_repeat(' ', 167 - mb_strlen($line));
+        $this->validateTransactionType($transactionType);
+        $this->data[2] = $transactionType;
+        return $this;
+    }
 
-        return $line;
+    public function setGroupId(int $groupId): self
+    {
+        $this->validateGroupId($groupId);
+        $this->data[3] = $groupId;
+        return $this;
+    }
+
+    private function validateTransactionType(string $transactionType): void
+    {
+        try {
+            TransactionType::from($transactionType);
+        } catch (\ValueError $e) {
+            throw new \InvalidArgumentException("Transaction Type must match an entry in the Transaction Type table.");
+        }
+    }
+
+    /**
+     * Validates the group ID.
+     *
+     * @param int $groupId
+     * @return void
+     */
+    private function validateGroupId(int $groupId): void
+    {
+        if ($groupId < 1 || $groupId > 99999) {
+            throw new \InvalidArgumentException("Group ID must start at 1 and increment sequentially. Max sequence is 99999.");
+        }
+
+        // Additional rule: Ensure the Group ID is unique within this file
+        if (!$this->isGroupIdUnique($groupId)) {
+            throw new \InvalidArgumentException("Group ID must be unique within this file.");
+        }
+    }
+
+    /**
+     * Checks if the Group ID is unique within the file.
+     * @todo Implement actual logic to track used Group IDs.
+     *
+     * @param int $groupId
+     * @return bool
+     */
+    private function isGroupIdUnique(int $groupId): bool
+    {
+        return true;
+        // Placeholder logic: Replace with the actual logic to check against previously used Group IDs
+        $usedGroupIds = []; // This would come from the file context or a tracking mechanism
+        return !in_array($groupId, $usedGroupIds, true);
     }
 }
