@@ -17,24 +17,32 @@ class CwrExporter
         $this->version = $version;
     }
 
-    /**
-     * @param  array  $works  List of work data (models or arrays)
-     * @return string         Full CWR flat-file contents (lines separated by \r\n)
-     */
+
     public function export(array $works, array $options = []): string
     {
-        // Pass $options through to the Version implementation:
-        $records = $this->version->buildControlRecords($works, $options);
+        // 1) File header + group header
+        $headerRecs = $this->version->buildControlRecords($works, $options, 'header');
 
-        $txn = 0;
+        // 2) All work-by-work detail records
+        $detailLines = [];
+        $tx = 0;
         foreach ($works as $work) {
-            $txn++;
-            $records = array_merge(
-                $records,
-                $this->version->buildWorkRecords($work, $txn)
-            );
+            $tx++;
+            $seq = 0;
+            foreach ($this->version->buildWorkRecords($work, $tx) as $rec) {
+                $seq++;
+                $detailLines[] = $rec->toString($tx, $seq);
+            }
         }
 
-        return implode("\r\n", $records) . "\r\n";
+        // 3) Group trailer + file trailer
+        $trailerRecs = $this->version->buildControlRecords($works, $options, 'trailer');
+
+        // 4) Stringify and join
+        $lines = array_map(fn($r) => $r->toString(0, 0), $headerRecs)
+               + $detailLines
+               + array_map(fn($r) => $r->toString(0, 0), $trailerRecs);
+
+        return implode("\r\n", $lines) . "\r\n";
     }
 }

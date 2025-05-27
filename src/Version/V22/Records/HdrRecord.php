@@ -2,58 +2,78 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V22\Records;
 
-use LabelTools\PhpCwrExporter\Contracts\RecordInterface;
 
-/**
- * v2.2 Transmission Header (HDR) record, fixed-width 167 characters:
- *  • Record Type        1–3   = "HDR"
- *  • Sender Type        4–5
- *  • Sender ID          6–14
- *  • Sender Name       15–59
- *  • EDI Version      60–64   = "01.10"
- *  • Creation Date    65–72   (YYYYMMDD)
- *  • Creation Time    73–78   (HHMMSS)
- *  • Transmission Date 79–86  (YYYYMMDD)
- *  • Character Set    87–101  (optional)
- *  • Version         102–104  (e.g. "2.2")
- *  • Revision        105–107  (e.g. "001")
- *  • Software Package 108–137 (optional)
- *  • Software Version 138–167 (optional)
- *
- *
- */
-class HdrRecord implements RecordInterface
+use LabelTools\PhpCwrExporter\Version\V21\Records\HdrRecord as V21HdrRecord;
+
+class HdrRecord extends V21HdrRecord
 {
+
+    public ?string $version = null; //Optional A {3}
+    public ?int $revision = null; // Optional N {3}
+    public ?string $softwarePackage = null; // Optional A {30}
+    public ?string $softwarePackageVersion = null; // Optional A {30}
+
     public function __construct(
-        protected string $senderType,
-        protected string $senderId,
-        protected string $senderName,
-        protected ?string $characterSet = '',
-        protected string $version       = '2.2',
-        protected string $revision      = '1',
-        protected ?string $softwarePkg  = '',
-        protected ?string $softwareVer  = ''
-    ) {}
+        string $senderType,
+        string $senderId,
+        string $senderName,
+        ?string $creationDate = null,
+        ?string $creationTime = null,
+        ?string $transmissionDate = null,
+        ?string $characterSet = null,
+        ?string $version = null,
+        ?int $revision = null,
+        ?string $softwarePackage = null,
+        ?string $softwarePackageVersion = null
+    ) {
+        parent::__construct($senderType, $senderId, $senderName, $creationDate, $creationTime, $transmissionDate, $characterSet);
 
-    public function toString(int $transactionSequence, int $recordSequence): string
-    {
-        $nowDate = now()->format('Ymd');
-        $nowTime = now()->format('His');
-
-        $line  = str_pad('HDR', 3);                                  // Record Type
-        $line .= str_pad($this->senderType, 2);                     // Sender Type
-        $line .= str_pad($this->senderId, 9, '0', STR_PAD_LEFT);     // Sender ID
-        $line .= str_pad($this->senderName, 45);                    // Sender Name
-        $line .= str_pad('01.10', 5);                               // EDI Version
-        $line .= $nowDate;                                          // Creation Date
-        $line .= $nowTime;                                          // Creation Time
-        $line .= $nowDate;                                          // Transmission Date
-        $line .= str_pad($this->characterSet ?? '', 15);            // Character Set
-        $line .= str_pad($this->version, 3);                        // CWR Version
-        $line .= str_pad($this->revision, 3, '0', STR_PAD_LEFT);    // Revision
-        $line .= str_pad($this->softwarePkg  ?? '', 30);            // Software Package
-        $line .= str_pad($this->softwareVer  ?? '', 30);            // Software Version
-
-        return $line;
+        // Initialize character set
+        $this->stringFormat .= "%-3s%-3s%-30s%-30s";
+        $this->setVersion($version);
+        $this->setRevision($revision);
+        $this->setSoftwarePackage($softwarePackage);
+        $this->setSoftwarePackageVersion($softwarePackageVersion);
     }
+
+    public function setVersion(?string $version): self
+    {
+        if ($version !== null && !preg_match('/^[0-9]{1,3}\.[0-9]{1,3}$/', $version)) {
+            throw new \InvalidArgumentException("Version must be in format 'X.Y' where X and Y are numbers.");
+        }
+        $this->version = $version;
+        $this->data['version'] = $this->version;
+        return $this;
+    }
+
+    public function setRevision(?int $revision): self
+    {
+        if ($revision !== null && ($revision < 0 || $revision > 999)) {
+            throw new \InvalidArgumentException("Revision must be a number between 0 and 999.");
+        }
+        $this->revision = $revision;
+        $this->data['revision'] = $this->revision;
+        return $this;
+    }
+
+    public function setSoftwarePackage(?string $softwarePackage): self
+    {
+        if ($softwarePackage !== null && mb_strlen($softwarePackage) > 30) {
+            throw new \InvalidArgumentException("Software Package must be at most 30 characters long.");
+        }
+        $this->softwarePackage = $softwarePackage;
+        $this->data['software_package'] = $this->softwarePackage;
+        return $this;
+    }
+
+    public function setSoftwarePackageVersion(?string $softwarePackageVersion): self
+    {
+        if ($softwarePackageVersion !== null && mb_strlen($softwarePackageVersion) > 30) {
+            throw new \InvalidArgumentException("Software Package Version must be at most 30 characters long.");
+        }
+        $this->softwarePackageVersion = $softwarePackageVersion;
+        $this->data['software_package_version'] = $this->softwarePackageVersion;
+        return $this;
+    }
+
 }
