@@ -2,66 +2,76 @@
 
 namespace LabelTools\PhpCwrExporter\Records;
 
-use LabelTools\PhpCwrExporter\Contracts\RecordInterface;
 
-class HdrRecord implements RecordInterface
+class HdrRecord extends Record
 {
-    public string $recordType = 'HDR'; // Always "HDR" - * A {3}
-    public string $senderType; // PB, SO, AA, WR (or first 2 digits of CWR Sender ID) * A {2}
-    public string $senderId; // Remaining 9 digits of CWR Sender ID * N {9}
-    public string $senderName; // Name of the sender * A {45}
-    public string $ediVersion = '01.10'; // Fixed version number for this standard * A {5}
-    public string $creationDate; // File creation date (YYYYMMDD) * D {8}
-    public string $creationTime; // File creation time (HHMMSS) * T {6}
-    public string $transmissionDate; // File transmission date (YYYYMMDD) * D {8}
+    protected static string $recordType = 'HDR'; // Always "HDR" - * A {3}
+    protected static string $ediVersion = '01.10'; // Fixed version number for this standard * A {5}
 
     protected string $stringFormat = "%-3s%-2s%-9s%-45s%-5s%-8s%-6s%-8s";
 
-    protected array $data = [];
+    protected string $senderType;
+    protected int $senderId;
 
-    public function __construct(
-        string $senderType,
-        string $senderId,
-        string $senderName,
-        ?string $creationDate = null,
-        ?string $creationTime = null,
-        ?string $transmissionDate = null,
-    ) {
-        $currentDateTime = new \DateTime();
-        $creationDate = $creationDate ?? $currentDateTime->format('Ymd');
-        $creationTime = $creationTime ?? $currentDateTime->format('His');
-        $transmissionDate = $transmissionDate ?? $currentDateTime->format('Ymd');
+    public function __construct(?string $senderType, ?string $senderId, ?string $senderName, ?string $creationDate = null, ?string $creationTime = null, ?string $transmissionDate = null)
+    {
+        parent::__construct(); //ALWAYS CALL PARENT CONSTRUCTOR FIRST
 
-        $this->validateSenderType($senderType, $senderId);
-        $this->validateSenderId($senderType, $senderId);
-        $this->validateSenderName($senderName);
-        $this->validateDate($creationDate, 'Creation Date');
-        $this->validateDate($transmissionDate, 'Transmission Date');
+        if (!empty($senderType) && !empty($senderId)) {
+            $this->setSenderTypeAndId($senderType, $senderId);
+        }
+        if (!empty($senderName)) {
+            $this->setSenderName($senderName);
+        }
+        $this->setCreationDate($creationDate);
+        $this->setCreationTime($creationTime);
+        $this->setTransmissionDate($transmissionDate);
 
-        // Assign values only after validation
-        $this->senderType = $this->resolveSenderType($senderType, $senderId);
-        $this->senderId = $this->resolveSenderId($senderType, $senderId);
-
-        $this->senderName = $senderName;
-        $this->creationDate = $creationDate;
-        $this->creationTime = $creationTime;
-        $this->transmissionDate = $transmissionDate;
-
-        $this->data = [
-            'record_type' => $this->recordType,
-            'sender_type' => $this->senderType,
-            'sender_id' => $this->senderId,
-            'sender_name' => $this->senderName,
-            'edi_standard' => $this->ediVersion,
-            'creation_date' => $this->creationDate,
-            'creation_time' => $this->creationTime,
-            'transmission_date' => $this->transmissionDate,
-        ];
+        $this->data[5] = static::$ediVersion;
     }
 
-    public function toString(): string
+    public function setSenderTypeAndId(string $senderType, int $senderId): self
     {
-        return sprintf($this->stringFormat, ...array_values($this->data));
+        $this->validateSenderType($senderType, $senderId);
+        $this->validateSenderId($senderType, $senderId);
+        $this->senderType = $this->resolveSenderType($senderType, $senderId);
+        $this->senderId = $this->resolveSenderId($senderType, $senderId);
+        $this->data[2] = $this->senderType;
+        $this->data[3] = $this->senderId;
+        return $this;
+    }
+
+    public function setSenderName(?string $senderName): self
+    {
+        $this->validateSenderName($senderName);
+        $this->data[4] = $senderName;
+        return $this;
+    }
+
+    public function setCreationDate(?string $creationDate): self
+    {
+        $currentDateTime = new \DateTime();
+        $creationDate = $creationDate ?? $currentDateTime->format('Ymd');
+        $this->validateDate($creationDate, 'Creation Date');
+        $this->data[6] = $creationDate;
+        return $this;
+    }
+
+    public function setCreationTime(?string $creationTime): self
+    {
+        $currentDateTime = new \DateTime();
+        $creationTime = $creationTime ?? $currentDateTime->format('His');
+        $this->data[7] = $creationTime;
+        return $this;
+    }
+
+    public function setTransmissionDate(?string $transmissionDate): self
+    {
+        $currentDateTime = new \DateTime();
+        $transmissionDate = $transmissionDate ?? $currentDateTime->format('Ymd');
+        $this->validateDate($transmissionDate, 'Transmission Date');
+        $this->data[8] = $transmissionDate;
+        return $this;
     }
 
     private function validateSenderType(string $senderType, string $senderId): void
@@ -122,7 +132,7 @@ class HdrRecord implements RecordInterface
             : $senderType;
     }
 
-    private function resolveSenderId(string $senderType, string $senderId): string
+    private function resolveSenderId(string $senderType, string $senderId): int
     {
         // Extract the last 9 digits from senderId if it's an IPI number > 9 digits
         return (strlen($senderId) > 9 && strlen($senderId) <= 11 && in_array($senderType, ['PB', 'AA', 'WR'], true))

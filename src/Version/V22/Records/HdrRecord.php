@@ -2,16 +2,10 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V22\Records;
 
-
 use LabelTools\PhpCwrExporter\Version\V21\Records\HdrRecord as V21HdrRecord;
 
 class HdrRecord extends V21HdrRecord
 {
-
-    public ?string $version = null; //Optional A {3}
-    public ?int $revision = null; // Optional N {3}
-    public ?string $softwarePackage = null; // Optional A {30}
-    public ?string $softwarePackageVersion = null; // Optional A {30}
 
     public function __construct(
         string $senderType,
@@ -28,8 +22,8 @@ class HdrRecord extends V21HdrRecord
     ) {
         parent::__construct($senderType, $senderId, $senderName, $creationDate, $creationTime, $transmissionDate, $characterSet);
 
-        // Initialize character set
         $this->stringFormat .= "%-3s%-3s%-30s%-30s";
+
         $this->setVersion($version);
         $this->setRevision($revision);
         $this->setSoftwarePackage($softwarePackage);
@@ -41,8 +35,8 @@ class HdrRecord extends V21HdrRecord
         if ($version !== null && !preg_match('/^[0-9]{1,3}\.[0-9]{1,3}$/', $version)) {
             throw new \InvalidArgumentException("Version must be in format 'X.Y' where X and Y are numbers.");
         }
-        $this->version = $version;
-        $this->data['version'] = $this->version;
+
+        $this->data[10] = $version;
         return $this;
     }
 
@@ -51,8 +45,8 @@ class HdrRecord extends V21HdrRecord
         if ($revision !== null && ($revision < 0 || $revision > 999)) {
             throw new \InvalidArgumentException("Revision must be a number between 0 and 999.");
         }
-        $this->revision = $revision;
-        $this->data['revision'] = $this->revision;
+
+        $this->data[11] = $revision;
         return $this;
     }
 
@@ -61,8 +55,7 @@ class HdrRecord extends V21HdrRecord
         if ($softwarePackage !== null && mb_strlen($softwarePackage) > 30) {
             throw new \InvalidArgumentException("Software Package must be at most 30 characters long.");
         }
-        $this->softwarePackage = $softwarePackage;
-        $this->data['software_package'] = $this->softwarePackage;
+        $this->data[12] = $softwarePackage;
         return $this;
     }
 
@@ -71,8 +64,7 @@ class HdrRecord extends V21HdrRecord
         if ($softwarePackageVersion !== null && mb_strlen($softwarePackageVersion) > 30) {
             throw new \InvalidArgumentException("Software Package Version must be at most 30 characters long.");
         }
-        $this->softwarePackageVersion = $softwarePackageVersion;
-        $this->data['software_package_version'] = $this->softwarePackageVersion;
+        $this->data[13] = $softwarePackageVersion;
         return $this;
     }
 

@@ -6,7 +6,6 @@ use LabelTools\PhpCwrExporter\Records\HdrRecord as RecordsHdrRecord;
 
 class HdrRecord extends RecordsHdrRecord
 {
-
     public ?string $characterSet; // optional L {15}
 
     public function __construct(
@@ -30,7 +29,7 @@ class HdrRecord extends RecordsHdrRecord
     {
         $this->validateCharacterSet($characterSet);
         $this->characterSet = $characterSet ?? '';
-        $this->data['character_set'] = $this->characterSet;
+        $this->data[9] = $this->characterSet;
         return $this;
     }
 
