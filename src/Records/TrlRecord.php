@@ -2,33 +2,62 @@
 
 namespace LabelTools\PhpCwrExporter\Records;
 
-use LabelTools\PhpCwrExporter\Contracts\RecordInterface;
-
-/**
- * v2.2 Transmission Trailer (TRL) record — fixed-width 167 chars:
- *  • Record Type      1–3   = "TRL"
- *  • Group Count      4–8   (zero-padded)
- *  • Transaction Cnt  9–16  (zero-padded)
- *  • Record Cnt      17–24  (zero-padded)
- *  • Padding        25–167 = spaces
- *
- */
-class TrlRecord implements RecordInterface
+class TrlRecord extends Record
 {
+    protected static string $recordType = 'TRL'; // Always "TRL" *A{3}
+    protected string $stringFormat = "%-3s%05d%08d%08d";
+
+    private const INDEX_GROUP_COUNT = 2;
+    private const INDEX_TRANSACTION_COUNT = 3;
+    private const INDEX_RECORD_COUNT = 4;
+
     public function __construct(
-        protected int $groupCount,
-        protected int $transactionCount,
-        protected int $recordCount
-    ) {}
+        ?int $groupCount = null,
+        ?int $transactionCount = null,
+        ?int $recordCount = null
+    ) {
+        parent::__construct();
 
-    public function toString(int $transactionSequence, int $recordSequence): string
+        $this->data[self::INDEX_GROUP_COUNT] = 0;
+        $this->data[self::INDEX_TRANSACTION_COUNT] = 0;
+        $this->data[self::INDEX_RECORD_COUNT] = 0;
+
+        if (! is_null($groupCount)) {
+            $this->setGroupCount($groupCount);
+        }
+        if (! is_null($transactionCount)) {
+            $this->setTransactionCount($transactionCount);
+        }
+        if (! is_null($recordCount)) {
+            $this->setRecordCount($recordCount);
+        }
+    }
+
+    public function setGroupCount(int $groupCount): self
     {
-        $line  = str_pad('TRL', 3);
-        $line .= str_pad((string) $this->groupCount, 5, '0', STR_PAD_LEFT);
-        $line .= str_pad((string) $this->transactionCount, 8, '0', STR_PAD_LEFT);
-        $line .= str_pad((string) $this->recordCount, 8, '0', STR_PAD_LEFT);
-        $line .= str_repeat(' ', 167 - mb_strlen($line));
+        $this->validateCount($groupCount, 'Group Count', 1, 99999);
+        $this->data[self::INDEX_GROUP_COUNT] = $groupCount;
+        return $this;
+    }
 
-        return $line;
+    public function setTransactionCount(int $transactionCount): self
+    {
+        $this->validateCount($transactionCount, 'Transaction Count', 0, 99999999);
+        $this->data[self::INDEX_TRANSACTION_COUNT] = $transactionCount;
+        return $this;
+    }
+
+    public function setRecordCount(int $recordCount): self
+    {
+        $this->validateCount($recordCount, 'Record Count', 0, 99999999);
+        $this->data[self::INDEX_RECORD_COUNT] = $recordCount;
+        return $this;
+    }
+
+    private function validateCount(int $value, string $fieldName, int $min, int $max): void
+    {
+        if ($value < $min || $value > $max) {
+            throw new \InvalidArgumentException("$fieldName must be between $min and $max.");
+        }
     }
 }
