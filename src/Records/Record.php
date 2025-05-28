@@ -41,4 +41,31 @@ abstract class Record
     {
         return $value ?? (new \DateTime())->format($format);
     }
+
+    protected function boolToValue(null|bool|string $value): string
+    {
+        if (is_null($value) || is_bool($value)) {
+            return is_null($value) ? '' : ($value ? 'Y' : 'N');
+        }
+
+        if (!in_array($value, ['Y', 'N'], true)) {
+            throw new \InvalidArgumentException("Recorded Indicator must be Y, N");
+        }
+
+        return $value;
+
+    }
+
+    protected function flagToValue(null|bool|string $flag = null): string
+    {
+        if (is_null($flag) || is_bool($flag)) {
+            return is_null($flag) ? '' : ($flag ? 'Y' : 'N');
+        }
+
+        if (!in_array($flag, ['Y', 'N', 'U'], true)) {
+            throw new \InvalidArgumentException("Recorded Indicator must be Y, N, or U");
+        }
+
+        return $flag;
+    }
 }
