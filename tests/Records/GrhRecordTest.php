@@ -90,7 +90,7 @@ describe('Group Header Record', function () {
             expect(substr($record, 3, 3))->toBe('NWR');
             expect(substr($record, 6, 5))->toBe('00001');
             expect(substr($record, 11, 5))->toBe('02.20');
-            expect(substr($record, 16, 10))->toBe('123       ');
+            expect(substr($record, 16, 10))->toBe('0000000123');
             expect(substr($record, 26, 2))->toBe('  ');
         });
     });

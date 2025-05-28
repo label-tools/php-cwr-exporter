@@ -4,7 +4,7 @@ use LabelTools\PhpCwrExporter\Records\HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\HdrRecord as V21HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\HdrRecord as V22HdrRecord;
 
-describe('HdrRecord', function () {
+describe('Transmission Header Record', function () {
     describe('Main', function () {
         it('builds a valid HDR record according to the spec', function () {
             $hdr = new HdrRecord(

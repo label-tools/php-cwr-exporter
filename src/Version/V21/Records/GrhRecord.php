@@ -35,7 +35,7 @@ class GrhRecord extends RecordsGrhRecord
         if (!is_null($batchRequest) && $batchRequest < 0) {
             throw new \InvalidArgumentException("Batch request must be a non-negative integer.");
         }
-        $this->data[self::INDEX_BATCH_REQUEST] = $batchRequest ?? 0; // Default to 0 if not provided
+        $this->data[self::INDEX_BATCH_REQUEST] = isset($batchRequest) ? str_pad($batchRequest, 10, '0', STR_PAD_LEFT) : '';
         return $this;
     }
 }
