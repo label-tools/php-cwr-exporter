@@ -32,6 +32,11 @@ abstract class Record
     {
         $data = $this->data;
         ksort($data);
-        return sprintf($this->stringFormat, ...array_values($data));
+        return vsprintf($this->stringFormat, $data);
+    }
+
+    protected function defaultDate(?string $value = null, string $format = 'Ymd'): string
+    {
+        return $value ?? (new \DateTime())->format($format);
     }
 }

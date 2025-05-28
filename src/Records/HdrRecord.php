@@ -2,18 +2,28 @@
 
 namespace LabelTools\PhpCwrExporter\Records;
 
+use LabelTools\PhpCwrExporter\Enums\SenderType;
 
 class HdrRecord extends Record
 {
     protected static string $recordType = 'HDR'; // Always "HDR" - * A {3}
     protected static string $ediVersion = '01.10'; // Fixed version number for this standard * A {5}
 
+    // Format: RecordType(3) + SenderType(2) + SenderID(9) + SenderName(45) + EdiVersion(5) + CreationDate(8) + CreationTime(6) + TransmissionDate(8)
     protected string $stringFormat = "%-3s%-2s%-9s%-45s%-5s%-8s%-6s%-8s";
+
+    private const INDEX_SENDER_TYPE = 2;
+    private const INDEX_SENDER_ID = 3;
+    private const INDEX_SENDER_NAME = 4;
+    private const INDEX_EDI_VERSION = 5;
+    private const INDEX_CREATION_DATE = 6;
+    private const INDEX_CREATION_TIME = 7;
+    private const INDEX_TRANSMISSION_DATE = 8;
 
     protected string $senderType;
     protected int $senderId;
 
-    public function __construct(?string $senderType, ?string $senderId, ?string $senderName, ?string $creationDate = null, ?string $creationTime = null, ?string $transmissionDate = null)
+    public function __construct(?string $senderType = null, ?int $senderId = null, ?string $senderName = null, ?string $creationDate = null, ?string $creationTime = null, ?string $transmissionDate = null)
     {
         parent::__construct(); //ALWAYS CALL PARENT CONSTRUCTOR FIRST
 
@@ -27,69 +37,56 @@ class HdrRecord extends Record
         $this->setCreationTime($creationTime);
         $this->setTransmissionDate($transmissionDate);
 
-        $this->data[5] = static::$ediVersion;
+        $this->data[self::INDEX_EDI_VERSION] = static::$ediVersion;
     }
 
-    public function setSenderTypeAndId(string $senderType, int $senderId): self
+    public function setSenderTypeAndId(string|SenderType $senderType, int $senderId): self
     {
-        $this->validateSenderType($senderType, $senderId);
-        $this->validateSenderId($senderType, $senderId);
-        $this->senderType = $this->resolveSenderType($senderType, $senderId);
-        $this->senderId = $this->resolveSenderId($senderType, $senderId);
-        $this->data[2] = $this->senderType;
-        $this->data[3] = $this->senderId;
+        try {
+            $senderTypeEnum = $senderType instanceof SenderType ? $senderType : SenderType::from($senderType);
+        } catch (\ValueError $e) {
+            throw new \InvalidArgumentException("Invalid sender type");
+        }
+
+        $this->validateSenderId($senderTypeEnum, $senderId);
+        $this->senderType = $this->resolveSenderType($senderTypeEnum, $senderId);
+        $this->senderId = $this->resolveSenderId($senderTypeEnum, $senderId);
+        $this->data[self::INDEX_SENDER_TYPE] = $this->senderType;
+        $this->data[self::INDEX_SENDER_ID] = $this->senderId;
         return $this;
     }
 
     public function setSenderName(?string $senderName): self
     {
         $this->validateSenderName($senderName);
-        $this->data[4] = $senderName;
+        $this->data[self::INDEX_SENDER_NAME] = $senderName;
         return $this;
     }
 
     public function setCreationDate(?string $creationDate): self
     {
-        $currentDateTime = new \DateTime();
-        $creationDate = $creationDate ?? $currentDateTime->format('Ymd');
+        $creationDate = $this->defaultDate($creationDate, 'Ymd');
         $this->validateDate($creationDate, 'Creation Date');
-        $this->data[6] = $creationDate;
+        $this->data[self::INDEX_CREATION_DATE] = $creationDate;
         return $this;
     }
 
     public function setCreationTime(?string $creationTime): self
     {
-        $currentDateTime = new \DateTime();
-        $creationTime = $creationTime ?? $currentDateTime->format('His');
-        $this->data[7] = $creationTime;
+        $creationTime = $this->defaultDate($creationTime, 'His');
+        $this->data[self::INDEX_CREATION_TIME] = $creationTime;
         return $this;
     }
 
     public function setTransmissionDate(?string $transmissionDate): self
     {
-        $currentDateTime = new \DateTime();
-        $transmissionDate = $transmissionDate ?? $currentDateTime->format('Ymd');
+        $transmissionDate = $this->defaultDate($transmissionDate, 'Ymd');
         $this->validateDate($transmissionDate, 'Transmission Date');
-        $this->data[8] = $transmissionDate;
+        $this->data[self::INDEX_TRANSMISSION_DATE] = $transmissionDate;
         return $this;
     }
 
-    private function validateSenderType(string $senderType, string $senderId): void
-    {
-        if ($this->requiresWorkaround($senderType, $senderId)) {
-            // Allow senderType to be treated as the first 2 digits of senderId in this case
-            if (!ctype_digit(substr($senderId, 0, 2))) {
-                throw new \InvalidArgumentException("The first 2 characters of Sender ID must be numeric when Sender Type is PB, AA, or WR.");
-            }
-        } else {
-            $validTypes = ['PB', 'SO', 'AA', 'WR'];
-            if (!in_array($senderType, $validTypes, true)) {
-                throw new \InvalidArgumentException("Sender Type must be one of 'PB', 'SO', 'AA', 'WR'.");
-            }
-        }
-    }
-
-    private function validateSenderId(string $senderType, string $senderId): void
+    private function validateSenderId(?SenderType $senderType, string $senderId): void
     {
         if ($this->requiresWorkaround($senderType, $senderId)) {
             // Validate first 2 and remaining 9 digits for senderId as a workaround
@@ -124,25 +121,20 @@ class HdrRecord extends Record
         }
     }
 
-    private function resolveSenderType(string $senderType, string $senderId): string
+    private function resolveSenderType(SenderType $senderType, string $senderId): string
     {
         // Extract the first 2 digits from senderId if it's an IPI number > 9 digits
-        return (strlen($senderId) > 9 && strlen($senderId) <= 11 && in_array($senderType, ['PB', 'AA', 'WR'], true))
-            ? substr($senderId, 0, 2)
-            : $senderType;
+       return (strlen($senderId) > 9 && strlen($senderId) <= 11 && $senderType->isRegular()) ? substr($senderId, 0, 2) : $senderType->value;
     }
 
-    private function resolveSenderId(string $senderType, string $senderId): int
+    private function resolveSenderId(SenderType $senderType, string $senderId): int
     {
-        // Extract the last 9 digits from senderId if it's an IPI number > 9 digits
-        return (strlen($senderId) > 9 && strlen($senderId) <= 11 && in_array($senderType, ['PB', 'AA', 'WR'], true))
-            ? substr($senderId, 2)
-            : $senderId;
+        return (int) ((strlen($senderId) > 9 && strlen($senderId) <= 11 && $senderType->isRegular()) ? substr($senderId, 2) : $senderId);
     }
 
-    private function requiresWorkaround(string $senderType, string $senderId): bool
+    private function requiresWorkaround(SenderType $senderType, string $senderId): bool
     {
-        return strlen($senderId) > 9 && strlen($senderId) <= 11 && in_array($senderType, ['PB', 'AA', 'WR'], true);
-    }
 
+        return strlen($senderId) > 9 && strlen($senderId) <= 11 && $senderType->isRegular();
+    }
 }

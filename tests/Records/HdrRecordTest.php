@@ -33,7 +33,7 @@ describe('HdrRecord', function () {
         // -- Invalid Sender Type --
         it('throws for an invalid sender type', function () {
             $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage("Sender Type must be one of 'PB', 'SO', 'AA', 'WR'.");
+            $this->expectExceptionMessage("Invalid sender type");
             new HdrRecord('XX', '123456789', 'Valid Name');
         });
 
