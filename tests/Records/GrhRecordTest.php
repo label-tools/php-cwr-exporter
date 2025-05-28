@@ -1,7 +1,8 @@
 <?php
 
 use LabelTools\PhpCwrExporter\Records\GrhRecord;
-
+use LabelTools\PhpCwrExporter\Version\V21\Records\GrhRecord as V21GrhRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\GrhRecord as V22GrhRecord;
 
 describe('Group Header Record', function () {
     describe('Base', function () {
@@ -59,10 +60,38 @@ describe('Group Header Record', function () {
     });
 
     describe('CWR v2.1', function () {
+        it('builds a valid GRH record for CWR v2.1', function () {
+            $record = (new V21GrhRecord())
+                ->setTransactionType('NWR')
+                ->setGroupId(1);
 
+            $record = $record->toString();
+
+            expect(strlen($record))->toBe(28); // 3 + 3 + 5 + 5 + 10 + 2
+            expect(substr($record, 0, 3))->toBe('GRH');
+            expect(substr($record, 3, 3))->toBe('NWR');
+            expect(substr($record, 6, 5))->toBe('00001');
+            expect(substr($record, 11, 5))->toBe('02.10');
+            expect(substr($record, 26, 2))->toBe('  ');
+        });
     });
 
     describe('CWR v2.2', function () {
+        it('builds a valid GRH record for CWR v2.2', function () {
+            $record = (new V22GrhRecord())
+                ->setTransactionType('NWR')
+                ->setGroupId(1)
+                ->setBatchRequest(123);
 
+            $record = $record->toString();
+
+            expect(strlen($record))->toBe(28); // 3 + 3 + 5 + 5 + 10 + 2
+            expect(substr($record, 0, 3))->toBe('GRH');
+            expect(substr($record, 3, 3))->toBe('NWR');
+            expect(substr($record, 6, 5))->toBe('00001');
+            expect(substr($record, 11, 5))->toBe('02.20');
+            expect(substr($record, 16, 10))->toBe('123       ');
+            expect(substr($record, 26, 2))->toBe('  ');
+        });
     });
 });

@@ -10,8 +10,11 @@ class GrhRecord extends Record
     protected static string $recordType = 'GRH'; // Always "GRH" *A{3}
     protected string $stringFormat = "%-3s%-3s%05d";
 
+    private const INDEX_TRANSACTION_TYPE= 2;
+    private const INDEX_GROUP_ID = 3;
+
     public function __construct(
-        ?string $transactionType = null,
+        null|string|TransactionType $transactionType = null,
         ?int $groupId = null,
     ) {
         parent::__construct();
@@ -24,24 +27,24 @@ class GrhRecord extends Record
         }
     }
 
-    public function setTransactionType(string $transactionType): self
+    public function setTransactionType(string|TransactionType $transactionType): self
     {
-        $this->validateTransactionType($transactionType);
-        $this->data[2] = $transactionType;
+        $transactionType = $this->validateTransactionType($transactionType);
+        $this->data[self::INDEX_TRANSACTION_TYPE] = $transactionType->value;
         return $this;
     }
 
     public function setGroupId(int $groupId): self
     {
         $this->validateGroupId($groupId);
-        $this->data[3] = $groupId;
+        $this->data[self::INDEX_GROUP_ID] = $groupId;
         return $this;
     }
 
-    private function validateTransactionType(string $transactionType): void
+    private function validateTransactionType(string|TransactionType $transactionType): TransactionType
     {
         try {
-            TransactionType::from($transactionType);
+            return $transactionType instanceof TransactionType ? $transactionType : TransactionType::from($transactionType);
         } catch (\ValueError $e) {
             throw new \InvalidArgumentException("Transaction Type must match an entry in the Transaction Type table.");
         }

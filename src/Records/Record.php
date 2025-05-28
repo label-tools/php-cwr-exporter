@@ -19,13 +19,15 @@ abstract class Record
      */
     protected string $stringFormat;
 
+    private const INDEX_RECORD_TYPE = 1;
+
     public function __construct()
     {
         if (empty(static::$recordType)) {
             throw new \LogicException('Record type must be defined in the subclass.');
         }
         // Initialize the data array with the record type
-        $this->data[1] = static::$recordType;
+        $this->data[self::INDEX_RECORD_TYPE] = static::$recordType;
     }
 
     public function toString(): string

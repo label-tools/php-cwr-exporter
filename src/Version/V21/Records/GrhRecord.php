@@ -2,32 +2,40 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V21\Records;
 
-use LabelTools\PhpCwrExporter\Contracts\RecordInterface;
+use LabelTools\PhpCwrExporter\Enums\TransactionType;
+use LabelTools\PhpCwrExporter\Records\GrhRecord as RecordsGrhRecord;
 
-/**
- * v2.2 Group Header (GRH) record — 167 chars
- */
-class GrhRecord implements RecordInterface
+class GrhRecord extends RecordsGrhRecord
 {
+    protected static string $versionNumber = '02.10'; // CWR version number (fixed: "02.10") *A{$}
+    protected static string $submissionDistributionType = ''; //Set to blank - Not used for CWR
+
+    private const INDEX_VERSION_NUMBER= 4;
+    private const INDEX_BATCH_REQUEST = 5;
+    private const INDEX_SUBMISSION_DISTRO_TYPE = 6;
+
     public function __construct(
-        protected string $transactionType,
-        protected int    $groupId,
-        protected string $versionNumber   = '02.10',
-        protected ?string $batchRequest   = '',
-        protected ?string $submissionType = ''
-    ) {}
+        null|string|TransactionType $transactionType = null,
+        ?int $groupId = null,
+        ?int $batchRequest = null
+    ) {
+        parent::__construct($transactionType, $groupId);
 
-    public function toString(int $transactionSequence, int $recordSequence): string
+        // Initialize character set
+        $this->stringFormat .= "%-5s%-10s%-2s";
+
+        $this->data[self::INDEX_VERSION_NUMBER] = static::$versionNumber;
+        $this->data[self::INDEX_SUBMISSION_DISTRO_TYPE] = static::$submissionDistributionType;
+
+        $this->setBatchRequest($batchRequest);
+    }
+
+    public function setBatchRequest(?int $batchRequest): self
     {
-        $line  = str_pad('GRH', 3);                                         // Record Type
-        $line .= str_pad($this->transactionType, 3);                       // Transaction Type
-        $line .= str_pad((string) $this->groupId, 5, '0', STR_PAD_LEFT);    // Group ID
-        $line .= str_pad($this->versionNumber, 5);                         // Version Number  [oai_citation:1‡CWR19-1070R1_Functional_specifications_CWR_version_2-2_Rev2_2022-02-03_EN.pdf](file-service://file-PER8KbcWdAGez32gAw9FAW)
-        $line .= str_pad($this->batchRequest   ?? '', 10);                 // Batch Request (opt)
-        $line .= str_pad($this->submissionType ?? '', 2);                  // Submission/Distribution Type (opt)
-        // pad out to full 167-char record length
-        $line .= str_repeat(' ', 167 - mb_strlen($line));
-
-        return $line;
+        if (!is_null($batchRequest) && $batchRequest < 0) {
+            throw new \InvalidArgumentException("Batch request must be a non-negative integer.");
+        }
+        $this->data[self::INDEX_BATCH_REQUEST] = $batchRequest ?? 0; // Default to 0 if not provided
+        return $this;
     }
 }
