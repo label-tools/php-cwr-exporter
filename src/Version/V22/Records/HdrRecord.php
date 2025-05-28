@@ -6,6 +6,10 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\HdrRecord as V21HdrRecord;
 
 class HdrRecord extends V21HdrRecord
 {
+    private const INDEX_VERSION = 10;
+    private const INDEX_REVISION = 11;
+    private const INDEX_SW_PACKAGE = 12;
+    private const INDEX_SW_PACKAGE_VERSION = 13;
 
     public function __construct(
         string $senderType,
@@ -36,7 +40,7 @@ class HdrRecord extends V21HdrRecord
             throw new \InvalidArgumentException("Version must be in format 'X.Y' where X and Y are numbers.");
         }
 
-        $this->data[10] = $version;
+        $this->data[self::INDEX_VERSION] = $version;
         return $this;
     }
 
@@ -46,7 +50,7 @@ class HdrRecord extends V21HdrRecord
             throw new \InvalidArgumentException("Revision must be a number between 0 and 999.");
         }
 
-        $this->data[11] = $revision;
+        $this->data[self::INDEX_REVISION] = $revision;
         return $this;
     }
 
@@ -55,7 +59,7 @@ class HdrRecord extends V21HdrRecord
         if ($softwarePackage !== null && mb_strlen($softwarePackage) > 30) {
             throw new \InvalidArgumentException("Software Package must be at most 30 characters long.");
         }
-        $this->data[12] = $softwarePackage;
+        $this->data[self::INDEX_SW_PACKAGE] = $softwarePackage;
         return $this;
     }
 
@@ -64,7 +68,7 @@ class HdrRecord extends V21HdrRecord
         if ($softwarePackageVersion !== null && mb_strlen($softwarePackageVersion) > 30) {
             throw new \InvalidArgumentException("Software Package Version must be at most 30 characters long.");
         }
-        $this->data[13] = $softwarePackageVersion;
+        $this->data[self::INDEX_SW_PACKAGE_VERSION] = $softwarePackageVersion;
         return $this;
     }
 
