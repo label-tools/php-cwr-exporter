@@ -9,6 +9,14 @@ enum SenderType: string
     case AGENCY = 'AA';
     case WRITER = 'WR';
 
+    public function getName(): string
+    {
+        return match ($this) {
+            // Override for non-specific category if desired
+            default => ucwords(strtolower(str_replace('_', ' ', $this->name))),
+        };
+    }
+
     public static function regularTypes(): array
     {
         return [self::PUBLISHER, self::AGENCY, self::WRITER];
