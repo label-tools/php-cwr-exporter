@@ -1,6 +1,7 @@
 <?php
 
 use LabelTools\PhpCwrExporter\Records\NwrRecord;
+use LabelTools\PhpCwrExporter\Records\RevRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\NwrRecord as V21NwrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\NwrRecord as V22NwrRecord;
 
@@ -239,5 +240,14 @@ describe('New Work Registration (NWR) Record', function () {
             expect(substr($record, 259, 1))->toBe('Y');
 
         });
+    });
+});
+describe('Revised Registration (REV) Record', function () {
+    it('builds a valid REV record', function () {
+        $record = (new RevRecord('Title','ABC','POP','ORI'));
+        $record = $record->toString();
+
+        expect(strlen($record))->toBe(259);
+        expect(substr($record, 0, 19))->toBe(str_pad('REV', 19, ' '));
     });
 });
