@@ -1,6 +1,8 @@
 <?php
 
 use LabelTools\PhpCwrExporter\Records\NwrRecord;
+use LabelTools\PhpCwrExporter\Version\V21\Records\NwrRecord as V21NwrRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\NwrRecord as V22NwrRecord;
 
 describe('New Work Registration (NWR) Record', function () {
     describe('Record format', function () {
@@ -214,5 +216,28 @@ describe('New Work Registration (NWR) Record', function () {
             (new NwrRecord('Title','ABC','POP','ORI'))
                 ->setExceptionalClause('X');
         })->throws(InvalidArgumentException::class);
+    });
+
+    describe('CWR v2.1', function () {
+        it('builds a valid NWR record for CWR v2.1', function () {
+            $record = (new V21NwrRecord('Title','ABC','POP','ORI'));
+            $record = $record->toString();
+
+            expect(strlen($record))->toBe(260);
+            expect(substr($record, 259, 1))->toBe(' ');
+
+        });
+    });
+
+    describe('CWR v2.2', function () {
+        it('builds a valid NWR record for CWR v2.2', function () {
+            $record = (new V22NwrRecord('Title','ABC','POP','ORI'))
+                ->setPriorityFlag(true);
+            $record = $record->toString();
+
+            expect(strlen($record))->toBe(260);
+            expect(substr($record, 259, 1))->toBe('Y');
+
+        });
     });
 });

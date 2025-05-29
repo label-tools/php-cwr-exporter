@@ -2,57 +2,83 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V21\Records;
 
-use LabelTools\PhpCwrExporter\Contracts\RecordInterface;
+use LabelTools\PhpCwrExporter\Records\NwrRecord as BaseNwrRecord;
 
-/**
- * v2.2 New Work Registration (NWR) record — fixed-width 167 chars:
- *  • Record Prefix                1–19   = 'NWR' + transaction prefix (built externally)
- *  • Work Title                  20–79   (60 chars)
- *  • Language Code               80–81   (2 chars, optional)
- *  • Submitter Work Number       82–95   (14 chars)
- *  • ISWC                       96–106   (11 chars, optional)
- *  • Copyright Date            107–114   (8 chars, optional)
- *  • Copyright Number          115–126   (12 chars, optional)
- *  • Musical Work Distribution 127–129   (3 chars)
- *  • Duration                  130–135   (6 chars, optional)
- *  • Recorded Indicator        136–136   (1 char, 'Y' or 'N')
- *  • Text Music Relationship   137–139   (3 chars, optional)
- *  • Padding                   140–167   spaces
- *
- */
-class NwrRecord implements RecordInterface
+class NwrRecord extends BaseNwrRecord
 {
+
+    private const IDX_PRIORITY_FLAG = 26;
+
     public function __construct(
-        protected string $workTitle,
-        protected ?string $languageCode,
-        protected string $submitterWorkNumber,
-        protected ?string $iswc,
-        protected ?string $copyrightDate,
-        protected ?string $copyrightNumber,
-        protected string $distributionCategory,
-        protected ?string $duration,
-        protected bool   $recorded,
-        protected ?string $textMusicRelation = ''
-    ) {}
+        string $workTitle,
+        string $submitterWorkNumber,
+        string $mwDistributionCategory,
+        string $versionType,
+        ?string $languageCode = null,
+        ?string $iswc = null,
+        ?string $copyrightDate = null,
+        ?string $copyrightNumber = null,
+        ?string $duration = null,
+        null|bool|string $recordedIndicator = null,
+        ?string $textMusicRelationship = null,
+        ?string $compositeType = null,
+        ?string $excerptType = null,
+        ?string $musicArrangement = null,
+        ?string $lyricAdaptation = null,
+        ?string $contactName = null,
+        ?string $contactId = null,
+        ?string $cwrWorkType = null,
+        null|bool|string $grandRightsInd = null,
+        ?int $compositeComponentCount = 0,
+        ?string $publicationDate = null,
+        null|bool|string $exceptionalClause = null,
+        ?string $opusNumber = null,
+        ?string $catalogueNumber = null,
+        null|bool|string $priorityFlag = null
+    ) {
+        parent::__construct(
+            $workTitle,
+            $submitterWorkNumber,
+            $mwDistributionCategory,
+            $versionType,
+            $languageCode,
+            $iswc,
+            $copyrightDate,
+            $copyrightNumber,
+            $duration,
+            $recordedIndicator,
+            $textMusicRelationship,
+            $compositeType,
+            $excerptType,
+            $musicArrangement,
+            $lyricAdaptation,
+            $contactName,
+            $contactId,
+            $cwrWorkType,
+            $grandRightsInd,
+            $compositeComponentCount,
+            $publicationDate,
+            $exceptionalClause,
+            $opusNumber,
+            $catalogueNumber
+        );
 
-    public function toString(int $transactionSequence, int $recordSequence): string
+
+        // Initialize character set
+        $this->stringFormat .= '%-1s';
+
+        $this->setPriorityFlag($priorityFlag);
+    }
+
+    /**
+     * Set the priority flag (Y/N or space).
+     *
+     * @param bool|string|null $flag
+     * @return $this
+     */
+    public function setPriorityFlag(null|bool|string $flag): self
     {
-        // Build the fixed-width fields
-        $line  = str_pad('NWR', 3);                                       // Record Type
-        // Transaction prefix (group & txn seq) should be handled by the Version class
-        $line .= str_pad($this->workTitle, 60);
-        $line .= str_pad($this->languageCode ?? '', 2);
-        $line .= str_pad($this->submitterWorkNumber, 14);
-        $line .= str_pad($this->iswc ?? '', 11);
-        $line .= str_pad($this->copyrightDate ?? '', 8);
-        $line .= str_pad($this->copyrightNumber ?? '', 12);
-        $line .= str_pad($this->distributionCategory, 3);
-        $line .= str_pad($this->duration ?? '', 6);
-        $line .= $this->recorded ? 'Y' : 'N';                             // Recorded Indicator
-        $line .= str_pad($this->textMusicRelation ?? '', 3);
-        // Pad the remainder
-        $line .= str_repeat(' ', 167 - mb_strlen($line));
-
-        return $line;
+        $this->data[self::IDX_PRIORITY_FLAG] = $this->flagToValue($flag);
+        return $this;
     }
 }
