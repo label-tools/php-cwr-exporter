@@ -128,10 +128,9 @@ class NwrRecord extends Record
     }
 
 
-    public function toString(): string
+    protected function validateBeforeToString(): void
     {
         $this->validateCompositeComponentCount();
-        return parent::toString();
     }
 
     public function setWorkTitle(string $title): self

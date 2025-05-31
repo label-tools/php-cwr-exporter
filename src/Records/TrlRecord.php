@@ -33,6 +33,11 @@ class TrlRecord extends Record
         }
     }
 
+    protected function validateBeforeToString(): void
+    {
+
+    }
+
     public function setGroupCount(int $groupCount): self
     {
         $this->validateCount($groupCount, 'Group Count', 1, 99999);

@@ -21,6 +21,8 @@ abstract class Record
 
     private const INDEX_RECORD_TYPE = 1;
 
+    abstract protected function validateBeforeToString(): void;
+
     public function __construct()
     {
         if (empty(static::$recordType)) {
@@ -32,6 +34,7 @@ abstract class Record
 
     public function toString(): string
     {
+        $this->validateBeforeToString();
         $data = $this->data;
         ksort($data);
         return vsprintf($this->stringFormat, $data);

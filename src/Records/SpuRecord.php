@@ -97,7 +97,7 @@ class SpuRecord extends Record
 
     public function setInterestedPartyNumber(string $number): self
     {
-        if (empty($number) && self::$recordType === 'SPU') {
+        if (empty($number) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Interested Party # is required for SPU.");
         }
         $this->data[self::IDX_INTERESTED_PARTY] = $number;
@@ -106,7 +106,7 @@ class SpuRecord extends Record
 
     public function setPublisherName(string $name): self
     {
-        if (empty($name) && self::$recordType === 'SPU') {
+        if (empty($name) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Publisher Name is required for SPU.");
         }
         $this->data[self::IDX_PUBLISHER_NAME] = $name;
@@ -115,14 +115,18 @@ class SpuRecord extends Record
 
     public function setPublisherType(string $type): self
     {
-        if (empty($type) && self::$recordType === 'SPU') {
+        if (empty($type) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Publisher Type is required for SPU.");
         }
-        try {
-            $type = PublisherType::from($type)->value;
-        } catch (\ValueError $e) {
-            throw new \InvalidArgumentException("Invalid Publisher Type: {$type}");
+
+        if(!empty($type)) {
+            try {
+                $type = PublisherType::from($type)->value;
+            } catch (\ValueError $e) {
+                throw new \InvalidArgumentException("Invalid Publisher Type: {$type}");
+            }
         }
+
         $this->data[self::IDX_PUBLISHER_TYPE] = $type;
         return $this;
     }
@@ -229,5 +233,23 @@ class SpuRecord extends Record
         }
 
         return $soc;
+    }
+
+    protected function validateBeforeToString(): void
+    {
+        if (empty($this->data[self::IDX_INTERESTED_PARTY]) && static::$recordType === 'SPU') {
+            throw new \InvalidArgumentException("Interested Party # is required for SPU.");
+        }
+        if (empty($this->data[self::IDX_PUBLISHER_NAME]) && static::$recordType === 'SPU') {
+            throw new \InvalidArgumentException("Publisher Name is required for SPU.");
+        }
+        if (empty($this->data[self::IDX_PUBLISHER_TYPE]) && static::$recordType === 'SPU') {
+            throw new \InvalidArgumentException("Publisher Type is required for SPU.");
+        }
+
+        //@todo since this might have to be checked at the group level since "If the record is of type SPU and followed by an SPT (and hence represents the file"
+        // if (empty($this->data[self::IDX_PUBLISHER_IPI_NAME]) && static::$recordType === 'SPU') {
+        //     throw new \InvalidArgumentException("Publisher IPI Name # is required for SPU.");
+        // }
     }
 }
