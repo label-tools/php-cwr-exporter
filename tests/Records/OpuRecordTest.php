@@ -31,15 +31,15 @@ describe('OPU (Other Publisher) Record', function () {
             // Submitter Agreement Number (14 A)
             expect(substr($str, 98, 14))->toBe(str_repeat(' ', 14));
             // PR Affiliation Society # (3 L)
-            expect(substr($str, 112, 3))->toBe(str_repeat(' ', 3));
+            expect(substr($str, 112, 3))->toBe('000');
             // PR Ownership Share (5 N)
             expect(substr($str, 115, 5))->toBe('00000');
             // MR Affiliation Society # (3 L)
-            expect(substr($str, 120, 3))->toBe(str_repeat(' ', 3));
+            expect(substr($str, 120, 3))->toBe('000');
             // MR Ownership Share (5 N)
             expect(substr($str, 123, 5))->toBe('00000');
             // SR Affiliation Society # (3 L)
-            expect(substr($str, 128, 3))->toBe(str_repeat(' ', 3));
+            expect(substr($str, 128, 3))->toBe('000');
             // SR Ownership Share (5 N)
             expect(substr($str, 131, 5))->toBe('00000');
             // Special Agreements Indicator (1)

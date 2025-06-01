@@ -18,33 +18,33 @@ class SpuRecord extends Record
         "%-9s"  .  // Tax ID #
         "%-11s" .  // Publisher IPI Name #
         "%-14s" .  // Submitter Agreement Number
-        "%-3s"  .  // PR Affiliation Society #
+        "%03d"  .  // PR Affiliation Society #
         "%05d"  .  // PR Ownership Share
-        "%-3s"  .  // MR Society
+        "%03d"  .  // MR Society
         "%05d"  .  // MR Ownership Share
-        "%-3s"  .  // SR Society
+        "%03d"  .  // SR Society
         "%05d"  .  // SR Ownership Share
         "%-1s"  .  // Special Agreements Indicator
         "%-1s"  .  // First Recording Refusal Indicator
         "%-1s";     // Filler
 
-    private const IDX_PUBLISHER_SEQUENCE = 2;
-    private const IDX_INTERESTED_PARTY = 3;
-    private const IDX_PUBLISHER_NAME = 4;
-    private const IDX_PUBLISHER_UNKNOWN_IND  = 5;
-    private const IDX_PUBLISHER_TYPE = 6;
-    private const IDX_TAX_ID = 7;
-    private const IDX_PUBLISHER_IPI_NAME = 8;
-    private const IDX_SUBMITTER_AGREEMENT = 9;
-    private const IDX_PR_AFFILIATION_SOCIETY = 10;
-    private const IDX_PR_OWNERSHIP_SHARE = 11;
-    private const IDX_MR_AFFILIATION_SOCIETY = 12;
-    private const IDX_MR_OWNERSHIP_SHARE = 13;
-    private const IDX_SR_AFFILIATION_SOCIETY = 14;
-    private const IDX_SR_OWNERSHIP_SHARE = 15;
-    private const IDX_SPECIAL_AGREEMENTS_IND = 16;
-    private const IDX_FIRST_RECORDING_REFUSAL_IND = 17;
-    private const IDX_FILLER = 18;
+    protected const IDX_PUBLISHER_SEQUENCE = 2;
+    protected const IDX_INTERESTED_PARTY = 3;
+    protected const IDX_PUBLISHER_NAME = 4;
+    protected const IDX_PUBLISHER_UNKNOWN_IND  = 5;
+    protected const IDX_PUBLISHER_TYPE = 6;
+    protected const IDX_TAX_ID = 7;
+    protected const IDX_PUBLISHER_IPI_NAME = 8;
+    protected const IDX_SUBMITTER_AGREEMENT = 9;
+    protected const IDX_PR_AFFILIATION_SOCIETY = 10;
+    protected const IDX_PR_OWNERSHIP_SHARE = 11;
+    protected const IDX_MR_AFFILIATION_SOCIETY = 12;
+    protected const IDX_MR_OWNERSHIP_SHARE = 13;
+    protected const IDX_SR_AFFILIATION_SOCIETY = 14;
+    protected const IDX_SR_OWNERSHIP_SHARE = 15;
+    protected const IDX_SPECIAL_AGREEMENTS_IND = 16;
+    protected const IDX_FIRST_RECORDING_REFUSAL_IND = 17;
+    protected const IDX_FILLER = 18;
 
     public function __construct(
         int $publisherSequence, //mandatory
@@ -65,8 +65,7 @@ class SpuRecord extends Record
     ) {
         parent::__construct();
 
-
-        $this->data[self::IDX_PUBLISHER_UNKNOWN_IND] = ' '; // must be blank for SPU records
+        $this->data[static::IDX_PUBLISHER_UNKNOWN_IND] = ' '; // must be blank for SPU records
 
         $this->setPublisherSequence($publisherSequence)
              ->setInterestedPartyNumber($interestedPartyNumber)
@@ -91,7 +90,7 @@ class SpuRecord extends Record
         if ($seq < 1) {
             throw new \InvalidArgumentException("Publisher Sequence # must be >= 1.");
         }
-        $this->data[self::IDX_PUBLISHER_SEQUENCE] = $seq;
+        $this->data[static::IDX_PUBLISHER_SEQUENCE] = $seq;
         return $this;
     }
 
@@ -100,7 +99,7 @@ class SpuRecord extends Record
         if (empty($number) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Interested Party # is required for SPU.");
         }
-        $this->data[self::IDX_INTERESTED_PARTY] = $number;
+        $this->data[static::IDX_INTERESTED_PARTY] = $number;
         return $this;
     }
 
@@ -109,7 +108,7 @@ class SpuRecord extends Record
         if (empty($name) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Publisher Name is required for SPU.");
         }
-        $this->data[self::IDX_PUBLISHER_NAME] = $name;
+        $this->data[static::IDX_PUBLISHER_NAME] = $name;
         return $this;
     }
 
@@ -127,7 +126,7 @@ class SpuRecord extends Record
             }
         }
 
-        $this->data[self::IDX_PUBLISHER_TYPE] = $type;
+        $this->data[static::IDX_PUBLISHER_TYPE] = $type;
         return $this;
     }
 
@@ -136,20 +135,20 @@ class SpuRecord extends Record
         if ($taxId !== '' && !ctype_digit($taxId)) {
             throw new \InvalidArgumentException("Tax ID must be numeric.");
         }
-        $this->data[self::IDX_TAX_ID] = $taxId;
+        $this->data[static::IDX_TAX_ID] = $taxId;
         return $this;
     }
 
     public function setPublisherIpiName(string $ipi): self
     {
 
-        $this->data[self::IDX_PUBLISHER_IPI_NAME] = $ipi;
+        $this->data[static::IDX_PUBLISHER_IPI_NAME] = $ipi;
         return $this;
     }
 
     public function setSubmitterAgreementNumber(string $agr): self
     {
-        $this->data[self::IDX_SUBMITTER_AGREEMENT] = $agr;
+        $this->data[static::IDX_SUBMITTER_AGREEMENT] = $agr;
         return $this;
     }
 
@@ -157,7 +156,7 @@ class SpuRecord extends Record
     {
         // If entered, must be numeric and match a SocietyCode
         $this->validateSocietyCode($soc);
-        $this->data[self::IDX_PR_AFFILIATION_SOCIETY] = $soc;
+        $this->data[static::IDX_PR_AFFILIATION_SOCIETY] = $soc;
         return $this;
     }
 
@@ -166,14 +165,14 @@ class SpuRecord extends Record
         if ($share < 0 || $share > 5000) {
             throw new \InvalidArgumentException("PR Ownership Share must be between 0 and 5000 (50.00%).");
         }
-        $this->data[self::IDX_PR_OWNERSHIP_SHARE] = $share;
+        $this->data[static::IDX_PR_OWNERSHIP_SHARE] = $share;
         return $this;
     }
 
     public function setMrSociety(string $soc): self
     {
         $this->validateSocietyCode($soc);
-        $this->data[self::IDX_MR_AFFILIATION_SOCIETY] = $soc;
+        $this->data[static::IDX_MR_AFFILIATION_SOCIETY] = $soc;
         return $this;
     }
 
@@ -182,14 +181,14 @@ class SpuRecord extends Record
         if ($share < 0 || $share > 10000) {
             throw new \InvalidArgumentException("MR Ownership Share must be between 0 and 10000 (100.00%).");
         }
-        $this->data[self::IDX_MR_OWNERSHIP_SHARE] = $share;
+        $this->data[static::IDX_MR_OWNERSHIP_SHARE] = $share;
         return $this;
     }
 
     public function setSrSociety(string $soc): self
     {
         $this->validateSocietyCode($soc);
-        $this->data[self::IDX_SR_AFFILIATION_SOCIETY] = $soc;
+        $this->data[static::IDX_SR_AFFILIATION_SOCIETY] = $soc;
         return $this;
     }
 
@@ -198,25 +197,25 @@ class SpuRecord extends Record
         if ($share < 0 || $share > 10000) {
             throw new \InvalidArgumentException("SR Ownership Share must be between 0 and 10000 (100.00%).");
         }
-        $this->data[self::IDX_SR_OWNERSHIP_SHARE] = $share;
+        $this->data[static::IDX_SR_OWNERSHIP_SHARE] = $share;
         return $this;
     }
 
     public function setSpecialAgreementsIndicator(null|bool|string $flag): self
     {
-        $this->data[self::IDX_SPECIAL_AGREEMENTS_IND] = $this->flagToValue($flag);
+        $this->data[static::IDX_SPECIAL_AGREEMENTS_IND] = $this->flagToValue($flag);
         return $this;
     }
 
     public function setFirstRecordingRefusalIndicator(null|bool|string $flag): self
     {
-        $this->data[self::IDX_FIRST_RECORDING_REFUSAL_IND] = $this->flagToValue($flag);
+        $this->data[static::IDX_FIRST_RECORDING_REFUSAL_IND] = $this->flagToValue($flag);
         return $this;
     }
 
     public function setFiller(string $filler): self
     {
-        $this->data[self::IDX_FILLER] = ' ';
+        $this->data[static::IDX_FILLER] = ' ';
         return $this;
     }
 
@@ -237,18 +236,18 @@ class SpuRecord extends Record
 
     protected function validateBeforeToString(): void
     {
-        if (empty($this->data[self::IDX_INTERESTED_PARTY]) && static::$recordType === 'SPU') {
+        if (empty($this->data[static::IDX_INTERESTED_PARTY]) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Interested Party # is required for SPU.");
         }
-        if (empty($this->data[self::IDX_PUBLISHER_NAME]) && static::$recordType === 'SPU') {
+        if (empty($this->data[static::IDX_PUBLISHER_NAME]) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Publisher Name is required for SPU.");
         }
-        if (empty($this->data[self::IDX_PUBLISHER_TYPE]) && static::$recordType === 'SPU') {
+        if (empty($this->data[static::IDX_PUBLISHER_TYPE]) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Publisher Type is required for SPU.");
         }
 
         //@todo since this might have to be checked at the group level since "If the record is of type SPU and followed by an SPT (and hence represents the file"
-        // if (empty($this->data[self::IDX_PUBLISHER_IPI_NAME]) && static::$recordType === 'SPU') {
+        // if (empty($this->data[static::IDX_PUBLISHER_IPI_NAME]) && static::$recordType === 'SPU') {
         //     throw new \InvalidArgumentException("Publisher IPI Name # is required for SPU.");
         // }
     }

@@ -7,12 +7,12 @@ class OpuRecord extends SpuRecord
     protected static string $recordType = 'OPU';
 
      public function __construct(
-        int $publisherSequence, //mandatory
-        ?string $interestedPartyNumber = '', //mandatory for SPU
-        ?string $publisherName = '',  //mandatory for SPU
-        ?string $publisherType = '', //mandatory for SPU
+        int $publisherSequence,
+        ?string $interestedPartyNumber = '',
+        ?string $publisherName = '',
+        ?string $publisherType = '',
         ?string $taxId = '',
-        ?string $publisherIpiName = '', //If the record is of type SPU and followed by an SPT (and hence represents the file submitter), then the IPI Name Number is mandatory.
+        ?string $publisherIpiName = '',
         ?string $submitterAgreementNumber = '',
         ?string $prAffiliationSociety = '',
         ?int $prOwnershipShare = 0,
