@@ -7,9 +7,6 @@ enum VersionType: string
     case MODIFIED_VERSION_OF_A_MUSICAL_WORK = 'MOD';
     case ORIGINAL_WORK = 'ORI';
 
-    /**
-     * Returns the human-readable name of the version type.
-     */
     public function getName(): string
     {
         return match ($this) {
@@ -18,9 +15,6 @@ enum VersionType: string
         };
     }
 
-    /**
-     * Returns a detailed description of the version type.
-     */
     public function getDescription(): string
     {
         return match ($this) {

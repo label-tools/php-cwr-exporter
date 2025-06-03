@@ -1,5 +1,5 @@
 <?php
-
+use Pest\Expectation;
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -27,6 +27,17 @@ pest()->extend(Tests\TestCase::class)->in('Feature');
 expect()->extend('toBeOne', function () {
     return $this->toBe(1);
 });
+
+expect()->extend('toBePadded', function ($expected, int $width, string $pad_string = ' ', $pad_type = STR_PAD_RIGHT) {
+    return $this->toBe(str_pad((string) $expected, $width, $pad_string, $pad_type));
+});
+
+expect()->extend('toBePaddedLeft', function ($expected, int $width, string $pad_string = ' ') {
+    return $this->toBe(str_pad((string) $expected, $width, $pad_string, STR_PAD_LEFT));
+});
+
+
+
 
 /*
 |--------------------------------------------------------------------------

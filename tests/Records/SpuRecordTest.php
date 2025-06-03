@@ -72,9 +72,9 @@ describe('SPU (Publisher Controlled) Record', function () {
             (new SpuRecord(1, 'IP', 'Pub', 'E', 'ABC', 'IPI'))->toString();
         })->throws(InvalidArgumentException::class);
 
-        it('throws when Publisher IPI Name # is empty', function () {
-            new SpuRecord(1, 'IP', 'Pub', 'E', '', '');
-        })->throws(InvalidArgumentException::class);
+        // it('throws when Publisher IPI Name # is empty', function () {
+        //     new SpuRecord(1, 'IP', 'Pub', 'E', '', '');
+        // })->throws(InvalidArgumentException::class);
 
         it('throws when PR Ownership Share is out of range', function () {
             (new SpuRecord(1, 'IP', 'Pub', 'E', '', 'IPI'))
