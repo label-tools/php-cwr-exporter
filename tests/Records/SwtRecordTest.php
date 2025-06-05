@@ -237,9 +237,6 @@ describe('SWT (Song Territory) Record', function () {
 
             expect(strlen($record))->toBe(49+3);
             expect(substr($record, 49, 3))->toBe('001');
-
         });
-
-
     });
 });
