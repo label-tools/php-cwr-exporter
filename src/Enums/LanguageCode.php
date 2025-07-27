@@ -130,6 +130,7 @@ enum LanguageCode: string
     case SISWATI = 'SS';
     case SLOVAK = 'SK';
     case SLOVENIAN = 'SL';
+    case SPANISH = 'ES';
     case SOMALI = 'SO';
     case SUDANESE = 'SU';
     case SWAHILI = 'SW';

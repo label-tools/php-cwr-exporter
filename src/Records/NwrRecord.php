@@ -12,9 +12,13 @@ use LabelTools\PhpCwrExporter\Enums\ExcerptType;
 use LabelTools\PhpCwrExporter\Enums\MusicArrangement;
 use LabelTools\PhpCwrExporter\Enums\LyricAdaptation;
 use LabelTools\PhpCwrExporter\Enums\CwrWorkType;
+use LabelTools\PhpCwrExporter\Fields\HasLanguageCode;
 
 class NwrRecord extends Record
 {
+
+    use HasLanguageCode;
+
     protected static string $recordType = 'NWR'; // A{3}
     protected string $stringFormat =
         "%-19s" .  // Record Prefix (19 A)
@@ -146,18 +150,9 @@ class NwrRecord extends Record
         return $this;
     }
 
-    public function setLanguageCode(string $code): self
+    protected function getLanguageCodeIndex(): int
     {
-        // If entered, must match Language Code table
-        if ($code !== '') {
-            try {
-                $code = LanguageCode::from($code)->value;
-            } catch (\ValueError $e) {
-                throw new \InvalidArgumentException("Invalid language code: {$code}");
-            }
-        }
-        $this->data[self::IDX_LANG] = $code;
-        return $this;
+        return self::IDX_LANG;
     }
 
     public function setSubmitterWorkNumber(string $num): self
