@@ -2,12 +2,17 @@
 
 namespace LabelTools\PhpCwrExporter\Records;
 
+use BackedEnum;
+
 abstract class Record
 {
     /**
      * @var string The record type, e.g. 'HDR', 'GRH'
      */
     protected static string $recordType;
+
+    protected int $transactionSequence = 0; // Default transaction sequence number
+    protected int $recordSequence = 0; // Default record sequence number
 
     /**
      * @var array Data to be formatted into a string
@@ -28,8 +33,34 @@ abstract class Record
         if (empty(static::$recordType)) {
             throw new \LogicException('Record type must be defined in the subclass.');
         }
-        // Initialize the data array with the record type
-        $this->data[self::INDEX_RECORD_TYPE] = static::$recordType;
+
+        // If the format expects a full 19-character prefix, set placeholders for transaction and record sequence numbers
+        if (!str_starts_with($this->stringFormat, "%-19s")) {
+            // Initialize the data array with the record type
+            $this->data[self::INDEX_RECORD_TYPE] = static::$recordType;
+        }
+    }
+
+    public function setRecordSequence(int $recordSequence): self
+    {
+        $this->recordSequence = $recordSequence;
+        return $this;
+    }
+
+    public function setTransactionSequence(int $transactionSequence): self
+    {
+        $this->transactionSequence = $transactionSequence;
+        return $this;
+    }
+
+    /**
+     * Sets the record prefix (record type + transaction sequence + record sequence) for formats with prefix.
+     */
+    public function setRecordPrefix($transactionSequence, $recordSequence): self
+    {
+        $prefix = sprintf('%-3s%08d%08d', static::$recordType, $transactionSequence, $recordSequence);
+        $this->data[self::INDEX_RECORD_TYPE] = $prefix;
+        return $this;
     }
 
     public function toString(): string
@@ -70,5 +101,26 @@ abstract class Record
         }
 
         return $flag;
+    }
+
+    protected function setEnumValue(int $key, string $enumClass, BackedEnum|string $value, ?string $fieldLabel = null, bool $isRequired = true): self
+    {
+        $fieldLabel ??= preg_replace('/(?<!^)[A-Z]/', ' $0', (new \ReflectionClass($enumClass))->getShortName());
+
+        if ($isRequired && empty($value)) {
+            throw new \InvalidArgumentException("{$fieldLabel} is required.");
+        } elseif (empty($value)) {
+            $this->data[$key] = '';
+            return $this;
+        }
+
+        try {
+            $enumValue = $value instanceof $enumClass ? $value : $enumClass::from($value);
+        } catch (\ValueError $e) {
+            throw new \InvalidArgumentException("Invalid {$fieldLabel}: {$value}");
+        }
+
+        $this->data[$key] = $enumValue->value;
+        return $this;
     }
 }

@@ -1,0 +1,81 @@
+<?php
+namespace LabelTools\PhpCwrExporter\Definitions;
+
+use BackedEnum;
+use LabelTools\PhpCwrExporter\Enums\{
+    TitleType,
+    LanguageCode,
+    MusicalWorkDistributionCategory,
+    VersionType
+};
+
+class WorkDefinition
+{
+    public function __construct(
+        public readonly string $submitterWorkNumber,
+        public readonly string $title,
+        public readonly TitleType|string $titleType,
+        public readonly null|LanguageCode|string $language,
+        public readonly MusicalWorkDistributionCategory|string $distributionCategory,
+        public readonly VersionType|string $versionType,
+        public readonly ?string $iswc = null,
+        public readonly ?string $copyrightDate = null,
+        public readonly ?string $copyrightNumber = null,
+        public readonly ?string $distribution_category = null,
+        public readonly ?string $duration = null,
+        public readonly bool $recorded = false,
+        public readonly string $textMusicRelationship = '',
+        public readonly array $publishers = []
+
+    ) {
+        // field‐level sanity checks:
+        if ($this->submitterWorkNumber === '') {
+            throw new \InvalidArgumentException('submitterWorkNumber is required.');
+        }
+        if (strlen($this->title) > 90) {
+            throw new \InvalidArgumentException('title cannot exceed 90 characters.');
+        }
+    }
+
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            submitterWorkNumber: $data['submitter_work_number'] ?? throw new \InvalidArgumentException('submitter_work_number missing'),
+            title: $data['title'] ?? throw new \InvalidArgumentException('title missing'),
+            titleType: static::getEnumValue($data, TitleType::class, 'title_type'),
+            language: static::getEnumValue($data, LanguageCode::class, 'language', isRequired: false),
+            distributionCategory: static::getEnumValue($data, MusicalWorkDistributionCategory::class, 'distribution_category'),
+            versionType: static::getEnumValue($data, VersionType::class, 'version_type'),
+            iswc: $data['iswc'] ?? null,
+            copyrightDate: $data['copyright_date'] ?? null,
+            copyrightNumber: $data['copyright_number'] ?? null,
+            duration: $data['duration'] ?? null,
+            recorded: $data['recorded'] ?? false,
+            textMusicRelationship: $data['text_music_relationship'] ?? '',
+            publishers: isset($data['publishers']) && is_array($data['publishers'])
+                ? array_map(fn($pub) => PublisherDefinition::fromArray($pub), $data['publishers'])
+                : []
+        );
+    }
+
+
+    protected static function getEnumValue(array $data, string $enumClass, string $key, bool $isRequired = true): BackedEnum|null
+    {
+        $value = $data[$key] ?? null;
+
+        if ($value instanceof $enumClass) {
+            /** @var BackedEnum $value */
+            return $value;
+        }
+
+        if (empty($value) && $isRequired) {
+            throw new \InvalidArgumentException("{$key} must be a non-empty string or {$enumClass} enum instance");
+        } elseif (empty($value)) {
+            return null; // Allow null for optional fields
+        }
+
+        $enumValue = $enumClass::from($value);
+        return $enumValue;
+    }
+
+}

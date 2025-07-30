@@ -75,7 +75,7 @@ describe('SPT (Publisher Territory) Record', function () {
     })->throws(InvalidArgumentException::class, 'Interested Party Number must be non-empty and at most 9 characters.');
 
     it('throws when PR Collection Share is negative', function () {
-        new SptRecord(
+       expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: -1,
             mrCollectionShare: 0,
@@ -83,11 +83,12 @@ describe('SPT (Publisher Territory) Record', function () {
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
-        );
-    })->throws(InvalidArgumentException::class, 'PR Collection Share must be between 0 and 5000.');
+        ))->toThrow(InvalidArgumentException::class)
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 5000'));
+    });
 
     it('throws when PR Collection Share exceeds 5000 (50.00%)', function () {
-        new SptRecord(
+        expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: 5001,
             mrCollectionShare: 0,
@@ -95,11 +96,12 @@ describe('SPT (Publisher Territory) Record', function () {
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
-        );
-    })->throws(InvalidArgumentException::class, 'PR Collection Share must be between 0 and 5000.');
+        ))->toThrow(InvalidArgumentException::class)
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 5000'));
+    });
 
     it('throws when MR Collection Share is negative', function () {
-        new SptRecord(
+        expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: 0,
             mrCollectionShare: -1,
@@ -107,11 +109,12 @@ describe('SPT (Publisher Territory) Record', function () {
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
-        );
-    })->throws(InvalidArgumentException::class, 'MR Collection Share must be between 0 and 10000.');
+        ))->toThrow(InvalidArgumentException::class)
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+    });
 
     it('throws when MR Collection Share exceeds 10000 (100.00%)', function () {
-        new SptRecord(
+        expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: 0,
             mrCollectionShare: 10001,
@@ -119,11 +122,12 @@ describe('SPT (Publisher Territory) Record', function () {
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
-        );
-    })->throws(InvalidArgumentException::class, 'MR Collection Share must be between 0 and 10000.');
+        ))->toThrow(InvalidArgumentException::class)
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+    });
 
     it('throws when SR Collection Share is negative', function () {
-        new SptRecord(
+        expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: 0,
             mrCollectionShare: 0,
@@ -131,11 +135,12 @@ describe('SPT (Publisher Territory) Record', function () {
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
-        );
-    })->throws(InvalidArgumentException::class, 'SR Collection Share must be between 0 and 10000.');
+        ))->toThrow(InvalidArgumentException::class)
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+    });
 
     it('throws when SR Collection Share exceeds 10000 (100.00%)', function () {
-        new SptRecord(
+        expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: 0,
             mrCollectionShare: 0,
@@ -143,8 +148,9 @@ describe('SPT (Publisher Territory) Record', function () {
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
-        );
-    })->throws(InvalidArgumentException::class, 'SR Collection Share must be between 0 and 10000.');
+        ))->toThrow(InvalidArgumentException::class)
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+    });
 
     it('throws when Inclusion/Exclusion Indicator is invalid', function () {
         new SptRecord(

@@ -5,182 +5,135 @@ namespace LabelTools\PhpCwrExporter\Version\V22;
 use LabelTools\PhpCwrExporter\Contracts\VersionInterface;
 use LabelTools\PhpCwrExporter\Version\V22\Records\HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\GrhRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\GrtRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\TrlRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\NwrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\SpuRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\SptRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\NwrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\SwrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\OwrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\PwrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\AltRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\GrtRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\TrlRecord;
 
 /**
  * CWR Version 2.2 implementation.
  */
 class Version implements VersionInterface
 {
+    protected int $transactionSequence = 0;
+    protected int $recordSequence = 0;
+
     public function getVersion(): string
     {
         return '2.2';
     }
 
-    public function buildControlRecords(array $works, array $options = []): array
+    public function renderHeader(array $options): array
     {
-        $records = [];
+        // Initialize first transaction
+        $this->transactionSequence = 0;
+        $this->recordSequence = 0;
 
-        // Transmission Header
-        $records[] = new HdrRecord(
-            senderType: $options['sender_type'] ?? config('cwr.sender_type'),
-            senderId: $options['sender_id'] ?? config('cwr.sender_id'),
-            senderName: $options['sender_name'] ?? config('cwr.sender_name'),
-            creationDate: $options['creation_date'] ?? null,
-            creationTime: $options['creation_time'] ?? null,
-            transmissionDate: $options['transmission_date'] ?? null,
-            characterSet: $options['character_set'] ?? config('cwr.character_set', ''),
-        );
+        return [
+            // File header
+            new HdrRecord(
+                senderType: $options['sender_type'],
+                senderId: $options['sender_id'] ,
+                senderName: $options['sender_name'],
+                creationDate: $options['creation_date'] ?? null,
+                creationTime: $options['creation_time'] ?? null,
+                transmissionDate: $options['transmission_date'] ?? null,
+                characterSet: $options['character_set'] ?? null,
+            )->toString(),
 
-        // Single group header
-        $records[] = new GrhRecord('NWR', 1);
-
-        // Detail records
-        $detailCount = 0;
-        foreach ($works as $index => $work) {
-            $transactionSeq = $index + 1;
-            $workRecs = $this->buildWorkRecords($work, $transactionSeq);
-            foreach ($workRecs as $rec) {
-                $records[] = $rec;
-            }
-            $detailCount += count($workRecs);
-        }
-
-        // Group trailer (includes GRH & GRT)
-        $records[] = new GrtRecord(1, count($works), $detailCount + 2);
-
-        // Transmission trailer
-        $groupCount      = 1;
-        $transactionCount = count($works);
-        $totalRecords    = count($records) + 1;
-        $records[] = new TrlRecord($groupCount, $transactionCount, $totalRecords);
-
-        return $records;
+            // Group header
+            new GrhRecord('NWR', groupId:1)->toString(),
+        ];
     }
 
-    public function buildWorkRecords($work, int $transactionSequence): array
+    public function renderDetailLines(array $works, array $options): array
     {
-        $records = [];
+        $lines = [];
 
-        // 1) SPU / SPT - publisher chain
-        if (!empty($work['publishers'])) {
-            foreach ($work['publishers'] as $pub) {
-                $records[] = new SpuRecord(
-                    $pub['sequence'],                        // Publisher Sequence #
-                    $pub['interested_party_number'],         // Interested Party #
-                    $pub['name'],                            // Publisher Name
-                    $pub['type'],                            // Publisher Type
-                    $pub['tax_id']         ?? null,          // Tax ID
-                    $pub['ipi_name_number'],                 // IPI Name #
-                    $pub['submitter_agreement_number'] ?? null,
-                    $pub['society_agreement_number']   ?? null,
-                    $pub['pr_affiliation_society']      ?? null,
-                    $pub['pr_affiliation_share']        ?? 0,
-                    $pub['mr_affiliation_society']      ?? null,
-                    $pub['mr_affiliation_share']        ?? 0
-                );
-                // Territories
-                if (!empty($pub['territories'])) {
-                    $seq = 0;
-                    foreach ($pub['territories'] as $terr) {
-                        $seq++;
-                        $records[] = new SptRecord(
-                            $pub['interested_party_number'],    // Interested Party #
-                            $terr['pr_share'],                  // PR Collection Share
-                            $terr['mr_share'],                  // MR Collection Share
-                            $terr['sr_share'],                  // SR Collection Share
-                            $terr['territory_code'],            // Territory Code
-                            $terr['inclusion_exclusion'],       // Inclusion/Exclusion
-                            $terr['shares_change_flag'] ?? 'N',  // Shares Change Flag
-                            $seq                                 // Sequence #
-                        );
-                    }
+        foreach ($works as $work) {
+            // Reset record sequence for this transaction
+            $this->recordSequence = 0;
+
+            // NWR work header
+            $lines[] = new NwrRecord(
+                workTitle:             $work->title,
+                submitterWorkNumber:   $work->submitterWorkNumber,
+                mwDistributionCategory: $work->distributionCategory,
+                versionType:           $work->versionType,
+                languageCode:          $work->language           ?? null,
+                iswc:                  $work->iswc              ?? null,
+                copyrightDate:         $work->copyright_date    ?? null,
+                copyrightNumber:       $work->copyright_number  ?? null,
+                duration:              $work->duration          ?? null,
+                recordedIndicator:     $work->recorded          ?? false,
+                textMusicRelationship: $work->text_music_relationship ?? ''
+            )->setRecordPrefix($this->transactionSequence, $this->recordSequence)
+            ->toString();
+
+            // SPU & SPT for each publisher
+            foreach ($work->publishers as $pubIndex => $pub) {
+                // SPU publisher record
+                $lines[] = (new SpuRecord(
+                    publisherSequence:           $pubIndex + 1,
+                    interestedPartyNumber:       $pub->interestedPartyNumber,
+                    publisherName:               $pub->publisherName,
+                    publisherType:               $pub->publisherType,
+                    taxId:                       $pub->taxId,
+                    publisherIpiName:            $pub->publisherIpiName,
+                    submitterAgreementNumber:    $pub->submitterAgreementNumber,
+                    prAffiliationSociety:        $pub->prAffiliationSociety,
+                    prOwnershipShare:            $pub->prOwnershipShare,
+                    mrAffiliationSociety:        $pub->mrAffiliationSociety,
+                    mrOwnershipShare:            $pub->mrOwnershipShare,
+                    srAffiliationSociety:        $pub->srAffiliationSociety,
+                    srOwnershipShare:            $pub->srOwnershipShare
+                ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                  ->toString();
+
+                // SPT territory records
+                foreach ($pub->territories ?? [] as $terrIndex => $terr) {
+                    $lines[] = (new SptRecord(
+                        interestedPartyNumber:        $pub->interestedPartyNumber,
+                        prCollectionShare:            $pub->prOwnershipShare,
+                        mrCollectionShare:            $pub->mrOwnershipShare,
+                        srCollectionShare:            $pub->srOwnershipShare,
+                        tisNumericCode:               $terr['tis_code'],
+                        inclusionExclusionIndicator:  $terr['inclusion_exclusion_indicator'] ?? 'I',
+                        sharesChange:                 $terr['shares_change_flag']        ?? '',
+                        sequenceNumber:               $terrIndex + 1
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
                 }
             }
+
+            // Advance to next transaction
+            $this->transactionSequence++;
         }
 
-        // 2) NWR header
-        $records[] = new NwrRecord(
-            $work['title'],
-            $work['language']                ?? null,
-            $work['submitter_work_number'],
-            $work['iswc']                    ?? null,
-            $work['copyright_date']          ?? null,
-            $work['copyright_number']        ?? null,
-            $work['distribution_category'],
-            $work['duration']                ?? null,
-            $work['recorded']                ?? false,
-            $work['text_music_relationship'] ?? ''
-        );
+        return $lines;
+    }
 
-        // 3) SWR / PWR - writers
-        if (!empty($work['writers'])) {
-            foreach ($work['writers'] as $writer) {
-                // SWR
-                $records[] = new SwrRecord(
-                    'SWR',
-                    $writer['interested_party_number'],
-                    $writer['last_name'],
-                    $writer['first_name']          ?? null,
-                    $writer['unknown_indicator']   ?? false,
-                    $writer['designation_code']    ?? '',
-                    $writer['tax_id']              ?? null,
-                    $writer['ipi_name_number']     ?? null,
-                    $writer['pr_affiliation_society'] ?? null,
-                    $writer['pr_ownership_share']  ?? 0
-                );
-                // PWR for each publisher under writer
-                if (!empty($writer['publishers'])) {
-                    foreach ($writer['publishers'] as $pub) {
-                        $records[] = new PwrRecord(
-                            $pub['publisher_ip'],
-                            $pub['publisher_name']       ?? '',
-                            $pub['submitter_agreement_number'] ?? null,
-                            $pub['society_agreement_number']   ?? null,
-                            $writer['interested_party_number'],
-                            $pub['publisher_sequence']
-                        );
-                    }
-                }
-            }
-        }
+    public function renderTrailer(array $options): array
+    {
+        $groupCount       = $options['group_count']       ?? 1;
+        $transactionCount = $options['transaction_count'] ?? 0;
+        $detailCount      = $options['detail_count']      ?? 0;
+        $headerCount      = $options['header_count']      ?? 0;
 
-        // 4) OWR - other writers
-        if (!empty($work['other_writers'])) {
-            foreach ($work['other_writers'] as $writer) {
-                $records[] = new OwrRecord(
-                    $writer['interested_party_number'],
-                    $writer['last_name'],
-                    $writer['first_name']        ?? null,
-                    $writer['unknown_indicator'] ?? false,
-                    $writer['designation_code']  ?? '',
-                    $writer['tax_id']            ?? null,
-                    $writer['ipi_name_number']   ?? null,
-                    $writer['pr_affiliation_society'] ?? null,
-                    $writer['pr_ownership_share'] ?? 0
-                );
-            }
-        }
+        // GRP record count includes GRH + detail lines + GRT itself
+        $grtRecordCount = $detailCount + 2;
+        // Total records includes headers + detail lines + GRT + TRL
+        $totalRecords = $headerCount + $detailCount + 2;
 
-        // 5) ALT - alternate titles
-        if (!empty($work['alternate_titles'])) {
-            foreach ($work['alternate_titles'] as $alt) {
-                $records[] = new AltRecord(
-                    $alt['title'],
-                    $alt['type'],
-                    $alt['language'] ?? ''
-                );
-            }
-        }
+        $grtLine = (new GrtRecord($groupCount, $transactionCount, $grtRecordCount))
+            ->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+            ->toString();
 
-        return $records;
+        $trlLine = (new TrlRecord($groupCount, $transactionCount, $totalRecords))
+            ->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+            ->toString();
+
+        return [$grtLine, $trlLine];
     }
 }

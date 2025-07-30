@@ -21,9 +21,9 @@ class HdrRecord extends Record
     private const INDEX_TRANSMISSION_DATE = 8;
 
     protected string $senderType;
-    protected int $senderId;
+    protected string $senderId;
 
-    public function __construct(?string $senderType = null, ?int $senderId = null, ?string $senderName = null, ?string $creationDate = null, ?string $creationTime = null, ?string $transmissionDate = null)
+    public function __construct(null|SenderType|string $senderType = null, ?string $senderId = null, ?string $senderName = null, ?string $creationDate = null, ?string $creationTime = null, ?string $transmissionDate = null)
     {
         parent::__construct(); //ALWAYS CALL PARENT CONSTRUCTOR FIRST
 
@@ -45,7 +45,7 @@ class HdrRecord extends Record
 
     }
 
-    public function setSenderTypeAndId(string|SenderType $senderType, int $senderId): self
+    public function setSenderTypeAndId(string|SenderType $senderType, string $senderId): self
     {
         try {
             $senderTypeEnum = $senderType instanceof SenderType ? $senderType : SenderType::from($senderType);

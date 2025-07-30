@@ -2,6 +2,8 @@
 
 namespace LabelTools\PhpCwrExporter\Records;
 
+use LabelTools\PhpCwrExporter\Enums\PublisherType;
+
 class OpuRecord extends SpuRecord
 {
     protected static string $recordType = 'OPU';
@@ -30,6 +32,20 @@ class OpuRecord extends SpuRecord
         );
     }
 
+    /**
+     * Override to set interested party number as optional for OPU records.
+     */
+    public function setInterestedPartyNumber(null|string $partyNumber, bool $isRequired = true): self
+    {
+        return parent::setInterestedPartyNumber($partyNumber, isRequired:false);
+    }
 
+    /**
+     * Override to set publisher type as optional for OPU records.
+     */
+    public function setPublisherType(null|PublisherType|string $type): self
+    {
+        return $this->setEnumValue(self::IDX_PUBLISHER_TYPE, PublisherType::class, $type, isRequired: false);
+    }
 
 }

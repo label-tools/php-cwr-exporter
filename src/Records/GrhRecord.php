@@ -21,9 +21,13 @@ class GrhRecord extends Record
 
         if (!is_null($transactionType)) {
             $this->setTransactionType($transactionType);
+        } else {
+            $this->data[self::INDEX_TRANSACTION_TYPE] = ''; // Default to '01' if not provided
         }
         if (!is_null($groupId)) {
             $this->setGroupId($groupId);
+        } else {
+            $this->data[self::INDEX_GROUP_ID] = 1; // Default to 0 if not provided
         }
     }
 

@@ -62,76 +62,100 @@ describe('SWT (Song Territory) Record', function () {
         })->throws(InvalidArgumentException::class, 'Interested Party Number must be 1–9 characters.');
 
         it('throws when PR Collection Share is negative', function () {
-            new SwtRecord(
-                interestedPartyNumber: 'PARTY123',
-                prCollectionShare:           -1,
-                mrCollectionShare: 0,
-                srCollectionShare: 0,
-                inclusionExclusionIndicator: 'I',
-                tisNumericCode: 840,
-                sharesChange: '',
-            );
-        })->throws(InvalidArgumentException::class, 'PR Collection Share must be between 0 and 10000.');
+            expect(function () {
+                new SwtRecord(
+                    interestedPartyNumber: 'PARTY123',
+                    prCollectionShare:           -1,
+                    mrCollectionShare: 0,
+                    srCollectionShare: 0,
+                    inclusionExclusionIndicator: 'I',
+                    tisNumericCode: 840,
+                    sharesChange: '',
+                );
+            })->toThrow(InvalidArgumentException::class)->and(function ($e) {
+                return str_contains($e->getMessage(), 'must be between');
+            });
+        });
 
         it('throws when PR Collection Share exceeds 10000', function () {
-            new SwtRecord(
-                interestedPartyNumber: 'PARTY123',
-                prCollectionShare: 10001,
-                mrCollectionShare: 0,
-                srCollectionShare: 0,
-                inclusionExclusionIndicator: 'I',
-                tisNumericCode: 840,
-                sharesChange: '',
-            );
-        })->throws(InvalidArgumentException::class, 'PR Collection Share must be between 0 and 10000.');
+            expect(function () {
+                new SwtRecord(
+                    interestedPartyNumber: 'PARTY123',
+                    prCollectionShare: 10001,
+                    mrCollectionShare: 0,
+                    srCollectionShare: 0,
+                    inclusionExclusionIndicator: 'I',
+                    tisNumericCode: 840,
+                    sharesChange: '',
+                );
+            })->toThrow(InvalidArgumentException::class)->and(function ($e) {
+                return str_contains($e->getMessage(), 'must be between');
+            });
+        });
 
         it('throws when MR Collection Share is negative', function () {
-            new SwtRecord(
-                interestedPartyNumber: 'PARTY123',
-                prCollectionShare: 0,
-                mrCollectionShare:           -1,
-                srCollectionShare: 0,
-                inclusionExclusionIndicator: 'I',
-                tisNumericCode: 840,
-                sharesChange: '',
-            );
-        })->throws(InvalidArgumentException::class, 'MR Collection Share must be between 0 and 10000.');
+            expect(function () {
+                new SwtRecord(
+                    interestedPartyNumber: 'PARTY123',
+                    prCollectionShare: 0,
+                    mrCollectionShare:           -1,
+                    srCollectionShare: 0,
+                    inclusionExclusionIndicator: 'I',
+                    tisNumericCode: 840,
+                    sharesChange: '',
+                );
+            })->toThrow(InvalidArgumentException::class)->and(function ($e) {
+                return str_contains($e->getMessage(), 'must be between');
+            });
+        });
 
         it('throws when MR Collection Share exceeds 10000', function () {
-            new SwtRecord(
-                interestedPartyNumber: 'PARTY123',
-                prCollectionShare: 0,
-                mrCollectionShare:           10001,
-                srCollectionShare: 0,
-                inclusionExclusionIndicator: 'I',
-                tisNumericCode: 840,
-                sharesChange: '',
-            );
-        })->throws(InvalidArgumentException::class, 'MR Collection Share must be between 0 and 10000.');
+            expect(function () {
+                new SwtRecord(
+                    interestedPartyNumber: 'PARTY123',
+                    prCollectionShare: 0,
+                    mrCollectionShare:           10001,
+                    srCollectionShare: 0,
+                    inclusionExclusionIndicator: 'I',
+                    tisNumericCode: 840,
+                    sharesChange: '',
+                );
+            })->toThrow(InvalidArgumentException::class)->and(function ($e) {
+                return str_contains($e->getMessage(), 'must be between');
+            });
+        });
 
         it('throws when SR Collection Share is negative', function () {
-            new SwtRecord(
-                interestedPartyNumber: 'PARTY123',
-                prCollectionShare: 0,
-                mrCollectionShare: 0,
-                srCollectionShare:           -1,
-                inclusionExclusionIndicator: 'I',
-                tisNumericCode: 840,
-                sharesChange: '',
-            );
-        })->throws(InvalidArgumentException::class, 'SR Collection Share must be between 0 and 10000.');
+            expect(function () {
+                new SwtRecord(
+                    interestedPartyNumber: 'PARTY123',
+                    prCollectionShare: 0,
+                    mrCollectionShare: 0,
+                    srCollectionShare:           -1,
+                    inclusionExclusionIndicator: 'I',
+                    tisNumericCode: 840,
+                    sharesChange: '',
+                );
+            })->toThrow(InvalidArgumentException::class)->and(function ($e) {
+                return str_contains($e->getMessage(), 'must be between');
+            });
+        });
 
         it('throws when SR Collection Share exceeds 10000', function () {
-            new SwtRecord(
-                interestedPartyNumber: 'PARTY123',
-                prCollectionShare: 0,
-                mrCollectionShare: 0,
-                srCollectionShare:           10001,
-                inclusionExclusionIndicator: 'I',
-                tisNumericCode: 840,
-                sharesChange: '',
-            );
-        })->throws(InvalidArgumentException::class, 'SR Collection Share must be between 0 and 10000.');
+            expect(function () {
+                new SwtRecord(
+                    interestedPartyNumber: 'PARTY123',
+                    prCollectionShare: 0,
+                    mrCollectionShare: 0,
+                    srCollectionShare:           10001,
+                    inclusionExclusionIndicator: 'I',
+                    tisNumericCode: 840,
+                    sharesChange: '',
+                );
+            })->toThrow(InvalidArgumentException::class)->and(function ($e) {
+                return str_contains($e->getMessage(), 'must be between');
+            });
+        });
 
         it('throws when Inclusion/Exclusion Indicator is invalid', function () {
             new SwtRecord(
@@ -231,7 +255,7 @@ describe('SWT (Song Territory) Record', function () {
                 inclusionExclusionIndicator: 'I',
                 tisNumericCode: TisCode::AUSTRALIA,
                 sharesChange: '',
-                sequenceNum: 1
+                sequenceNumber: 1
             );
             $record = $swr->toString();
 

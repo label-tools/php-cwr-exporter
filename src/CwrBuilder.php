@@ -2,6 +2,8 @@
 namespace LabelTools\PhpCwrExporter;
 
 use LabelTools\PhpCwrExporter\CwrExporter;
+use LabelTools\PhpCwrExporter\Definitions\PublisherDefinition;
+use LabelTools\PhpCwrExporter\Definitions\WorkDefinition;
 use LabelTools\PhpCwrExporter\Enums\SenderType;
 use LabelTools\PhpCwrExporter\Version\V22\Version as V22Version;
 
@@ -18,6 +20,8 @@ class CwrBuilder
             '2.2' => new V22Version(),
             default => throw new \InvalidArgumentException("Unsupported CWR version: {$version}"),
         };
+
+        $this->options['version'] = $version;
         $this->exporter = new CwrExporter($versionImpl);
     }
 
@@ -115,10 +119,20 @@ class CwrBuilder
 
     public function works(array $works): self
     {
-        if (!is_array($works) || empty($works)) {
-            throw new \InvalidArgumentException("works must be a non-empty array of work definitions.");
+        if (empty($works)) {
+            throw new \InvalidArgumentException("works must be a non-empty array.");
         }
-        $this->works = $works;
+
+        $this->works = array_map(
+            function ($w) {
+                if (!$w instanceof WorkDefinition) {
+                    $w = WorkDefinition::fromArray($w);
+                }
+                return $w;
+            },
+            $works
+        );
+
         return $this;
     }
 
@@ -130,6 +144,25 @@ class CwrBuilder
 
     public function export(): string
     {
+        // single group per file
+        $this->options['group_count'] = 1;
+        // one transaction per work
+        $this->options['transaction_count'] = count($this->works);
+        // headers: file header + group header
+        $this->options['header_count'] = 2;
+        // detail records: NWR + SPU + SPT for each work
+        $detailCount = 0;
+        foreach ($this->works as $work) {
+            // one NWR per work
+            $detailCount++;
+            // one SPU per publisher
+            foreach ($work->publishers as $pub) {
+                $detailCount++;
+                // one SPT per territory
+                $detailCount += count($pub->territories ?? []);
+            }
+        }
+        $this->options['detail_count'] = $detailCount;
         return $this->exporter->export($this->works, $this->options);
     }
 }

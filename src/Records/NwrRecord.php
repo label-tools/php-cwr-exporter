@@ -47,7 +47,7 @@ class NwrRecord extends Record
         "%-25s" .  // Opus Number (25 A)
         "%-25s";   // Catalogue Number (25 A)
 
-    private const IDX_PREFIX = 1;
+
     private const IDX_TITLE = 2;
     private const IDX_LANG = 3;
     private const IDX_SUBMITTER = 4;
@@ -76,9 +76,9 @@ class NwrRecord extends Record
     public function __construct(
         string $workTitle,
         string $submitterWorkNumber,
-        string $mwDistributionCategory,
-        string $versionType,
-        ?string $languageCode = null,
+        MusicalWorkDistributionCategory|string $mwDistributionCategory,
+        VersionType|string $versionType,
+        LanguageCode|null|string $languageCode = null,
         ?string $iswc = null,
         ?string $copyrightDate = null,
         ?string $copyrightNumber = null,
@@ -100,7 +100,6 @@ class NwrRecord extends Record
         ?string $catalogueNumber = null
     ) {
         parent::__construct();
-        $this->data[self::IDX_PREFIX] = static::$recordType; // Record Prefix
 
         // Mandatory fields
         $this->setWorkTitle($workTitle)
@@ -146,6 +145,11 @@ class NwrRecord extends Record
         if (!preg_match('/^[\x20-\x7E]+$/', $title)) {
             throw new \InvalidArgumentException("Work Title contains invalid characters; only ASCII 32–126 allowed");
         }
+        // TR: max 60 characters
+        if (strlen($title) > 60) {
+            throw new \InvalidArgumentException("Work Title cannot exceed 60 characters.");
+        }
+
         $this->data[self::IDX_TITLE] = $title;
         return $this;
     }
@@ -191,18 +195,17 @@ class NwrRecord extends Record
         return $this;
     }
 
-    public function setMwDistributionCategory(string $cat): self
+    public function setMwDistributionCategory(MusicalWorkDistributionCategory|string $cat): self
     {
-        // TR: mandatory, must match table
-        if ($cat === '') {
+        if (empty($cat)) {
             throw new \InvalidArgumentException("Musical Work Distribution Category is required.");
         }
         try {
-            $cat = MusicalWorkDistributionCategory::from($cat)->value;
+            $cat = $cat instanceof MusicalWorkDistributionCategory ? $cat : MusicalWorkDistributionCategory::from($cat);
         } catch (\ValueError $e) {
             throw new \InvalidArgumentException("Invalid Musical Work Distribution Category: {$cat}");
         }
-        $this->data[self::IDX_MWDC] = $cat;
+        $this->data[self::IDX_MWDC] = $cat->value;
         return $this;
     }
 
@@ -251,17 +254,17 @@ class NwrRecord extends Record
         return $this;
     }
 
-    public function setVersionType(string $type): self
+    public function setVersionType(VersionType|string $type): self
     {
-        if ($type === '') {
+        if (empty($type)) {
             throw new \InvalidArgumentException("Version Type is required.");
         }
         try {
-            $type = VersionType::from($type)->value;
+             $type = $type instanceof VersionType ? $type : VersionType::from($type);
         } catch (\ValueError $e) {
             throw new \InvalidArgumentException("Invalid Version Type: {$type}");
         }
-        $this->data[self::IDX_VER] = $type;
+        $this->data[self::IDX_VER] = $type->value;
         return $this;
     }
 

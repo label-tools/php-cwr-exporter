@@ -3,38 +3,35 @@
 namespace LabelTools\PhpCwrExporter\Version\V21\Records;
 
 use LabelTools\PhpCwrExporter\Enums\TisCode;
+use LabelTools\PhpCwrExporter\Fields\HasSequenceNumber;
 
 class SwtRecord extends \LabelTools\PhpCwrExporter\Records\SwtRecord
 {
-    protected const IDX_SEQUENCE_NUMBER = 9;
+    use HasSequenceNumber;
+
+    protected const INDEX_SEQUENCE_NUM = 9;
 
     public function __construct(
         string $interestedPartyNumber,
-        ?int $prCollectionShare = null,
-        ?int $mrCollectionShare = null,
-        ?int $srCollectionShare = null,
-        string $inclusionExclusionIndicator = '',
+        string $inclusionExclusionIndicator,
+        int $prCollectionShare = 0,
+        int $mrCollectionShare = 0,
+        int $srCollectionShare = 0,
         null|int|TisCode $tisNumericCode = null,
         string $sharesChange = '',
-        ?int $sequenceNum = 0
+        ?int $sequenceNumber = 1
     ) {
         parent::__construct(
-            $interestedPartyNumber, $prCollectionShare, $mrCollectionShare, $srCollectionShare,
-            $inclusionExclusionIndicator, $tisNumericCode, $sharesChange
+            $interestedPartyNumber,$inclusionExclusionIndicator, $prCollectionShare, $mrCollectionShare, $srCollectionShare, $tisNumericCode, $sharesChange
         );
         $this->stringFormat .= "%03d";
 
-        $this->setSequenceNumber($sequenceNum);
+        $this->setSequenceNumber($sequenceNumber);
     }
 
-    public function setSequenceNumber(int $seq): static
+    protected function getSequenceNumberIndex(): int
     {
-        if ($seq < 0 || $seq > 999) {
-            throw new \InvalidArgumentException("Sequence Number must be between 0 and 999.");
-        }
-        $this->data[self::IDX_SEQUENCE_NUMBER] = $seq;
-        return $this;
+        return self::INDEX_SEQUENCE_NUM;
     }
-
-
 }
+

@@ -4,45 +4,26 @@ namespace LabelTools\PhpCwrExporter;
 
 use LabelTools\PhpCwrExporter\Contracts\VersionInterface;
 
-/**
- * Main exporter: takes a VersionImplementation and a collection of works,
- * and produces the full CWR file as a string.
- */
 class CwrExporter
 {
-    protected VersionInterface $version;
+    private VersionInterface $version;
 
     public function __construct(VersionInterface $version)
     {
         $this->version = $version;
     }
 
-
-    public function export(array $works, array $options = []): string
+    public function export(array $works, array $opts): string
     {
-        // 1) File header + group header
-        $headerRecs = $this->version->buildControlRecords($works, $options, 'header');
+        // Retrieve pre-formatted lines from the version implementation
+        $headerLines  = $this->version->renderHeader($opts);
+        $detailLines  = $this->version->renderDetailLines($works, $opts);
+        $trailerLines = $this->version->renderTrailer($opts);
 
-        // 2) All work-by-work detail records
-        $detailLines = [];
-        $tx = 0;
-        foreach ($works as $work) {
-            $tx++;
-            $seq = 0;
-            foreach ($this->version->buildWorkRecords($work, $tx) as $rec) {
-                $seq++;
-                $detailLines[] = $rec->toString($tx, $seq);
-            }
-        }
+        // Merge all lines into a single sequence
+        $lines = array_merge($headerLines, $detailLines, $trailerLines);
 
-        // 3) Group trailer + file trailer
-        $trailerRecs = $this->version->buildControlRecords($works, $options, 'trailer');
-
-        // 4) Stringify and join
-        $lines = array_map(fn($r) => $r->toString(0, 0), $headerRecs)
-               + $detailLines
-               + array_map(fn($r) => $r->toString(0, 0), $trailerRecs);
-
+        // Join with Windows CRLF and append a final newline
         return implode("\r\n", $lines) . "\r\n";
     }
 }

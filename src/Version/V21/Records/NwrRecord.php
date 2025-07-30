@@ -2,6 +2,9 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V21\Records;
 
+use LabelTools\PhpCwrExporter\Enums\LanguageCode;
+use LabelTools\PhpCwrExporter\Enums\MusicalWorkDistributionCategory;
+use LabelTools\PhpCwrExporter\Enums\VersionType;
 use LabelTools\PhpCwrExporter\Records\NwrRecord as BaseNwrRecord;
 
 class NwrRecord extends BaseNwrRecord
@@ -12,9 +15,9 @@ class NwrRecord extends BaseNwrRecord
     public function __construct(
         string $workTitle,
         string $submitterWorkNumber,
-        string $mwDistributionCategory,
-        string $versionType,
-        ?string $languageCode = null,
+        MusicalWorkDistributionCategory|string $mwDistributionCategory,
+        VersionType|string $versionType,
+        LanguageCode|null|string $languageCode = null,
         ?string $iswc = null,
         ?string $copyrightDate = null,
         ?string $copyrightNumber = null,

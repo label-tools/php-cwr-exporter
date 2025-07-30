@@ -3,16 +3,21 @@
 namespace LabelTools\PhpCwrExporter\Records;
 
 use LabelTools\PhpCwrExporter\Enums\TisCode;
+use LabelTools\PhpCwrExporter\Fields\HasCollectionShare;
+use LabelTools\PhpCwrExporter\Fields\HasInterestedPartyNumber;
 
 class SwtRecord extends Record
 {
+    use HasInterestedPartyNumber;
+    use HasCollectionShare;
+
     protected static string $recordType = 'SWT';
 
     // Field indices for data array
-    protected const IDX_INTERESTED_PARTY_NUMBER      = 2;
-    protected const IDX_PR_COLLECTION_SHARE          = 3;
-    protected const IDX_MR_COLLECTION_SHARE          = 4;
-    protected const IDX_SR_COLLECTION_SHARE          = 5;
+    protected const IDX_INTERESTED_PARTY_NUMBER = 2;
+    protected const IDX_PR_COLLECTION_SHARE = 3;
+    protected const IDX_MR_COLLECTION_SHARE = 4;
+    protected const IDX_SR_COLLECTION_SHARE = 5;
     protected const IDX_INCLUSION_EXCLUSION_INDICATOR = 6;
     protected const IDX_TIS_NUMERIC_CODE             = 7;
     protected const IDX_SHARES_CHANGE                = 8;
@@ -44,10 +49,10 @@ class SwtRecord extends Record
 
     public function __construct(
         string $interestedPartyNumber,
-        ?int $prCollectionShare = null,
-        ?int $mrCollectionShare = null,
-        ?int $srCollectionShare = null,
-        string $inclusionExclusionIndicator = '',
+        string $inclusionExclusionIndicator,
+        int $prCollectionShare = 0,
+        int $mrCollectionShare = 0,
+        int $srCollectionShare = 0,
         null|int|TisCode $tisNumericCode = null,
         string $sharesChange = ''
     ) {
@@ -63,54 +68,6 @@ class SwtRecord extends Record
             ->setSharesChange($sharesChange);
     }
 
-    /**
-     * @param string $id 1–9 chars, not blank.
-     */
-    public function setInterestedPartyNumber(string $id): static
-    {
-        $id = trim($id);
-        if ($id === '' || strlen($id) > 9) {
-            throw new \InvalidArgumentException("Interested Party Number must be 1–9 characters.");
-        }
-        $this->data[self::IDX_INTERESTED_PARTY_NUMBER] = $id;
-        return $this;
-    }
-
-    /**
-     * @param int $share 0–10000 (0.00%–100.00%)
-     */
-    public function setPrCollectionShare(int $share): static
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("PR Collection Share must be between 0 and 10000.");
-        }
-        $this->data[self::IDX_PR_COLLECTION_SHARE] = $share;
-        return $this;
-    }
-
-    /**
-     * @param int $share 0–10000 (0.00%–100.00%)
-     */
-    public function setMrCollectionShare(int $share): static
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("MR Collection Share must be between 0 and 10000.");
-        }
-        $this->data[self::IDX_MR_COLLECTION_SHARE] = $share;
-        return $this;
-    }
-
-    /**
-     * @param int $share 0–10000 (0.00%–100.00%)
-     */
-    public function setSrCollectionShare(int $share): static
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("SR Collection Share must be between 0 and 10000.");
-        }
-        $this->data[self::IDX_SR_COLLECTION_SHARE] = $share;
-        return $this;
-    }
 
     /**
      * @param string $flag Must be 'I' or 'E'.

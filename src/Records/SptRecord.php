@@ -4,10 +4,15 @@ namespace LabelTools\PhpCwrExporter\Records;
 
 use InvalidArgumentException;
 use LabelTools\PhpCwrExporter\Enums\TisCode;
+use LabelTools\PhpCwrExporter\Fields\HasCollectionShare;
+use LabelTools\PhpCwrExporter\Fields\HasInterestedPartyNumber;
 
 //The SPT record defines the territory and the collection shares for the preceding SPU publisher.
 class SptRecord extends Record
 {
+    use HasInterestedPartyNumber;
+    use HasCollectionShare;
+
     protected static string $recordType = 'SPT';
 
     protected string $stringFormat =
@@ -21,8 +26,7 @@ class SptRecord extends Record
         "%-4s"  .  // TIS Numeric Code (4 L)
         "%-1s";    // Shares Change (1 B)
 
-    protected const IDX_PREFIX = 1;
-    protected const IDX_INTERESTED_PARTY = 2;
+    protected const IDX_INTERESTED_PARTY_NUMBER = 2;
     protected const IDX_CONSTANT = 3;
     protected const IDX_PR_COLLECTION_SHARE = 4;
     protected const IDX_MR_COLLECTION_SHARE = 5;
@@ -51,45 +55,9 @@ class SptRecord extends Record
              ->setSharesChange($sharesChange ?? '');
     }
 
-    private function setInterestedPartyNumber(string $partyNumber): self
-    {
-        if ($partyNumber === '' || strlen($partyNumber) > 9) {
-            throw new InvalidArgumentException('Interested Party Number must be non-empty and at most 9 characters.');
-        }
-        $this->data[self::IDX_INTERESTED_PARTY] = $partyNumber;
-        return $this;
-    }
-
     private function setConstant(): self
     {
         $this->data[self::IDX_CONSTANT] = str_repeat(' ', 6);
-        return $this;
-    }
-
-    private function setPrCollectionShare(int $share): self
-    {
-        if ($share < 0 || $share > 5000) {
-            throw new InvalidArgumentException('PR Collection Share must be between 0 and 5000.');
-        }
-        $this->data[self::IDX_PR_COLLECTION_SHARE] = $share;
-        return $this;
-    }
-
-    private function setMrCollectionShare(int $share): self
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new InvalidArgumentException('MR Collection Share must be between 0 and 10000.');
-        }
-        $this->data[self::IDX_MR_COLLECTION_SHARE] = $share;
-        return $this;
-    }
-
-    private function setSrCollectionShare(int $share): self
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new InvalidArgumentException('SR Collection Share must be between 0 and 10000.');
-        }
-        $this->data[self::IDX_SR_COLLECTION_SHARE] = $share;
         return $this;
     }
 
@@ -119,7 +87,6 @@ class SptRecord extends Record
         $this->data[self::IDX_SHARES_CHANGE] = $flag;
         return $this;
     }
-
 
     protected function validateBeforeToString(): void
     {

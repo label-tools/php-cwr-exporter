@@ -2,8 +2,12 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V21\Records;
 
+use LabelTools\PhpCwrExporter\Fields\HasSequenceNumber;
+
 class SptRecord extends \LabelTools\PhpCwrExporter\Records\SptRecord
 {
+    use HasSequenceNumber;
+
     protected const INDEX_SEQUENCE_NUM = 10;
 
     public function __construct(
@@ -23,13 +27,9 @@ class SptRecord extends \LabelTools\PhpCwrExporter\Records\SptRecord
         $this->setSequenceNumber($sequenceNumber);
     }
 
-    public function setSequenceNumber(int $sequenceNumber): self
+    protected function getSequenceNumberIndex(): int
     {
-        if ($sequenceNumber < 1 || $sequenceNumber > 999) {
-            throw new \InvalidArgumentException('Sequence number must be greater than 0 and less than or equal to 999.');
-        }
-        $this->data[self::INDEX_SEQUENCE_NUM] = $sequenceNumber;
-        return $this;
+        return self::INDEX_SEQUENCE_NUM;
     }
 
     protected function validateBeforeToString(): void
