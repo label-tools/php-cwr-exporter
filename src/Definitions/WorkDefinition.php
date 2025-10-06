@@ -26,7 +26,8 @@ class WorkDefinition
         public readonly bool $recorded = false,
         public readonly string $textMusicRelationship = '',
         public readonly array $writers = [],
-        public readonly array $publishers = []
+        public readonly array $publishers = [],
+        public readonly array $alternateTitles = []
 
     ) {
         // field‐level sanity checks:
@@ -60,7 +61,10 @@ class WorkDefinition
                 : [],
             publishers: isset($data['publishers']) && is_array($data['publishers'])
                 ? array_map(fn($pub) => PublisherDefinition::fromArray($pub), $data['publishers'])
-                : []
+                : [],
+            alternateTitles: isset($data['alternate_titles']) && is_array($data['alternate_titles'])
+                ? $data['alternate_titles']
+                : [],
         );
     }
 

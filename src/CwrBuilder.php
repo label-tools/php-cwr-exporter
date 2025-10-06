@@ -2,7 +2,6 @@
 namespace LabelTools\PhpCwrExporter;
 
 use LabelTools\PhpCwrExporter\CwrExporter;
-use LabelTools\PhpCwrExporter\Definitions\PublisherDefinition;
 use LabelTools\PhpCwrExporter\Definitions\WorkDefinition;
 use LabelTools\PhpCwrExporter\Enums\SenderType;
 use LabelTools\PhpCwrExporter\Version\V22\Version as V22Version;
@@ -156,6 +155,11 @@ class CwrBuilder
         foreach ($this->works as $work) {
             // NWR per work
             $detailCount += 1;
+
+            // ALT records
+            if (!empty($work->alternateTitles) && is_array($work->alternateTitles)) {
+                $detailCount += count($work->alternateTitles);
+            }
 
             // Writers: one SWR per writer; one SWT per writer territory
             $writerCount = 0;

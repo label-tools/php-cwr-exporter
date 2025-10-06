@@ -4,6 +4,7 @@ use LabelTools\PhpCwrExporter\CwrBuilder;
 use LabelTools\PhpCwrExporter\Enums\MusicalWorkDistributionCategory;
 use LabelTools\PhpCwrExporter\Enums\PublisherType;
 use LabelTools\PhpCwrExporter\Enums\SenderType;
+use LabelTools\PhpCwrExporter\Enums\LanguageCode;
 use LabelTools\PhpCwrExporter\Enums\SocietyCode;
 use LabelTools\PhpCwrExporter\Enums\TisCode;
 use LabelTools\PhpCwrExporter\Enums\TitleType;
@@ -26,6 +27,18 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                 'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
                 'version_type'=> VersionType::ORIGINAL_WORK,
                 'iswc' => 'T1234567890',
+                'alternate_titles' => [
+                    [
+                        'alternate_title' => 'A DIFFERENT TITLE',
+                        'title_type' => TitleType::ALTERNATIVE_TITLE,
+                        'language_code' => null,
+                    ],
+                    [
+                        'alternate_title' => 'A DIFFERENT TITLE TWO',
+                        'title_type' => TitleType::ALTERNATIVE_TITLE,
+                        'language_code' => LanguageCode::FRENCH->value,
+                    ]
+                ],
                 'writers' => [[
                     'interested_party_number' => 'W000001',
                     'first_name' => 'John',
@@ -125,6 +138,11 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
     expect($field($lines[0], 1, 3))->toBe('HDR'); // §3.4(2)
     expect($field($lines[1], 1, 3))->toBe('GRH'); // §3.4(3)
     expect($field(end($lines), 1, 3))->toBe('TRL'); // §3.4(5)
+
+    // --- HDR checks (spec §3.5) ---
+    $hdr = $lines[0];
+    expect(trim($field($hdr, 4, 11)))->toBe('01265713057'); // Sender ID
+    expect(trim($field($hdr, 15, 45)))->toBe('Publishing Company'); // Sender Name
 
     // --- HDR checks (spec §3.5) ---
     $hdr = $lines[0];
@@ -245,6 +263,22 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
         expect(trim($field($nwr, 127, 3)))->toBe('POP'); // Musical Work Distribution Category: POPULAR
         expect(trim($field($nwr, 143, 3)))->toBe('ORI'); // Version Type: ORIGINAL_WORK
     }
+
+    // --- ALT field-level spot checks ---
+    // Find the ALT records and verify their content
+    $altIndexes = [];
+    foreach ($lines as $i => $rec) {
+        if ($field($rec, 1, 3) === 'ALT') { $altIndexes[] = $i; }
+    }
+    expect(count($altIndexes))->toBe(2); // One for each work
+
+    $alt1 = $lines[$altIndexes[0]];
+    expect(rtrim($field($alt1, 20, 60)))->toBe('A DIFFERENT TITLE');
+    expect($field($alt1, 80, 2))->toBe(TitleType::ALTERNATIVE_TITLE->value);
+    $alt2 = $lines[$altIndexes[1]];
+    expect(rtrim($field($alt2, 20, 60)))->toBe('A DIFFERENT TITLE TWO');
+    expect($field($alt2, 80, 2))->toBe(TitleType::ALTERNATIVE_TITLE->value);
+    expect($field($alt2, 82, 2))->toBe(LanguageCode::FRENCH->value);
 
     // --- Transaction level validations around shares (spec §4.2/Transaction Level Validation) ---
     // Our fixture defines a single writer CA and a publisher chain with PR 50%, MR/SR 100% collection shares.

@@ -2,6 +2,7 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V22;
 
+use LabelTools\PhpCwrExporter\Records\AltRecord;
 use LabelTools\PhpCwrExporter\Contracts\VersionInterface;
 use LabelTools\PhpCwrExporter\Version\V22\Records\HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\GrhRecord;
@@ -170,6 +171,18 @@ class Version implements VersionInterface
                         societyAssignedAgreementNumber: (property_exists($firstPublisher, 'societyAssignedAgreementNumber') ? (string) $firstPublisher->societyAssignedAgreementNumber : ''),
                         writerIpNumber:                 $wr->interestedPartyNumber,
                         publisherSequenceNumber:        $firstPublisherSequence
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                }
+            }
+
+            // ALT records for each alternate title
+            if (!empty($work->alternateTitles)) {
+                foreach ($work->alternateTitles as $alt) {
+                    $lines[] = (new AltRecord(
+                        alternateTitle: $alt['alternate_title'],
+                        titleType:      $alt['title_type'],
+                        languageCode:   $alt['language_code'] ?? null
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
                 }
