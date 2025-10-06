@@ -4,9 +4,12 @@ namespace LabelTools\PhpCwrExporter\Records;
 
 use LabelTools\PhpCwrExporter\Enums\SocietyCode;
 use LabelTools\PhpCwrExporter\Enums\WriterDesignation;
+use LabelTools\PhpCwrExporter\Fields\HasOwnershipShare;
 
 class SwrRecord extends Record
 {
+    use HasOwnershipShare;
+
     protected static string $recordType = 'SWR';
 
     // Field indices for data array
@@ -75,13 +78,13 @@ class SwrRecord extends Record
         string $writerIpiNameNumber = '',
 
         int|SocietyCode|null $prAffiliationSociety = null,
-        int $prOwnershipShare = 0,
+        int|float $prOwnershipShare = 0,
 
         int|SocietyCode|null $mrAffiliationSociety = null,
-        int $mrOwnershipShare = 0,
+        int|float $mrOwnershipShare = 0,
 
         int|SocietyCode|null $srAffiliationSociety = null,
-        int $srOwnershipShare = 0,
+        int|float $srOwnershipShare = 0,
 
         //Society/Region Specific Fields
         string $reversionaryIndicator = '',
@@ -281,28 +284,10 @@ class SwrRecord extends Record
         return $this;
     }
 
-    public function setPrOwnershipShare(int $share): static
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("PR Ownership Share must be between 0 and 10000.");
-        }
-        $this->data[self::IDX_PR_OWNERSHIP_SHARE] = $share;
-        return $this;
-    }
-
     public function setMrAffiliationSociety(int|SocietyCode|null $soc): static
     {
         $value = $this->normalizeSociety($soc);
         $this->data[self::IDX_MR_AFFILIATION_SOCIETY] = $value;
-        return $this;
-    }
-
-    public function setMrOwnershipShare(int $share): static
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("MR Ownership Share must be between 0 and 10000.");
-        }
-        $this->data[self::IDX_MR_OWNERSHIP_SHARE] = $share;
         return $this;
     }
 
@@ -312,16 +297,6 @@ class SwrRecord extends Record
         $this->data[self::IDX_SR_AFFILIATION_SOCIETY] = $value;
         return $this;
     }
-
-    public function setSrOwnershipShare(int $share): static
-    {
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("SR Ownership Share must be between 0 and 10000.");
-        }
-        $this->data[self::IDX_SR_OWNERSHIP_SHARE] = $share;
-        return $this;
-    }
-
 
     protected function validateBeforeToString(): void
     {

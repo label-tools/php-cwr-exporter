@@ -5,10 +5,12 @@ namespace LabelTools\PhpCwrExporter\Records;
 use LabelTools\PhpCwrExporter\Enums\PublisherType;
 use LabelTools\PhpCwrExporter\Enums\SocietyCode;
 use LabelTools\PhpCwrExporter\Fields\HasInterestedPartyNumber;
+use LabelTools\PhpCwrExporter\Fields\HasOwnershipShare;
 
 class SpuRecord extends Record
 {
     use HasInterestedPartyNumber;
+    use HasOwnershipShare;
 
     protected static string $recordType = 'SPU';
     protected string $stringFormat =
@@ -57,12 +59,12 @@ class SpuRecord extends Record
         ?string $taxId = '',
         ?string $publisherIpiName = '', //If the record is of type SPU and followed by an SPT (and hence represents the file submitter), then the IPI Name Number is mandatory.
         ?string $submitterAgreementNumber = '',
-        ?string $prAffiliationSociety = '',
-        ?int $prOwnershipShare = 0,
-        ?string $mrAffiliationSociety = '',
-        ?int $mrOwnershipShare = 0,
-        ?string $srAffiliationSociety = '',
-        ?int $srOwnershipShare = 0,
+        int|string|null $prAffiliationSociety = null,
+        int|float|null $prOwnershipShare = 0,
+        int|string|null $mrAffiliationSociety = null,
+        int|float|null $mrOwnershipShare = 0,
+        int|string|null $srAffiliationSociety = null,
+        int|float|null $srOwnershipShare = 0,
         null|bool|string $specialAgreementsIndicator = null,
         null|bool|string $firstRecordingRefusalIndicator = null
     ) {
@@ -143,48 +145,17 @@ class SpuRecord extends Record
         return $this;
     }
 
-    public function setPrOwnershipShare(null|int $share): self
-    {
-        $share ??= 0;
-        if ($share < 0 || $share > 5000) {
-            throw new \InvalidArgumentException("PR Ownership Share must be between 0 and 5000 (50.00%).");
-        }
-        $this->data[static::IDX_PR_OWNERSHIP_SHARE] = $share;
-        return $this;
-    }
-
-
-    public function setMrSociety(?string $soc): self
+    public function setMrSociety(int|string|null $soc): self
     {
         $this->validateSocietyCode($soc);
         $this->data[static::IDX_MR_AFFILIATION_SOCIETY] = $soc;
         return $this;
     }
 
-    public function setMrOwnershipShare(null|int $share): self
-    {
-        $share ??= 0;
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("MR Ownership Share must be between 0 and 10000 (100.00%).");
-        }
-        $this->data[static::IDX_MR_OWNERSHIP_SHARE] = $share;
-        return $this;
-    }
-
-    public function setSrSociety(?string $soc): self
+    public function setSrSociety(int|string|null $soc): self
     {
         $this->validateSocietyCode($soc);
         $this->data[static::IDX_SR_AFFILIATION_SOCIETY] = $soc;
-        return $this;
-    }
-
-    public function setSrOwnershipShare(null|int $share): self
-    {
-        $share ??= 0;
-        if ($share < 0 || $share > 10000) {
-            throw new \InvalidArgumentException("SR Ownership Share must be between 0 and 10000 (100.00%).");
-        }
-        $this->data[static::IDX_SR_OWNERSHIP_SHARE] = $share;
         return $this;
     }
 
@@ -206,11 +177,11 @@ class SpuRecord extends Record
         return $this;
     }
 
-    protected function validateSocietyCode(?string $soc): string
+    protected function validateSocietyCode(int|string|null $soc): ?string
     {
          // If entered, must be numeric and match a SocietyCode
         if (empty($soc)) {
-            $soc = '';
+            return null;
         } elseif ($soc !== '') {
             if (!ctype_digit($soc)) {
                 throw new \InvalidArgumentException("Society must be numeric: {$soc}");

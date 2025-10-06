@@ -37,9 +37,9 @@ class SptRecord extends Record
 
     public function __construct(
         protected string $interestedPartyNumber,
-        protected int $prCollectionShare,
-        protected int $mrCollectionShare,
-        protected int $srCollectionShare,
+        protected int|float $prCollectionShare,
+        protected int|float $mrCollectionShare,
+        protected int|float $srCollectionShare,
         protected string $inclusionExclusionIndicator, // 'I' for inclusion, 'E' for exclusion
         protected string $tisNumericCode,
         protected ?string $sharesChange = null,

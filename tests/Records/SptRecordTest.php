@@ -8,9 +8,9 @@ describe('SPT (Publisher Territory) Record', function () {
     it('builds a minimal valid SPT record with correct padding & format', function () {
         $record = new SptRecord(
             interestedPartyNumber: 'ABCDEFGHI',
-            prCollectionShare: 1234,
-            mrCollectionShare: 5000,
-            srCollectionShare: 10000,
+            prCollectionShare: 50,
+            mrCollectionShare: 50,
+            srCollectionShare: 100,
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
@@ -31,8 +31,8 @@ describe('SPT (Publisher Territory) Record', function () {
         // 28–33: Constant 6 spaces
         expect(substr($out, 28, 6))->toBe(str_repeat(' ', 6));
 
-        // 34–38: PR collection share (“01234”)
-        expect(substr($out, 34, 5))->toBe('01234');
+        // 34–38: PR collection share (05000)
+        expect(substr($out, 34, 5))->toBe('05000');
 
         // 39–43: MR collection share (“05000”)
         expect(substr($out, 39, 5))->toBe('05000');
@@ -53,9 +53,9 @@ describe('SPT (Publisher Territory) Record', function () {
     it('throws when setRecordPrefix is not called', function () {
         $record = new SptRecord(
             interestedPartyNumber: 'ABCDEFGHI',
-            prCollectionShare: 1234,
-            mrCollectionShare: 5000,
-            srCollectionShare: 10000,
+            prCollectionShare: 50,
+            mrCollectionShare: 50,
+            srCollectionShare: 100,
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
@@ -97,20 +97,20 @@ describe('SPT (Publisher Territory) Record', function () {
             tisNumericCode: 840,
             sharesChange: ''
         ))->toThrow(InvalidArgumentException::class)
-            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 5000'));
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 50'));
     });
 
     it('throws when PR Collection Share exceeds 5000 (50.00%)', function () {
         expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
-            prCollectionShare: 5001,
+            prCollectionShare: 50.01,
             mrCollectionShare: 0,
             srCollectionShare: 0,
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
         ))->toThrow(InvalidArgumentException::class)
-            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 5000'));
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 50'));
     });
 
     it('throws when MR Collection Share is negative', function () {
@@ -123,20 +123,20 @@ describe('SPT (Publisher Territory) Record', function () {
             tisNumericCode: 840,
             sharesChange: ''
         ))->toThrow(InvalidArgumentException::class)
-            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 100'));
     });
 
     it('throws when MR Collection Share exceeds 10000 (100.00%)', function () {
         expect(fn() => new SptRecord(
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: 0,
-            mrCollectionShare: 10001,
+            mrCollectionShare: 100.01,
             srCollectionShare: 0,
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
         ))->toThrow(InvalidArgumentException::class)
-            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 100'));
     });
 
     it('throws when SR Collection Share is negative', function () {
@@ -149,7 +149,7 @@ describe('SPT (Publisher Territory) Record', function () {
             tisNumericCode: 840,
             sharesChange: ''
         ))->toThrow(InvalidArgumentException::class)
-            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 100'));
     });
 
     it('throws when SR Collection Share exceeds 10000 (100.00%)', function () {
@@ -157,12 +157,12 @@ describe('SPT (Publisher Territory) Record', function () {
             interestedPartyNumber: 'PARTY123',
             prCollectionShare: 0,
             mrCollectionShare: 0,
-            srCollectionShare: 10001,
+            srCollectionShare: 100.01,
             inclusionExclusionIndicator: 'I',
             tisNumericCode: 840,
             sharesChange: ''
         ))->toThrow(InvalidArgumentException::class)
-            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 10000'));
+            ->and(fn($e) => str_contains($e->getMessage(), 'must be between 0 and 100'));
     });
 
     it('throws when Inclusion/Exclusion Indicator is invalid', function () {
@@ -204,9 +204,9 @@ describe('SPT (Publisher Territory) Record', function () {
     it('accepts “E” for Inclusion/Exclusion (excluded) and “Y” for Shares Change', function () {
         $record = new SptRecord(
             interestedPartyNumber: 'PUBLISHER',
-            prCollectionShare: 2500,
-            mrCollectionShare: 7500,
-            srCollectionShare: 1000,
+            prCollectionShare: 25,
+            mrCollectionShare: 75,
+            srCollectionShare: 10,
             inclusionExclusionIndicator: 'E',
             tisNumericCode: '250',
             sharesChange: 'Y'
@@ -234,9 +234,9 @@ describe('SPT (Publisher Territory) Record', function () {
 
             $record = new V21SptRecord(
                 interestedPartyNumber: 'PARTY1',
-                prCollectionShare: 3000,
-                mrCollectionShare: 4000,
-                srCollectionShare: 5000,
+                prCollectionShare: 30,
+                mrCollectionShare: 40,
+                srCollectionShare: 50,
                 inclusionExclusionIndicator: 'I',
                 tisNumericCode: 344,
             );

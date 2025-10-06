@@ -137,4 +137,26 @@ abstract class Record
         $this->data[$key] = $enumValue->value;
         return $this;
     }
+
+    /**
+     * Normalizes a share value from an int or float to a CWR-compliant integer.
+     *
+     * @param int|float|null $share The share value (e.g., 50.5 for 50.5%).
+     * @param int $maxPercent The maximum allowed percentage (e.g., 50 or 100).
+     * @param string $fieldName The name of the field for error messages.
+     * @return int The CWR-formatted integer share (e.g., 5050).
+     */
+    protected function normalizeShare(int|float|null $share, int $maxPercent, string $fieldName): int
+    {
+        $share ??= 0.0;
+
+        if ($share < 0 || $share > $maxPercent) {
+            throw new \InvalidArgumentException(
+                sprintf('%s must be between 0 and %d. Given: %s', $fieldName, $maxPercent, $share)
+            );
+        }
+
+        // Convert to CWR format (e.g., 50.5 -> 5050)
+        return (int) round($share * 100);
+    }
 }
