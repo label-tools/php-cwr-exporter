@@ -40,10 +40,6 @@ class HdrRecord extends Record
         $this->data[self::INDEX_EDI_VERSION] = static::$ediVersion;
     }
 
-    protected function validateBeforeToString(): void
-    {
-
-    }
 
     public function setSenderTypeAndId(string|SenderType $senderType, string $senderId): self
     {

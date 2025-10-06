@@ -76,6 +76,8 @@ class PwrRecord extends Record
 
     protected function validateBeforeToString(): void
     {
+        parent::validateBeforeToString();
+
         // Publisher IP # and Publisher Name are always required (already enforced in setters).
         if (empty($this->data[self::IDX_PUBLISHER_IP_NUMBER])) {
             throw new \RuntimeException("PWR: Publisher IP # is required.");

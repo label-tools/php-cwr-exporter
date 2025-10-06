@@ -9,11 +9,11 @@ describe('SPU (Publisher Controlled) Record', function () {
         it('builds a minimal valid SPU record', function () {
             $rec = new SpuRecord(1,'IP00001','MyPub','E');
 
-            $str = $rec->toString();
+            $str = $rec->setRecordPrefix(0, 0)->toString();
             expect(strlen($str))->toBe(139);
 
             // Record Prefix (19 A)
-            expect(substr($str, 0, 19))->toBe(str_pad('SPU', 19, ' '));
+            expect(substr($str, 0, 19))->toBe(str_pad('SPU0000000000000000', 19, ' '));
             // Publisher Sequence # (2 N)
             expect(substr($str, 19, 2))->toBe('01');
             // Interested Party # (9 A)
@@ -50,6 +50,12 @@ describe('SPU (Publisher Controlled) Record', function () {
             expect(substr($str, 138, 1))->toBe(' ');
         });
     });
+
+    it('throws when setRecordPrefix is not called', function () {
+        $record = new SpuRecord(1,'IP00001','MyPub','E');
+
+        $record->toString();
+    })->throws(\LogicException::class, 'The record prefix for LabelTools\PhpCwrExporter\Records\SpuRecord has not been set.');
 
     describe('Field-level validation', function () {
         it('throws when Publisher Sequence # is less than 1', function () {

@@ -12,7 +12,7 @@ describe('ALT (Alternate Title) Record', function () {
                 titleType: TitleType::FORMAL_TITLE
             );
 
-            $out = $record->toString();
+            $out = $record->setRecordPrefix(0,0)->toString();
 
             // Total length = 19 (prefix) + 60 (title) + 2 (type) + 2 (lang) = 83
             expect(strlen($out))->toBe(83);
@@ -20,8 +20,8 @@ describe('ALT (Alternate Title) Record', function () {
             // 0–2:   "ALT"
             expect(substr($out, 0, 3))->toBe('ALT');
 
-            // 3–18: 16 spaces
-            expect(substr($out, 3, 16))->toBePadded('', 16);
+            // 3–18:
+            expect(substr($out, 3, 16))->toBePadded('0', 16, '0');
 
             // 19–78: Alternate Title (60 chars)
             expect(substr($out, 19, 60))->toBePadded('My Alternate Title', 60);
@@ -32,6 +32,16 @@ describe('ALT (Alternate Title) Record', function () {
             // 81–82: Language Code (2 chars) => two spaces
             expect(substr($out, 81, 2))->toBePadded('', 2);
         });
+
+        it('throws when setRecordPrefix is not called', function () {
+            $record = new AltRecord(
+                alternateTitle: 'My Alternate Title',
+                titleType: TitleType::FORMAL_TITLE
+            );
+
+            // Not calling setRecordPrefix() before toString()
+            $record->toString();
+        })->throws(\LogicException::class, 'The record prefix for LabelTools\PhpCwrExporter\Records\AltRecord has not been set.');
 
         it('throws when Alternate Title is empty', function () {
             new AltRecord(
@@ -58,7 +68,7 @@ describe('ALT (Alternate Title) Record', function () {
                 alternateTitle: 'Título',
                 titleType: TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS
             );
-            $record->toString();
+            $record->setRecordPrefix(0,0)->toString();
         })->throws(
             \InvalidArgumentException::class,
             "ALT: Language Code is required when Title Type is 'OL'."
@@ -71,7 +81,7 @@ describe('ALT (Alternate Title) Record', function () {
                 languageCode: LanguageCode::SPANISH
             );
 
-            $out = $record->toString();
+            $out = $record->setRecordPrefix(0,0)->toString();
 
             expect(strlen($out))->toBe(83);
             expect(substr($out, 79, 2))->toBe(TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS->value);

@@ -24,10 +24,10 @@ describe('SWT (Song Territory) Record', function () {
                 sharesChange: ''
             );
 
-            $out = $record->toString();
+            $out = $record->setRecordPrefix(0, 0)->toString();
 
             expect(strlen($out))->toBe(19 + 9 + 5 + 5 + 5 + 1 + 4 + 1);
-            expect(substr($out, 0, 19))->toBePadded('SWT', 19);
+            expect(substr($out, 0, 19))->toBePadded('SWT0000000000000000', 19);
             expect(substr($out, 19, 9))->toBePadded('PARTY1', 9);
             expect(substr($out, 28, 5))->toBe('00000');
             expect(substr($out, 33, 5))->toBe('00000');
@@ -36,6 +36,19 @@ describe('SWT (Song Territory) Record', function () {
             expect(substr($out, 44, 4))->toBePadded(TisCode::AUSTRALIA->value, 4);
             expect(substr($out, 48, 1))->toBe(' ');
         });
+
+        it('throws when setRecordPrefix is not called', function () {
+            $record = new SwtRecord(
+                interestedPartyNumber: 'PARTY1',
+                prCollectionShare: 0,
+                mrCollectionShare: 0,
+                srCollectionShare: 0,
+                inclusionExclusionIndicator: 'I',
+                tisNumericCode: TisCode::AUSTRALIA,
+                sharesChange: ''
+            );
+            $record->toString();
+        })->throws(\LogicException::class, 'The record prefix for LabelTools\PhpCwrExporter\Records\SwtRecord has not been set.');
 
         it('throws when Interested Party Number is empty', function () {
             new SwtRecord(
@@ -47,7 +60,7 @@ describe('SWT (Song Territory) Record', function () {
                 tisNumericCode: 840,
                 sharesChange: '',
             );
-        })->throws(InvalidArgumentException::class, 'Interested Party Number must be 1–9 characters.');
+        })->throws(InvalidArgumentException::class, 'Interested Party Number must be non-empty and at most 9 characters.');
 
         it('throws when Interested Party Number is longer than 9 characters', function () {
             new SwtRecord(
@@ -59,7 +72,7 @@ describe('SWT (Song Territory) Record', function () {
                 tisNumericCode: 840,
                 sharesChange: '',
             );
-        })->throws(InvalidArgumentException::class, 'Interested Party Number must be 1–9 characters.');
+        })->throws(InvalidArgumentException::class, 'Interested Party Number must be non-empty and at most 9 characters.');
 
         it('throws when PR Collection Share is negative', function () {
             expect(function () {
@@ -228,7 +241,7 @@ describe('SWT (Song Territory) Record', function () {
                 sharesChange: 'Y'
             );
 
-            $out = $record->toString();
+            $out = $record->setRecordPrefix(0, 0)->toString();
 
             // Check Inclusion/Exclusion = "E" at position 43
             expect(substr($out, 43, 1))->toBe('E');
@@ -257,7 +270,7 @@ describe('SWT (Song Territory) Record', function () {
                 sharesChange: '',
                 sequenceNumber: 1
             );
-            $record = $swr->toString();
+            $record = $swr->setRecordPrefix(0, 0)->toString();
 
             expect(strlen($record))->toBe(49+3);
             expect(substr($record, 49, 3))->toBe('001');

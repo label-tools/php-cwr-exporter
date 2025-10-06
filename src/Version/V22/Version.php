@@ -6,6 +6,9 @@ use LabelTools\PhpCwrExporter\Contracts\VersionInterface;
 use LabelTools\PhpCwrExporter\Version\V22\Records\HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\GrhRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\NwrRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\SwrRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\SwtRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\PwrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\SpuRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\SptRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\GrtRecord;
@@ -24,6 +27,11 @@ class Version implements VersionInterface
         return '2.2';
     }
 
+    public function getRevision(): string
+    {
+        return '2';
+    }
+
     public function renderHeader(array $options): array
     {
         // Initialize first transaction
@@ -40,10 +48,14 @@ class Version implements VersionInterface
                 creationTime: $options['creation_time'] ?? null,
                 transmissionDate: $options['transmission_date'] ?? null,
                 characterSet: $options['character_set'] ?? null,
+                version: $this->getVersion(),
+                revision: $this->getRevision(), //@todo maybe in the future we can support different revisions, for now we are hardcoding to the one we support
+                softwarePackage: $options['software_package'] ?? null,
+                softwarePackageVersion: $options['software_version'] ?? null
             )->toString(),
 
             // Group header
-            new GrhRecord('NWR', groupId:1)->toString(),
+            new GrhRecord('NWR', groupId:1)->toString(), //@todo type of group should be configurable. not all CWRs will be NWR
         ];
     }
 
@@ -107,6 +119,62 @@ class Version implements VersionInterface
                 }
             }
 
+            // SWR & SWT for each writer
+            foreach ($work->writers ?? [] as $writerIndex => $wr) {
+                // SWR writer record
+                $lines[] = (new SwrRecord(
+                    interestedPartyNumber:   $wr->interestedPartyNumber,
+                    writerLastName:          $wr->writerLastName,
+                    writerFirstName:         $wr->writerFirstName,
+                    writerDesignationCode:   $wr->writerDesignationCode,
+                    taxId:                   '',
+                    writerIpiNameNumber:     $wr->ipiNameNumber ?? '',
+                    prAffiliationSociety:    $wr->prAffiliationSociety ?? null,
+                    prOwnershipShare:        property_exists($wr, 'prOwnershipShare') ? (int) $wr->prOwnershipShare : 0,
+                    mrAffiliationSociety:    property_exists($wr, 'mrAffiliationSociety') ? $wr->mrAffiliationSociety : null,
+                    mrOwnershipShare:        property_exists($wr, 'mrOwnershipShare') ? (int) $wr->mrOwnershipShare : 0,
+                    srAffiliationSociety:    property_exists($wr, 'srAffiliationSociety') ? $wr->srAffiliationSociety : null,
+                    srOwnershipShare:        property_exists($wr, 'srOwnershipShare') ? (int) $wr->srOwnershipShare : 0,
+                    reversionaryIndicator:   '',
+                    firstRecordingRefusalIndicator: '',
+                    workForHireIndicator:    '',
+                    filler:                  '',
+                    writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
+                    personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
+                    usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : ''
+                ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                  ->toString();
+
+                // SWT territory records for the writer (sequence starts at 1 per writer)
+                $swtSeq = 0;
+                foreach ($wr->territories ?? [] as $terr) {
+                    $lines[] = (new SwtRecord(
+                        interestedPartyNumber:       $wr->interestedPartyNumber,
+                        tisNumericCode:              $terr['tis_code'] ?? null,
+                        inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
+                        sequenceNumber:              ++$swtSeq
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                }
+            }
+
+            // PWR link: connect each writer to the first publisher sequence if publishers exist
+            if (!empty($work->publishers)) {
+                $firstPublisherSequence = 1; // SPU sequence starts at 1
+                $firstPublisher = $work->publishers[0];
+                foreach ($work->writers ?? [] as $wr) {
+                    $lines[] = (new PwrRecord(
+                        publisherIpNumber:              $firstPublisher->interestedPartyNumber,
+                        publisherName:                  $firstPublisher->publisherName,
+                        submitterAgreementNumber:       $firstPublisher->submitterAgreementNumber ?? '',
+                        societyAssignedAgreementNumber: (property_exists($firstPublisher, 'societyAssignedAgreementNumber') ? (string) $firstPublisher->societyAssignedAgreementNumber : ''),
+                        writerIpNumber:                 $wr->interestedPartyNumber,
+                        publisherSequenceNumber:        $firstPublisherSequence
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                }
+            }
+
             // Advance to next transaction
             $this->transactionSequence++;
         }
@@ -126,13 +194,8 @@ class Version implements VersionInterface
         // Total records includes headers + detail lines + GRT + TRL
         $totalRecords = $headerCount + $detailCount + 2;
 
-        $grtLine = (new GrtRecord($groupCount, $transactionCount, $grtRecordCount))
-            ->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-            ->toString();
-
-        $trlLine = (new TrlRecord($groupCount, $transactionCount, $totalRecords))
-            ->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-            ->toString();
+        $grtLine = (new GrtRecord($groupCount, $transactionCount, $grtRecordCount))->toString();
+        $trlLine = (new TrlRecord($groupCount, $transactionCount, $totalRecords))->toString();
 
         return [$grtLine, $trlLine];
     }

@@ -325,6 +325,8 @@ class SwrRecord extends Record
 
     protected function validateBeforeToString(): void
     {
+        parent::validateBeforeToString();
+
         // If recordType = SWR, lastName and designationCode are required.
         if (static::$recordType === 'SWR') {
             if (empty($this->data[self::IDX_WRITER_LAST_NAME])) {

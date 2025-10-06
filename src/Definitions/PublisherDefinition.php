@@ -14,10 +14,13 @@ class PublisherDefinition
         public readonly ?string $submitterAgreementNumber = null,
         public readonly ?string $prAffiliationSociety = null,
         public readonly int $prOwnershipShare = 0,
+        public readonly int $prCollectionShare = 0,
         public readonly ?string $mrAffiliationSociety = null,
         public readonly int $mrOwnershipShare = 0,
+        public readonly int $mrCollectionShare = 0,
         public readonly ?string $srAffiliationSociety = null,
         public readonly int $srOwnershipShare = 0,
+        public readonly int $srCollectionShare = 0,
         public readonly array $territories = []
     ) {
 
@@ -37,10 +40,13 @@ class PublisherDefinition
             submitterAgreementNumber: $data['submitter_agreement_number'] ?? null,
             prAffiliationSociety: $data['pr_affiliation_society'] ?? null,
             prOwnershipShare: $data['pr_ownership_share'] ?? 0,
+            prCollectionShare: $data['pr_collection_share'] ?? 0,
             mrAffiliationSociety: $data['mr_affiliation_society'] ?? null,
             mrOwnershipShare: $data['mr_ownership_share'] ?? 0,
+            mrCollectionShare: $data['mr_collection_share'] ?? 0,
             srAffiliationSociety: $data['sr_affiliation_society'] ?? null,
             srOwnershipShare: $data['sr_ownership_share'] ?? 0,
+            srCollectionShare: $data['sr_collection_share'] ?? 0,
             territories: $data['territories'] ?? []
         );
     }

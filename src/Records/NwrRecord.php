@@ -133,6 +133,7 @@ class NwrRecord extends Record
 
     protected function validateBeforeToString(): void
     {
+        parent::validateBeforeToString();
         $this->validateCompositeComponentCount();
     }
 

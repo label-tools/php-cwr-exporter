@@ -117,6 +117,8 @@ class SwtRecord extends Record
 
     protected function validateBeforeToString(): void
     {
+        parent::validateBeforeToString();
+
         // Mandatory fields for SWT:
         if (empty($this->data[self::IDX_INTERESTED_PARTY_NUMBER]) && static::$recordType == 'SWT') {
             throw new \RuntimeException("Interested Party Number is required.");

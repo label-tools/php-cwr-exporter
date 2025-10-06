@@ -16,14 +16,14 @@ describe('SPT (Publisher Territory) Record', function () {
             sharesChange: ''
         );
 
-        $out = $record->toString();
+        $out = $record->setRecordPrefix(0, 0)->toString();
 
         // TOTAL LENGTH = 19 + 9 + 6 + 5 + 5 + 5 + 1 + 4 + 1 = 55
         expect(strlen($out))->toBe(55);
 
-        // 0–18: “SPT” + 16 spaces
+        // 0–18: “SPT” + zero-padded prefix
         expect(substr($out, 0, 3))->toBe('SPT');
-        expect(substr($out, 3, 16))->toBe(str_repeat(' ', 16));
+        expect(substr($out, 3, 16))->toBe(str_repeat('0', 16));
 
         // 19–27: Interested Party # (9 chars)
         expect(substr($out, 19, 9))->toBe('ABCDEFGHI');
@@ -49,6 +49,19 @@ describe('SPT (Publisher Territory) Record', function () {
         // 54: Shares Change (blank)
         expect(substr($out, 54, 1))->toBe(' ');
     });
+
+    it('throws when setRecordPrefix is not called', function () {
+        $record = new SptRecord(
+            interestedPartyNumber: 'ABCDEFGHI',
+            prCollectionShare: 1234,
+            mrCollectionShare: 5000,
+            srCollectionShare: 10000,
+            inclusionExclusionIndicator: 'I',
+            tisNumericCode: 840,
+            sharesChange: ''
+        );
+        $record->toString();
+    })->throws(\LogicException::class, 'The record prefix for LabelTools\PhpCwrExporter\Records\SptRecord has not been set.');
 
     it('throws when Interested Party Number is empty', function () {
         new SptRecord(
@@ -199,7 +212,7 @@ describe('SPT (Publisher Territory) Record', function () {
             sharesChange: 'Y'
         );
 
-        $out = $record->toString();
+        $out = $record->setRecordPrefix(0, 0)->toString();
 
         // Check Inclusion/Exclusion = “E” at position 49
         expect(substr($out, 49, 1))->toBe('E');
@@ -230,14 +243,14 @@ describe('SPT (Publisher Territory) Record', function () {
 
             $record->setSequenceNumber(7);
 
-            $out21 = $record->toString();
+            $out21 = $record->setRecordPrefix(0, 0)->toString();
 
             // TOTAL LENGTH (v2.1) = 55 + 3 = 58
             expect(strlen($out21))->toBe(58);
 
             // 0–53: inspect exactly as before up through TIS & sharesChange
             expect(substr($out21, 0, 3))->toBe('SPT');
-            expect(substr($out21, 3, 16))->toBe(str_repeat(' ', 16));
+            expect(substr($out21, 3, 16))->toBe(str_repeat('0', 16));
             expect(substr($out21, 19, 9))->toBe('PARTY1   ');
             expect(substr($out21, 28, 6))->toBe(str_repeat(' ', 6));
             expect(substr($out21, 34, 5))->toBe('03000');
@@ -262,7 +275,7 @@ describe('SPT (Publisher Territory) Record', function () {
                 tisNumericCode: 344,
             );
 
-            $record->setSequenceNumber(7);
+            $record->setRecordPrefix(0, 0)->setSequenceNumber(7);
             expect(strlen($record->toString()))->toBe(58);
         });
     });

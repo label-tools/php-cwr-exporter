@@ -150,18 +150,45 @@ class CwrBuilder
         $this->options['transaction_count'] = count($this->works);
         // headers: file header + group header
         $this->options['header_count'] = 2;
-        // detail records: NWR + SPU + SPT for each work
+
+        // detail records: NWR per work, SWR/SWT for writers, SPU/SPT for publishers, and minimal PWR linking
         $detailCount = 0;
         foreach ($this->works as $work) {
-            // one NWR per work
-            $detailCount++;
-            // one SPU per publisher
-            foreach ($work->publishers as $pub) {
-                $detailCount++;
-                // one SPT per territory
-                $detailCount += count($pub->territories ?? []);
+            // NWR per work
+            $detailCount += 1;
+
+            // Writers: one SWR per writer; one SWT per writer territory
+            $writerCount = 0;
+            $writerTerritoryCount = 0;
+            if (!empty($work->writers) && is_array($work->writers)) {
+                $writerCount = count($work->writers);
+                $detailCount += $writerCount; // SWR records
+                foreach ($work->writers as $wr) {
+                    $writerTerritoryCount += count($wr->territories ?? []); // SWT
+                }
+                $detailCount += $writerTerritoryCount;
+            }
+
+            // Publishers: one SPU per publisher; one SPT per publisher territory
+            $publisherCount = 0;
+            $publisherTerritoryCount = 0;
+            if (!empty($work->publishers) && is_array($work->publishers)) {
+                $publisherCount = count($work->publishers);
+                $detailCount += $publisherCount; // SPU records
+                foreach ($work->publishers as $pub) {
+                    $publisherTerritoryCount += count($pub->territories ?? []); // SPT
+                }
+                $detailCount += $publisherTerritoryCount;
+            }
+
+            // Minimal PWR linking: at least one PWR per writer when there is at least one publisher
+            // Note: If your exporter emits multiple PWR per writer (e.g., one per publisher),
+            // replace the next line with `$detailCount += ($writerCount * $publisherCount);`
+            if ($writerCount > 0 && $publisherCount > 0) {
+                $detailCount += $writerCount; // PWR
             }
         }
+
         $this->options['detail_count'] = $detailCount;
         return $this->exporter->export($this->works, $this->options);
     }

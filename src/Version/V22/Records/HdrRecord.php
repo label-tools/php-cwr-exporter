@@ -28,8 +28,8 @@ class HdrRecord extends V21HdrRecord
 
         $this->stringFormat .= "%-3s%-3s%-30s%-30s";
 
-        $this->setVersion($version);
-        $this->setRevision($revision);
+        $this->setVersion($version  ?? '2.2');
+        $this->setRevision($revision ?? 2);
         $this->setSoftwarePackage($softwarePackage);
         $this->setSoftwarePackageVersion($softwarePackageVersion);
     }

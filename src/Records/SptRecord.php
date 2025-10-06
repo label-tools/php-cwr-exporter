@@ -88,8 +88,4 @@ class SptRecord extends Record
         return $this;
     }
 
-    protected function validateBeforeToString(): void
-    {
-
-    }
 }

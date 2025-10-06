@@ -225,6 +225,8 @@ class SpuRecord extends Record
 
     protected function validateBeforeToString(): void
     {
+        parent::validateBeforeToString();
+
         if (empty($this->data[static::IDX_INTERESTED_PARTY_NUMBER]) && static::$recordType === 'SPU') {
             throw new \InvalidArgumentException("Interested Party # is required for SPU.");
         }

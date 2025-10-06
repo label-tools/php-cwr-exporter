@@ -5,6 +5,7 @@ namespace LabelTools\PhpCwrExporter\Records;
 use LabelTools\PhpCwrExporter\Enums\TitleType;
 use LabelTools\PhpCwrExporter\Enums\LanguageCode;
 use LabelTools\PhpCwrExporter\Fields\HasLanguageCode;
+use LabelTools\PhpCwrExporter\Traits\HasRecordPrefix;
 
 class AltRecord extends Record
 {
@@ -65,6 +66,8 @@ class AltRecord extends Record
 
     protected function validateBeforeToString(): void
     {
+        parent::validateBeforeToString();
+
         // Alternate Title is always required
         if (empty($this->data[self::IDX_ALTERNATE_TITLE])) {
             throw new \InvalidArgumentException('ALT: Alternate Title is required.');

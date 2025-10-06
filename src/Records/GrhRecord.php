@@ -31,11 +31,6 @@ class GrhRecord extends Record
         }
     }
 
-    protected function validateBeforeToString(): void
-    {
-
-    }
-
     public function setTransactionType(string|TransactionType $transactionType): self
     {
         $transactionType = $this->validateTransactionType($transactionType);

@@ -14,11 +14,14 @@ describe('New Work Registration (NWR) Record', function () {
                 versionType: 'ORI'
             );
 
-            $str = $record->toString();
+            $str = $record->setRecordPrefix(0,1)->toString();
             expect(strlen($str))->toBe(259);
 
             // Prefix (19 A)
-            expect(substr($str, 0, 19))->toBe(str_pad('NWR', 19, ' '));
+            expect(substr($str, 0, 3))->toBe('NWR');
+            expect(substr($str, 3, 8))->toBePaddedLeft('0', 8, '0');
+            expect(substr($str, 11, 8))->toBePaddedLeft('1', 8, '0');
+
             // Title (60 A)
             expect(substr($str, 19, 60))->toBe(str_pad('My Song Title', 60, ' '));
             // Language Code (defaults to spaces)
@@ -69,6 +72,17 @@ describe('New Work Registration (NWR) Record', function () {
             expect(substr($str, 234, 25))->toBe(str_repeat(' ', 25));
         });
     });
+
+    it('throws when setRecordPrefix is not called', function () {
+        $record = new NwrRecord(
+            workTitle: 'My Song Title',
+            submitterWorkNumber: 'SUB123',
+            mwDistributionCategory: 'POP',
+            versionType: 'ORI'
+        );
+
+        $record->toString();
+    })->throws(\LogicException::class, 'The record prefix for LabelTools\PhpCwrExporter\Records\NwrRecord has not been set.');
 
     describe('Field-level validation', function () {
         it('throws when Work Title is empty', function () {
@@ -196,13 +210,14 @@ describe('New Work Registration (NWR) Record', function () {
             $rec = new NwrRecord('Title','ABC','POP','ORI');
             $rec->setCompositeType('COS');
             $rec->setCompositeComponentCount(0);
-            $rec->toString();
+            $rec->setRecordPrefix(0,0)->toString();
         });
 
         it('throws when Component Count present but Composite Type missing', function () {
             $this->expectException(InvalidArgumentException::class);
             $this->expectExceptionMessage("Component Count is set but Composite Type is missing.");
             $rec = (new NwrRecord('Title','ABC','POP','ORI'))
+                ->setRecordPrefix(0,0)
                 ->setCompositeComponentCount(2);
             $rec->toString();
         });
@@ -221,7 +236,7 @@ describe('New Work Registration (NWR) Record', function () {
     describe('CWR v2.1', function () {
         it('builds a valid NWR record for CWR v2.1', function () {
             $record = (new V21NwrRecord('Title','ABC','POP','ORI'));
-            $record = $record->toString();
+            $record = $record->setRecordPrefix(0,0)->toString();
 
             expect(strlen($record))->toBe(260);
             expect(substr($record, 259, 1))->toBe(' ');
@@ -233,7 +248,7 @@ describe('New Work Registration (NWR) Record', function () {
         it('builds a valid NWR record for CWR v2.2', function () {
             $record = (new V22NwrRecord('Title','ABC','POP','ORI'))
                 ->setPriorityFlag(true);
-            $record = $record->toString();
+            $record = $record->setRecordPrefix(0,0)->toString();
 
             expect(strlen($record))->toBe(260);
             expect(substr($record, 259, 1))->toBe('Y');

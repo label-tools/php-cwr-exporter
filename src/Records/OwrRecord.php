@@ -15,8 +15,4 @@ class OwrRecord extends Record
         protected ?string $prAffiliationSociety,
         protected int    $prOwnershipShare
     ) {}
-
-    protected function validateBeforeToString(): void
-    {
-    }
 }

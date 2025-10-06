@@ -25,6 +25,7 @@ class WorkDefinition
         public readonly ?string $duration = null,
         public readonly bool $recorded = false,
         public readonly string $textMusicRelationship = '',
+        public readonly array $writers = [],
         public readonly array $publishers = []
 
     ) {
@@ -35,6 +36,8 @@ class WorkDefinition
         if (strlen($this->title) > 90) {
             throw new \InvalidArgumentException('title cannot exceed 90 characters.');
         }
+        // Writers can be empty in some flows (e.g., stubs), but most societies expect at least one writer.
+        // Validation for presence of writers, roles, and shares should occur in the exporter/transaction layer.
     }
 
     public static function fromArray(array $data): self
@@ -52,6 +55,9 @@ class WorkDefinition
             duration: $data['duration'] ?? null,
             recorded: $data['recorded'] ?? false,
             textMusicRelationship: $data['text_music_relationship'] ?? '',
+            writers: isset($data['writers']) && is_array($data['writers'])
+                ? array_map(fn($w) => WriterDefinition::fromArray($w), $data['writers'])
+                : [],
             publishers: isset($data['publishers']) && is_array($data['publishers'])
                 ? array_map(fn($pub) => PublisherDefinition::fromArray($pub), $data['publishers'])
                 : []

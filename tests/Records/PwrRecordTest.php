@@ -13,7 +13,7 @@ describe('PWR (Publisher For Writer) Record', function () {
                 publisherName: 'Acme Publishing'
             );
 
-            $out = $record->toString();
+            $out = $record->setRecordPrefix(0, 0)->toString();
 
 
             expect(strlen($out))->toBe(19 + 9 + 45 + 14 + 14);
@@ -21,8 +21,8 @@ describe('PWR (Publisher For Writer) Record', function () {
             // 0-2:   "PWR"
             expect(substr($out, 0, 3))->toBe('PWR');
 
-            // 3-18:  16 spaces (prefix is 19 chars: "PWR" + 16 blanks)
-            expect(substr($out, 3, 16))->toBePadded('', 16);
+            // 3-18: Transaction Sequence (8) and Record Sequence (8), both zero-padded
+            expect(substr($out, 3, 16))->toBe(str_repeat('0', 16));
 
             // 19-27: Publisher IP # (9 chars). We passed "PUBLISHER" (8 chars) → "PUBLISHER" + one trailing space
             expect(substr($out, 19, 9))->toBePadded('PUBLISHER', 9);
@@ -36,6 +36,15 @@ describe('PWR (Publisher For Writer) Record', function () {
             // 87-100: Society-Assigned Agreement Number (14 chars) → all spaces
             expect(substr($out, 87, 14))->toBePadded('', 14);
         });
+
+        it('throws when setRecordPrefix is not called', function () {
+            $record = new PwrRecord(
+                publisherIpNumber: 'PUBLISHER',
+                publisherName: 'Acme Publishing'
+            );
+
+            $record->toString();
+        })->throws(\LogicException::class, 'The record prefix for LabelTools\PhpCwrExporter\Records\PwrRecord has not been set.');
 
         it('throws when Publisher IP # is empty', function () {
             new PwrRecord(
@@ -91,7 +100,7 @@ describe('PWR (Publisher For Writer) Record', function () {
                 societyAssignedAgreementNumber: 'SOC9876543210'
             );
 
-            $out = $record->toString();
+            $out = $record->setRecordPrefix(0, 0)->toString();
 
             // Check total length
             expect(strlen($out))->toBe(101);
@@ -115,7 +124,7 @@ describe('PWR (Publisher For Writer) Record', function () {
                 societyAssignedAgreementNumber: 'SOC9876543210',
                 writerIpNumber: 'LINK001'
             );
-            $record = $swr->toString();
+            $record = $swr->setRecordPrefix(0,0)->toString();
 
             expect(strlen($record))->toBe(19 + 9 + 45 + 14 + 14 + 9);
             expect(substr($record, 101, 9))->toBePadded('LINK001', 9);
@@ -133,7 +142,7 @@ describe('PWR (Publisher For Writer) Record', function () {
                 publisherSequenceNumber: 1
 
             );
-            $record = $swr->toString();
+            $record = $swr->setRecordPrefix(0, 0)->toString();
 
             expect(strlen($record))->toBe(19 + 9 + 45 + 14 + 14 + 9 + 2);
             expect(substr($record, 110, 2))->toBe('01');

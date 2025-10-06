@@ -140,9 +140,9 @@ describe('Transmission Header Record', function () {
             expect(strlen($record))->toBe(167);
 
             // Version field at bytes 102-104 (0-based offset 101, length 3)
-            expect(substr($record, 101, 3))->toBe(str_repeat(' ', 3));
+            expect(substr($record, 101, 3))->toBe('2.2');
             // Revision field at bytes 105-107 (offset 104, length 3)
-            expect(substr($record, 104, 3))->toBe(str_repeat(' ', 3));
+            expect(substr($record, 104, 3))->toBe('2  '); //REVISION 2 is the defult for now
             // Software Package at bytes 108-137 (offset 107, length 30)
             expect(substr($record, 107, 30))->toBe(str_repeat(' ', 30));
             // Software Package Version at bytes 138-167 (offset 137, length 30)

@@ -26,7 +26,14 @@ abstract class Record
 
     private const INDEX_RECORD_TYPE = 1;
 
-    abstract protected function validateBeforeToString(): void;
+    protected function validateBeforeToString(): void
+    {
+        if ($this->hasRecordPrefix() && empty($this->data[self::INDEX_RECORD_TYPE])) {
+            throw new \LogicException(
+                sprintf('The record prefix for %s has not been set. Please call setRecordPrefix() before generating the string.', static::class)
+            );
+        }
+    }
 
     public function __construct()
     {
@@ -35,10 +42,15 @@ abstract class Record
         }
 
         // If the format expects a full 19-character prefix, set placeholders for transaction and record sequence numbers
-        if (!str_starts_with($this->stringFormat, "%-19s")) {
+        if (!$this->hasRecordPrefix()) {
             // Initialize the data array with the record type
             $this->data[self::INDEX_RECORD_TYPE] = static::$recordType;
         }
+    }
+
+    public function hasRecordPrefix(): bool
+    {
+        return str_starts_with($this->stringFormat, "%-19s");
     }
 
     public function setRecordSequence(int $recordSequence): self
@@ -58,6 +70,7 @@ abstract class Record
      */
     public function setRecordPrefix($transactionSequence, $recordSequence): self
     {
+        //@todo we need to block record that dont need record prefix from calling this
         $prefix = sprintf('%-3s%08d%08d', static::$recordType, $transactionSequence, $recordSequence);
         $this->data[self::INDEX_RECORD_TYPE] = $prefix;
         return $this;
@@ -68,6 +81,7 @@ abstract class Record
         $this->validateBeforeToString();
         $data = $this->data;
         ksort($data);
+
         return vsprintf($this->stringFormat, $data);
     }
 

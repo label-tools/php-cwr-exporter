@@ -9,11 +9,11 @@ describe('OPU (Other Publisher) Record', function () {
         it('builds a minimal valid OPU record', function () {
             $rec = new OpuRecord(1);
 
-            $str = $rec->toString();
+            $str = $rec->setRecordPrefix(0, 0)->toString();
             expect(strlen($str))->toBe(139);
 
             // Record Prefix (19 A)
-            expect(substr($str, 0, 19))->toBe(str_pad('OPU', 19, ' '));
+            expect(substr($str, 0, 19))->toBe(str_pad('OPU', 19, '0'));
             // Publisher Sequence # (2 N)
             expect(substr($str, 19, 2))->toBe('01');
             // Interested Party # (9 A)

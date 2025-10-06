@@ -24,15 +24,15 @@ describe('SWR (Writer) Record', function () {
                 srAffiliationSociety: SocietyCode::PRS,
                 srOwnershipShare: 2500
             );
-            $record = $swr->toString();
+            $record = $swr->setRecordPrefix(0, 0)->toString();
 
             // total length = 19+9+45+30+1+2+9+11+3+5+3+5+3+5+1+1+1+1+13+12 = 179
             expect(strlen($record))->toBe(179);
 
             // 0-2: "SWR"
             expect(substr($record, 0, 3))->toBe('SWR');
-            // 3-18: 16 spaces
-            expect(substr($record, 3, 16))->toBe(str_repeat(' ', 16));
+            // 3-18: Transaction Sequence (8) and Record Sequence (8), both zero-padded
+            expect(substr($record, 3, 16))->toBe(str_repeat('0', 16));
 
             // 19-27: Interested Party #
             expect(substr($record, 19, 9))->toBe('WRTR12345');
@@ -93,6 +93,18 @@ describe('SWR (Writer) Record', function () {
             // 167-178: Personal Number (blank)
             expect(substr($record, 167, 12))->toBe(str_repeat(' ', 12));
         });
+
+        it('throws when setRecordPrefix is not called', function () {
+            $record = new SwrRecord(
+                interestedPartyNumber: 'WRTR12345',
+                writerLastName: 'Doe',
+                writerDesignationCode: WriterDesignation::COMPOSER
+            );
+
+            $record->toString();
+        })->throws(\LogicException::class, 'The record prefix for LabelTools\PhpCwrExporter\Records\SwrRecord has not been set.');
+
+
 
         it('throws when Interested Party Number is empty', function () {
             new SwrRecord(
@@ -181,7 +193,7 @@ describe('SWR (Writer) Record', function () {
                 personalNumber: '123456789012',
                 usaLicenseIndicator: 'Y'
             );
-            $record = $swr->toString();
+            $record = $swr->setRecordPrefix(0, 0)->toString();
 
             // Length = base (179) + 1 = 180
             expect(strlen($record))->toBe(180);
