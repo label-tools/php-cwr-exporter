@@ -15,21 +15,21 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
     $cwr = CwrBuilder::v22()
         ->senderType(SenderType::PUBLISHER)
         ->senderId('01265713057')
-        ->senderName('WAYU Publishing')
+        ->senderName('Publishing Company')
         ->software('LabelTools CWR Exporter', '1.0.0')
         ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
         ->works([
             [
                 'submitter_work_number' => '00000001',
-                'title' => 'STAY',
+                'title' => 'SONG TITLE',
                 'title_type' => TitleType::ORIGINAL_TITLE,
                 'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
                 'version_type'=> VersionType::ORIGINAL_WORK,
                 'iswc' => 'T1234567890',
                 'writers' => [[
                     'interested_party_number' => 'W000001',
-                    'first_name' => 'Leonardo',
-                    'last_name' => 'Ortegon',
+                    'first_name' => 'John',
+                    'last_name' => 'Doe',
                     'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                     'ipi_name_number' => '123456789',
                     'pr_affiliation_society' => SocietyCode::BMI->value,
@@ -40,7 +40,7 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                 ]],
                 'publishers' => [[
                     'interested_party_number' => 'P000001',
-                    'name' => 'WAYU Publishing',
+                    'name' => 'Publishing Company',
                     'type' => PublisherType::ORIGINAL_PUBLISHER->value,
                     'ipi_name_number' => '123456789',
                     'tax_id' => null,
@@ -59,15 +59,15 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
             ],
             [
                 'submitter_work_number' => '00000002',
-                'title' => 'FEELINGS',
+                'title' => 'SONG WITH COOL TITLE',
                 'title_type' => TitleType::ORIGINAL_TITLE,
                 'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
                 'version_type'=> VersionType::ORIGINAL_WORK,
                 'iswc' => 'T1234567890',
                 'writers' => [[
                     'interested_party_number' => 'W000001',
-                    'first_name' => 'Leonardo',
-                    'last_name' => 'Ortegon',
+                    'first_name' => 'John',
+                    'last_name' => 'Doe',
                     'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                     'ipi_name_number' => '123456789',
                     'pr_affiliation_society' => SocietyCode::BMI->value,
@@ -78,7 +78,7 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                 ]],
                 'publishers' => [[
                     'interested_party_number' => 'P000001',
-                    'name' => 'WAYU Publishing',
+                    'name' => 'Publishing Company',
                     'type' => PublisherType::ORIGINAL_PUBLISHER->value,
                     'ipi_name_number' => '123456789',
                     'tax_id' => null,
@@ -241,7 +241,7 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
         $nwr = $lines[$idx];
         expect($field($nwr, 1, 3))->toBe('NWR');
         $title = rtrim($field($nwr, 20, 60)); // Work Title position
-        expect(in_array($title, ['STAY', 'FEELINGS'], true))->toBeTrue(); //
+        expect(in_array($title, ['SONG TITLE', 'SONG WITH COOL TITLE'], true))->toBeTrue(); //
         expect(trim($field($nwr, 127, 3)))->toBe('POP'); // Musical Work Distribution Category: POPULAR
         expect(trim($field($nwr, 143, 3)))->toBe('ORI'); // Version Type: ORIGINAL_WORK
     }
