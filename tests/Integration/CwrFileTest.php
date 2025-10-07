@@ -108,8 +108,8 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
-                        'pr_collection_share' => 50.0,
-                        'mr_collection_share' => 100.0,
+                        'pr_collection_share' => 25.3,
+                        'mr_collection_share' => 33.33,
                         'sr_collection_share' => 100.0,
                     ]]
                 ]]
@@ -306,11 +306,17 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
     }
     expect(count($sptIndexes))->toBe(2);
 
-    foreach ($sptIndexes as $idx) {
-        $spt = $lines[$idx];
-        expect($field($spt, 35, 5))->toBe('05000'); // PR Collection Share 50.00%
-        expect($field($spt, 40, 5))->toBe('10000'); // MR Collection Share 100.00%
-        expect($field($spt, 45, 5))->toBe('10000'); // SR Collection Share 100.00%
-        expect(trim($field($spt, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
-    }
+    // Check first SPT record (from first work)
+    $spt1 = $lines[$sptIndexes[0]];
+    expect($field($spt1, 35, 5))->toBe('05000'); // PR Collection Share 50.00%
+    expect($field($spt1, 40, 5))->toBe('10000'); // MR Collection Share 100.00%
+    expect($field($spt1, 45, 5))->toBe('10000'); // SR Collection Share 100.00%
+    expect(trim($field($spt1, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
+
+    // Check second SPT record (from second work)
+    $spt2 = $lines[$sptIndexes[1]];
+    expect($field($spt2, 35, 5))->toBe('02530'); // PR Collection Share 25.30%
+    expect($field($spt2, 40, 5))->toBe('03333'); // MR Collection Share 33.33%
+    expect($field($spt2, 45, 5))->toBe('10000'); // SR Collection Share 100.00%
+    expect(trim($field($spt2, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
 });

@@ -23,15 +23,15 @@ use LabelTools\PhpCwrExporter\Contracts\RecordInterface;
 class OwrRecord implements RecordInterface
 {
     public function __construct(
-        protected string $interestedPartyNumber,
-        protected string $lastName,
-        protected ?string $firstName,
-        protected bool   $unknownIndicator,
-        protected ?string $designationCode,
-        protected ?string $taxId,
-        protected ?string $ipiNameNumber,
-        protected ?string $prAffiliationSociety,
-        protected int    $prOwnershipShare
+        string $interestedPartyNumber,
+        string $lastName,
+        ?string $firstName,
+        bool   $unknownIndicator,
+        ?string $designationCode,
+        ?string $taxId,
+        ?string $ipiNameNumber,
+        ?string $prAffiliationSociety,
+        int|float    $prOwnershipShare
     ) {}
 
     public function toString(int $transactionSequence, int $recordSequence): string

@@ -11,14 +11,14 @@ class SptRecord extends \LabelTools\PhpCwrExporter\Records\SptRecord
     protected const INDEX_SEQUENCE_NUM = 10;
 
     public function __construct(
-        protected string $interestedPartyNumber,
-        protected int $prCollectionShare,
-        protected int $mrCollectionShare,
-        protected int $srCollectionShare,
-        protected string $inclusionExclusionIndicator, // 'I' for inclusion, 'E' for exclusion
-        protected string $tisNumericCode,
-        protected ?string $sharesChange = null,
-        protected ?int $sequenceNumber = 1
+        string $interestedPartyNumber,
+        int|float $prCollectionShare,
+        int|float $mrCollectionShare,
+        int|float $srCollectionShare,
+        string $inclusionExclusionIndicator, // 'I' for inclusion, 'E' for exclusion
+        string $tisNumericCode,
+        ?string $sharesChange = null,
+        ?int $sequenceNumber = 1
     ) {
         // Initialize character set
         $this->stringFormat .= "%03d";
