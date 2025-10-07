@@ -144,11 +144,11 @@ class NwrRecord extends Record
             throw new \InvalidArgumentException("Work Title is required.");
         }
         if (!preg_match('/^[\x20-\x7E]+$/', $title)) {
-            throw new \InvalidArgumentException("Work Title contains invalid characters; only ASCII 32–126 allowed");
+            throw new \InvalidArgumentException("Work Title contains invalid characters; only ASCII 32–126 allowed: {$title}");
         }
         // TR: max 60 characters
         if (strlen($title) > 60) {
-            throw new \InvalidArgumentException("Work Title cannot exceed 60 characters.");
+            throw new \InvalidArgumentException("Work Title cannot exceed 60 characters : {$title}");
         }
 
         $this->data[self::IDX_TITLE] = $title;
