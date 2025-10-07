@@ -4,14 +4,9 @@
          bootstrap="vendor/autoload.php"
          colors="true"
 >
-    <testsuites>
-        <testsuite name="Tests">
-            <directory suffix="Test.php">./tests</directory>
-        </testsuite>
-    </testsuites>
-    <source>
-        <include>
-            <directory suffix=".php">./src</directory>
-        </include>
-    </source>
+  <testsuites>
+    <testsuite name="CWR Exporter">
+      <directory>./tests</directory>
+    </testsuite>
+  </testsuites>
 </phpunit>

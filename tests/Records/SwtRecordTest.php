@@ -261,7 +261,7 @@ describe('SWT (Song Territory) Record', function () {
     describe('CWR v2.1', function () {
         it('builds a valid v2.1 SWT record ', function () {
             $swr = new V21SwtRecord(
-                 interestedPartyNumber: 'PARTY1',
+                interestedPartyNumber: 'PARTY1',
                 prCollectionShare: 0,
                 mrCollectionShare: 0,
                 srCollectionShare: 0,
