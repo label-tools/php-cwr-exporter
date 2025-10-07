@@ -245,7 +245,7 @@ class SwrRecord extends Record
                 throw new \InvalidArgumentException("Designation Code is required for SWR.");
             }
             $oldCode = $code;
-            if ($code = WriterDesignation::tryFrom($code) === null) {
+            if (($code = WriterDesignation::tryFrom($code)) === null) {
                 throw new \InvalidArgumentException("Invalid Writer Designation Code: {$oldCode}");
             }
         }
