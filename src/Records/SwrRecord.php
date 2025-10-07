@@ -211,7 +211,7 @@ class SwrRecord extends Record
             throw new \InvalidArgumentException("Last Name is required and max 45 chars.");
         }
         if (!preg_match('/^[\x20-\x7E]*$/', $writerLastName)) {
-            throw new \InvalidArgumentException("Last Name must be ASCII printable chars.");
+            throw new \InvalidArgumentException("Last Name must be ASCII printable chars: {$writerLastName}");
         }
         $this->data[self::IDX_WRITER_LAST_NAME] = $writerLastName;
         return $this;
@@ -224,7 +224,7 @@ class SwrRecord extends Record
             throw new \InvalidArgumentException("First Name max 30 chars.");
         }
         if ($writerFirstName !== '' && !preg_match('/^[\x20-\x7E]*$/', $writerFirstName)) {
-            throw new \InvalidArgumentException("First Name must be ASCII printable chars.");
+            throw new \InvalidArgumentException("First Name must be ASCII printable chars: {$writerFirstName}");
         }
         $this->data[self::IDX_WRITER_FIRST_NAME] = $writerFirstName;
         return $this;

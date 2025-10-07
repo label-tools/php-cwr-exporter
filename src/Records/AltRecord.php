@@ -41,7 +41,7 @@ class AltRecord extends Record
     {
         $title = trim($title);
         if ($title === '' || strlen($title) > 60) {
-            throw new \InvalidArgumentException('Alternate Title must be 1–60 characters.');
+            throw new \InvalidArgumentException('Alternate Title must be 1–60 characters: ' . $title);
         }
         $this->data[self::IDX_ALTERNATE_TITLE] = $title;
         return $this;
