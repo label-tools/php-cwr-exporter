@@ -233,9 +233,9 @@ describe('SWT (Song Territory) Record', function () {
         it('accepts valid flags and sharesChange "Y"', function () {
             $record = new SwtRecord(
                 interestedPartyNumber: 'PUBLISHER',
-                prCollectionShare:           5000,    // 05000
-                mrCollectionShare:           7500,    // 07500
-                srCollectionShare:           2500,    // 02500
+                prCollectionShare:           50,    // 05000
+                mrCollectionShare:           75,    // 07500
+                srCollectionShare:           25,    // 02500
                 inclusionExclusionIndicator: 'E',
                 tisNumericCode:              TisCode::UNITED_STATES,
                 sharesChange: 'Y'

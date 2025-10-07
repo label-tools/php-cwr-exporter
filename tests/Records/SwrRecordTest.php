@@ -18,11 +18,11 @@ describe('SWR (Writer) Record', function () {
                 taxId: '123456789',
                 writerIpiNameNumber: 'I2345678901',
                 prAffiliationSociety: SocietyCode::ASCAP,
-                prOwnershipShare: 1000,
+                prOwnershipShare: 10,
                 mrAffiliationSociety: SocietyCode::BMI,
-                mrOwnershipShare: 5000,
+                mrOwnershipShare: 50,
                 srAffiliationSociety: SocietyCode::PRS,
-                srOwnershipShare: 2500
+                srOwnershipShare: 25
             );
             $record = $swr->setRecordPrefix(0, 0)->toString();
 
@@ -142,10 +142,10 @@ describe('SWR (Writer) Record', function () {
                 writerFirstName: 'John',
                 writerDesignationCode: WriterDesignation::COMPOSER,
                 prAffiliationSociety:  SocietyCode::ASCAP,
-                prOwnershipShare: 100001, // >10000 (100.00)
+                prOwnershipShare: 100.01, // >100.00
 
             );
-        })->throws(InvalidArgumentException::class, 'PR Ownership Share must be between 0 and 10000.');
+        })->throws(InvalidArgumentException::class, 'PR Ownership Share must be between 0 and 50. Given: 100.01');
 
         it('throws when MR Ownership Share out of range', function () {
             new SwrRecord(
@@ -156,7 +156,7 @@ describe('SWR (Writer) Record', function () {
                 mrAffiliationSociety: SocietyCode::BMI,
                 mrOwnershipShare: -1,
             );
-        })->throws(InvalidArgumentException::class, 'MR Ownership Share must be between 0 and 10000.');
+        })->throws(InvalidArgumentException::class, 'MR Ownership Share must be between 0 and 100. Given: -1');
 
         it('throws when SR Ownership Share out of range', function () {
             new SwrRecord(
@@ -165,9 +165,9 @@ describe('SWR (Writer) Record', function () {
                 writerFirstName: 'John',
                 writerDesignationCode: WriterDesignation::COMPOSER,
                 srAffiliationSociety: SocietyCode::PRS,
-                srOwnershipShare: 100001
+                srOwnershipShare: 100.01
             );
-        })->throws(InvalidArgumentException::class, 'SR Ownership Share must be between 0 and 10000.');
+        })->throws(InvalidArgumentException::class, 'SR Ownership Share must be between 0 and 100. Given: 100.01');
     });
 
     describe('CWR v2.1', function () {
@@ -180,11 +180,11 @@ describe('SWR (Writer) Record', function () {
                 taxId: '987654321',
                 writerIpiNameNumber: 'I1234567890',
                 prAffiliationSociety: SocietyCode::BMI,
-                prOwnershipShare: 2000,
+                prOwnershipShare: 20,
                 mrAffiliationSociety: 8,
-                mrOwnershipShare: 3000,
+                mrOwnershipShare: 30,
                 srAffiliationSociety: SocietyCode::PRS,
-                srOwnershipShare: 4000,
+                srOwnershipShare: 40,
                 reversionaryIndicator: 'Y',
                 firstRecordingRefusalIndicator: 'N',
                 workForHireIndicator: 'Y',

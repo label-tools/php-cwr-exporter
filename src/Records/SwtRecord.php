@@ -50,9 +50,9 @@ class SwtRecord extends Record
     public function __construct(
         string $interestedPartyNumber,
         string $inclusionExclusionIndicator,
-        int $prCollectionShare = 0,
-        int $mrCollectionShare = 0,
-        int $srCollectionShare = 0,
+        int|float $prCollectionShare = 0,
+        int|float $mrCollectionShare = 0,
+        int|float $srCollectionShare = 0,
         null|int|TisCode $tisNumericCode = null,
         string $sharesChange = ''
     ) {

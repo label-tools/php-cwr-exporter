@@ -268,14 +268,14 @@ describe('SPT (Publisher Territory) Record', function () {
 
             $record = new V22SptRecord(
                 interestedPartyNumber: 'PARTY1',
-                prCollectionShare: 3000,
-                mrCollectionShare: 4000,
-                srCollectionShare: 5000,
+                prCollectionShare: 30,
+                mrCollectionShare: 40,
+                srCollectionShare: 50,
                 inclusionExclusionIndicator: 'I',
                 tisNumericCode: 344,
             );
 
-            $record->setRecordPrefix(0, 0)->setSequenceNumber(7);
+            $record->setRecordPrefix(0, 0);
             expect(strlen($record->toString()))->toBe(58);
         });
     });

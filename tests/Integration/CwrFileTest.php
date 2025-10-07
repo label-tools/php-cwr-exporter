@@ -67,6 +67,9 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 50.0,
+                        'mr_collection_share' => 100.0,
+                        'sr_collection_share' => 100.0,
                     ]]
                 ]]
             ],
@@ -105,6 +108,9 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 50.0,
+                        'mr_collection_share' => 100.0,
+                        'sr_collection_share' => 100.0,
                     ]]
                 ]]
             ],
@@ -290,5 +296,21 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
         expect($types)->toContain('SPU'); // at least one controlled publisher (spec: SPU required if writer shares < 100%)
         expect($types)->toContain('SWR'); // at least one writer (spec)
         expect($types)->toContain('PWR'); // link publisher to writer (spec)
+        expect($types)->toContain('SPT'); // at least one territory for publisher
+    }
+
+    // --- SPT field-level spot checks ---
+    $sptIndexes = [];
+    foreach ($lines as $i => $rec) {
+        if ($field($rec, 1, 3) === 'SPT') { $sptIndexes[] = $i; }
+    }
+    expect(count($sptIndexes))->toBe(2);
+
+    foreach ($sptIndexes as $idx) {
+        $spt = $lines[$idx];
+        expect($field($spt, 35, 5))->toBe('05000'); // PR Collection Share 50.00%
+        expect($field($spt, 40, 5))->toBe('10000'); // MR Collection Share 100.00%
+        expect($field($spt, 45, 5))->toBe('10000'); // SR Collection Share 100.00%
+        expect(trim($field($spt, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
     }
 });

@@ -108,12 +108,12 @@ class Version implements VersionInterface
                 foreach ($pub->territories ?? [] as $terrIndex => $terr) {
                     $lines[] = (new SptRecord(
                         interestedPartyNumber:        $pub->interestedPartyNumber,
-                        prCollectionShare:            $pub->prOwnershipShare,
-                        mrCollectionShare:            $pub->mrOwnershipShare,
-                        srCollectionShare:            $pub->srOwnershipShare,
+                        prCollectionShare:            $terr['pr_collection_share'] ?? 0,
+                        mrCollectionShare:            $terr['mr_collection_share'] ?? 0,
+                        srCollectionShare:            $terr['sr_collection_share'] ?? 0,
                         tisNumericCode:               $terr['tis_code'],
                         inclusionExclusionIndicator:  $terr['inclusion_exclusion_indicator'] ?? 'I',
-                        sharesChange:                 $terr['shares_change_flag']        ?? '',
+                        sharesChange:                 $terr['shares_change_flag'] ?? '',
                         sequenceNumber:               $terrIndex + 1
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();

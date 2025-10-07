@@ -36,13 +36,13 @@ class SptRecord extends Record
     protected const IDX_SHARES_CHANGE = 9;
 
     public function __construct(
-        protected string $interestedPartyNumber,
-        protected int|float $prCollectionShare,
-        protected int|float $mrCollectionShare,
-        protected int|float $srCollectionShare,
-        protected string $inclusionExclusionIndicator, // 'I' for inclusion, 'E' for exclusion
-        protected string $tisNumericCode,
-        protected ?string $sharesChange = null,
+         string $interestedPartyNumber,
+         int|float $prCollectionShare,
+         int|float $mrCollectionShare,
+         int|float $srCollectionShare,
+         string $inclusionExclusionIndicator, // 'I' for inclusion, 'E' for exclusion
+         string $tisNumericCode,
+         ?string $sharesChange = null,
     ) {
         parent::__construct();
         $this->setInterestedPartyNumber($interestedPartyNumber)
