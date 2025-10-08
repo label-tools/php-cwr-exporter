@@ -7,4 +7,8 @@ interface VersionInterface
     public function renderHeader(array $opts): array;
     public function renderDetailLines(array $works, array $opts): array;
     public function renderTrailer(array $opts): array;
+    public function countDetailLines(array $works, array $opts): int;
+    public function getVersionNumber(): string;
+    public function getRevision(): string;
+
 }

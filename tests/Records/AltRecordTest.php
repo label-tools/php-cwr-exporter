@@ -50,7 +50,7 @@ describe('ALT (Alternate Title) Record', function () {
             );
         })->throws(
             \InvalidArgumentException::class,
-            'Alternate Title must be 1–60 characters.'
+            'Alternate Title must be 1–60 characters: '
         );
 
         it('throws when Alternate Title exceeds 60 characters', function () {
@@ -60,7 +60,7 @@ describe('ALT (Alternate Title) Record', function () {
             );
         })->throws(
             \InvalidArgumentException::class,
-            'Alternate Title must be 1–60 characters.'
+            'Alternate Title must be 1–60 characters: ' . str_repeat('A', 61)
         );
 
         it('throws when Title Type requires Language Code but none provided', function () {

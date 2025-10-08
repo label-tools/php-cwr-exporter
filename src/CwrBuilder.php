@@ -1,10 +1,9 @@
 <?php
 namespace LabelTools\PhpCwrExporter;
 
-use LabelTools\PhpCwrExporter\CwrExporter;
 use LabelTools\PhpCwrExporter\Definitions\WorkDefinition;
-use LabelTools\PhpCwrExporter\Enums\SenderType;
 use LabelTools\PhpCwrExporter\Version\V22\Version as V22Version;
+use LabelTools\PhpCwrExporter\Enums\SenderType;
 
 class CwrBuilder
 {
@@ -12,26 +11,21 @@ class CwrBuilder
     protected array $works = [];
     protected array $options = [];
 
-    private function __construct(string $version)
+    private function __construct(CwrExporter $exporter)
     {
-        // right now we only have 2.2; you could map '2.1' → another impl
-        $versionImpl = match ($version) {
-            '2.2' => new V22Version(),
-            default => throw new \InvalidArgumentException("Unsupported CWR version: {$version}"),
-        };
-
-        $this->options['version'] = $version;
-        $this->exporter = new CwrExporter($versionImpl);
+        $this->exporter = $exporter;
+        $this->options['version'] = $exporter->getVersion()->getVersionNumber();
     }
 
-    public static function make($version): self
+    public static function make(CwrExporter $exporter): self
     {
-        return new self($version);
+        return new self($exporter);
     }
 
     public static function v22(): self
     {
-        return new self('2.2');
+        $exporter = new CwrExporter(new V22Version());
+        return new self($exporter);
     }
 
     public function senderType(SenderType|string $type): self
@@ -135,65 +129,20 @@ class CwrBuilder
         return $this;
     }
 
-    public function addWork(array $work): self
+    public function addWork(array|WorkDefinition $work): self
     {
+        if (!$work instanceof WorkDefinition) {
+            $work = WorkDefinition::fromArray($work);
+        }
         $this->works[] = $work;
         return $this;
     }
 
     public function export(): string
     {
-        // single group per file
-        $this->options['group_count'] = 1;
-        // one transaction per work
-        $this->options['transaction_count'] = count($this->works);
-        // headers: file header + group header
-        $this->options['header_count'] = 2;
-
-        // detail records: NWR per work, SWR/SWT for writers, SPU/SPT for publishers, and minimal PWR linking
-        $detailCount = 0;
-        foreach ($this->works as $work) {
-            // NWR per work
-            $detailCount += 1;
-
-            // ALT records
-            if (!empty($work->alternateTitles) && is_array($work->alternateTitles)) {
-                $detailCount += count($work->alternateTitles);
-            }
-
-            // Writers: one SWR per writer; one SWT per writer territory
-            $writerCount = 0;
-            $writerTerritoryCount = 0;
-            if (!empty($work->writers) && is_array($work->writers)) {
-                $writerCount = count($work->writers);
-                $detailCount += $writerCount; // SWR records
-                foreach ($work->writers as $wr) {
-                    $writerTerritoryCount += count($wr->territories ?? []); // SWT
-                }
-                $detailCount += $writerTerritoryCount;
-            }
-
-            // Publishers: one SPU per publisher; one SPT per publisher territory
-            $publisherCount = 0;
-            $publisherTerritoryCount = 0;
-            if (!empty($work->publishers) && is_array($work->publishers)) {
-                $publisherCount = count($work->publishers);
-                $detailCount += $publisherCount; // SPU records
-                foreach ($work->publishers as $pub) {
-                    $publisherTerritoryCount += count($pub->territories ?? []); // SPT
-                }
-                $detailCount += $publisherTerritoryCount;
-            }
-
-            // Minimal PWR linking: at least one PWR per writer when there is at least one publisher
-            // Note: If your exporter emits multiple PWR per writer (e.g., one per publisher),
-            // replace the next line with `$detailCount += ($writerCount * $publisherCount);`
-            if ($writerCount > 0 && $publisherCount > 0) {
-                $detailCount += $writerCount; // PWR
-            }
+        if (empty($this->works)) {
+            throw new \LogicException("Cannot export without works. Please add works using works() or addWork().");
         }
-
-        $this->options['detail_count'] = $detailCount;
         return $this->exporter->export($this->works, $this->options);
     }
 }
