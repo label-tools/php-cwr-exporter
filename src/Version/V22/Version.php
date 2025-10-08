@@ -60,51 +60,6 @@ class Version implements VersionInterface
         ];
     }
 
-    public function countDetailLines(array $works, array $options): int
-    {
-        $detailCount = 0;
-        foreach ($works as $work) {
-            // NWR per work
-            $detailCount++;
-
-            // SPU & SPT for each publisher
-            if (!empty($work->publishers)) {
-                // SPU records
-                $detailCount += count($work->publishers);
-
-                // SPT records
-                foreach ($work->publishers as $pub) {
-                    $detailCount += count($pub->territories ?? []);
-                }
-            }
-
-            // SWR & SWT for each writer
-            $writerCount = 0;
-            if (!empty($work->writers)) {
-                $writerCount = count($work->writers);
-                // SWR records
-                $detailCount += $writerCount;
-
-                // SWT records
-                foreach ($work->writers as $wr) {
-                    $detailCount += count($wr->territories ?? []);
-                }
-            }
-
-            // PWR link: one per writer if publishers exist
-            if (!empty($work->publishers) && $writerCount > 0) {
-                $detailCount += $writerCount;
-            }
-
-            // ALT records for each alternate title
-            if (!empty($work->alternateTitles)) {
-                $detailCount += count($work->alternateTitles);
-            }
-        }
-
-        return $detailCount;
-    }
-
     /**
      * @param \LabelTools\PhpCwrExporter\Definitions\WorkDefinition[] $works
      * @param array $options

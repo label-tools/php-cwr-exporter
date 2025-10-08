@@ -20,15 +20,15 @@ class CwrExporter
 
     public function export(array $works, array $opts): string
     {
-        // Complete options with calculated counts
+        // Set initial options
         $opts['group_count'] = 1; // single group per file
         $opts['transaction_count'] = count($works); // one transaction per work
         $opts['header_count'] = 2; // file header + group header
-        $opts['detail_count'] = $this->version->countDetailLines($works, $opts);
 
         // Retrieve pre-formatted lines from the version implementation
-        $headerLines  = $this->version->renderHeader($opts); // Pass all options
-        $detailLines  = $this->version->renderDetailLines($works, $opts); // Pass all options
+        $headerLines  = $this->version->renderHeader($opts);
+        $detailLines  = $this->version->renderDetailLines($works, $opts);
+        $opts['detail_count'] = count($detailLines); // Count the lines after they are generated
         $trailerLines = $this->version->renderTrailer($opts); // Pass all options
 
         // Merge all lines into a single sequence
