@@ -165,6 +165,18 @@ class Version implements VersionInterface
                 }
             }
 
+            // ALT records for each alternate title
+            if (!empty($work->alternateTitles)) {
+                foreach ($work->alternateTitles as $alt) {
+                    $lines[] = (new AltRecord(
+                        alternateTitle: $alt['alternate_title'],
+                        titleType:      $alt['title_type'],
+                        languageCode:   $alt['language_code'] ?? null
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                }
+            }
+
             // PWR link: connect each writer to the first publisher sequence if publishers exist
             if (!empty($work->publishers)) {
                 $firstPublisherSequence = 1; // SPU sequence starts at 1
@@ -177,18 +189,6 @@ class Version implements VersionInterface
                         societyAssignedAgreementNumber: (property_exists($firstPublisher, 'societyAssignedAgreementNumber') ? (string) $firstPublisher->societyAssignedAgreementNumber : ''),
                         writerIpNumber:                 $wr->interestedPartyNumber,
                         publisherSequenceNumber:        $firstPublisherSequence
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                }
-            }
-
-            // ALT records for each alternate title
-            if (!empty($work->alternateTitles)) {
-                foreach ($work->alternateTitles as $alt) {
-                    $lines[] = (new AltRecord(
-                        alternateTitle: $alt['alternate_title'],
-                        titleType:      $alt['title_type'],
-                        languageCode:   $alt['language_code'] ?? null
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
                 }
