@@ -33,11 +33,6 @@ class GrtRecord extends Record
         }
     }
 
-    protected function validateBeforeToString(): void
-    {
-
-    }
-
     public function setGroupId(int $groupId): self
     {
         $this->validateGroupId($groupId);

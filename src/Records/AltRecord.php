@@ -5,7 +5,6 @@ namespace LabelTools\PhpCwrExporter\Records;
 use LabelTools\PhpCwrExporter\Enums\TitleType;
 use LabelTools\PhpCwrExporter\Enums\LanguageCode;
 use LabelTools\PhpCwrExporter\Fields\HasLanguageCode;
-use LabelTools\PhpCwrExporter\Traits\HasRecordPrefix;
 
 class AltRecord extends Record
 {

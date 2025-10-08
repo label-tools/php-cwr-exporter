@@ -133,6 +133,4 @@ class SwtRecord extends Record
         //     throw new \RuntimeException("SWT: Sequence Number is required (Version 2.1).");
         // }
     }
-
-
 }

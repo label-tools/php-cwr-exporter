@@ -16,7 +16,6 @@ use LabelTools\PhpCwrExporter\Fields\HasLanguageCode;
 
 class NwrRecord extends Record
 {
-
     use HasLanguageCode;
 
     protected static string $recordType = 'NWR'; // A{3}
@@ -129,7 +128,6 @@ class NwrRecord extends Record
              ->setOpusNumber($opusNumber ?? '')
              ->setCatalogueNumber($catalogueNumber ?? '');
     }
-
 
     protected function validateBeforeToString(): void
     {
