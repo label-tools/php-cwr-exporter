@@ -23,53 +23,53 @@ describe('New Work Registration (NWR) Record', function () {
             expect(substr($str, 11, 8))->toBePaddedLeft('1', 8, '0');
 
             // Title (60 A)
-            expect(substr($str, 19, 60))->toBe(str_pad('My Song Title', 60, ' '));
+            expect(substr($str, 19, 60))->toBePadded('My Song Title', 60);
             // Language Code (defaults to spaces)
-            expect(substr($str, 79, 2))->toBe('  ');
+            expect(substr($str, 79, 2))->toBePadded('', 2);
             // Submitter Work # (14 A)
-            expect(substr($str, 81, 14))->toBe(str_pad('SUB123', 14, ' '));
+            expect(substr($str, 81, 14))->toBePadded('SUB123', 14);
             // ISWC (defaults to empty)
-            expect(substr($str, 95, 11))->toBe(str_repeat(' ', 11));
+            expect(substr($str, 95, 11))->toBePadded('', 11);
             // Copyright Date (defaults to zeros)
-            expect(substr($str, 106, 8))->toBe('00000000');
+            expect(substr($str, 106, 8))->toBePadded('', 8);
             // Copyright Number
-            expect(substr($str, 114, 12))->toBe(str_repeat(' ', 12));
+            expect(substr($str, 114, 12))->toBePadded('', 12);
             // Distribution Category
             expect(substr($str, 126, 3))->toBe('POP');
             // Duration (defaults to zeros)
-            expect(substr($str, 129, 6))->toBe('000000');
+            expect(substr($str, 129, 6))->toBePadded('', 6);
             // Recorded Indicator (defaults to space)
             expect(substr($str, 135, 1))->toBe(' ');
             // Text Music Relationship (defaults to spaces)
-            expect(substr($str, 136, 3))->toBe('   ');
+            expect(substr($str, 136, 3))->toBePadded('', 3);
             // Composite Type
-            expect(substr($str, 139, 3))->toBe('   ');
+            expect(substr($str, 139, 3))->toBePadded('', 3);
             // Version Type
             expect(substr($str, 142, 3))->toBe('ORI');
             // Excerpt Type
-            expect(substr($str, 145, 3))->toBe('   ');
+            expect(substr($str, 145, 3))->toBePadded('', 3);
             // Music Arrangement
-            expect(substr($str, 148, 3))->toBe('   ');
+            expect(substr($str, 148, 3))->toBePadded('', 3);
             // Lyric Adaptation
-            expect(substr($str, 151, 3))->toBe('   ');
+            expect(substr($str, 151, 3))->toBePadded('', 3);
             // Contact Name
-            expect(substr($str, 154, 30))->toBe(str_repeat(' ', 30));
+            expect(substr($str, 154, 30))->toBePadded('', 30);
             // Contact ID
-            expect(substr($str, 184, 10))->toBe(str_repeat(' ', 10));
+            expect(substr($str, 184, 10))->toBePadded('', 10);
             // CWR Work Type
-            expect(substr($str, 194, 2))->toBe('  ');
+            expect(substr($str, 194, 2))->toBePadded('', 2);
             // Grand Rights Indicator
             expect(substr($str, 196, 1))->toBe(' ');
             // Composite Component Count
             expect(substr($str, 197, 3))->toBe('000');
             // Publication Date
-            expect(substr($str, 200, 8))->toBe('00000000');
+            expect(substr($str, 200, 8))->toBePadded('', 8);
             // Exceptional Clause
             expect(substr($str, 208, 1))->toBe(' ');
             // Opus Number
-            expect(substr($str, 209, 25))->toBe(str_repeat(' ', 25));
+            expect(substr($str, 209, 25))->toBePadded('', 25);
             // Catalogue Number
-            expect(substr($str, 234, 25))->toBe(str_repeat(' ', 25));
+            expect(substr($str, 234, 25))->toBePadded('', 25);
         });
     });
 

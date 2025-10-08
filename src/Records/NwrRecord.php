@@ -109,9 +109,9 @@ class NwrRecord extends Record
         // Optional fields
         $this->setLanguageCode($languageCode ?? '')
              ->setIswc($iswc ?? '')
-             ->setCopyrightDate($copyrightDate ?? '00000000')
-             ->setCopyrightNumber($copyrightNumber ?? '')
-             ->setDuration($duration ?? '000000')
+             ->setCopyrightDate($copyrightDate)
+             ->setCopyrightNumber($copyrightNumber)
+             ->setDuration($duration)
              ->setRecordedIndicator($recordedIndicator)
              ->setTextMusicRelationship($textMusicRelationship ?? '')
              ->setCompositeType($compositeType ?? '')
@@ -123,7 +123,7 @@ class NwrRecord extends Record
              ->setCwrWorkType($cwrWorkType ?? '')
              ->setGrandRightsInd($grandRightsInd)
              ->setCompositeComponentCount($compositeComponentCount)
-             ->setPublicationDate($publicationDate ?? '00000000')
+             ->setPublicationDate($publicationDate)
              ->setExceptionalClause($exceptionalClause)
              ->setOpusNumber($opusNumber ?? '')
              ->setCatalogueNumber($catalogueNumber ?? '');
@@ -178,19 +178,19 @@ class NwrRecord extends Record
         return $this;
     }
 
-    public function setCopyrightDate(string $date): self
+    public function setCopyrightDate(?string $date): self
     {
         // If entered, must be YYYYMMDD, else default zeros
-        if (!preg_match('/^\d{8}$/', $date)) {
+        if (!empty($date) && !preg_match('/^\d{8}$/', $date)) {
             throw new \InvalidArgumentException("Date must be YYYYMMDD: {$date}");
         }
-        $this->data[self::IDX_COPYDATE] = $date;
+        $this->data[self::IDX_COPYDATE] = $date ?? '';
         return $this;
     }
 
-    public function setCopyrightNumber(string $num): self
+    public function setCopyrightNumber(?string $num): self
     {
-        $this->data[self::IDX_COPYNUM] = $num;
+        $this->data[self::IDX_COPYNUM] = $num ?? '';
         return $this;
     }
 
@@ -208,16 +208,21 @@ class NwrRecord extends Record
         return $this;
     }
 
-    public function setDuration(string $dur): self
+    public function setDuration(?string $dur): self
     {
-        if (!preg_match('/^[0-9]{6}$/', $dur)) {
+        if (!empty($dur) && !preg_match('/^[0-9]{6}$/', $dur)) {
             throw new \InvalidArgumentException("Duration must be HHMMSS: {$dur}");
         }
         $mwdc = $this->data[self::IDX_MWDC] ?? '';
-        if ($mwdc === MusicalWorkDistributionCategory::SERIOUS->value && $dur === '000000') {
+        if ($mwdc === MusicalWorkDistributionCategory::SERIOUS->value && ($dur === '000000' || empty($dur))) {
             throw new \InvalidArgumentException("Duration must be > 000000 when category is SER");
         }
-        $this->data[self::IDX_DURATION] = $dur;
+
+        //@todo Note that some societies may also require
+        //duration for works where the Musical Work Distribution
+        //Category is equal to JAZ (e.g. BMI).
+
+        $this->data[self::IDX_DURATION] = $dur ?? '';
         return $this;
     }
 
@@ -370,12 +375,12 @@ class NwrRecord extends Record
         }
     }
 
-    public function setPublicationDate(string $date): self
+    public function setPublicationDate(?string $date): self
     {
-        if (!preg_match('/^\d{8}$/', $date)) {
+        if (!empty($date) && !preg_match('/^\d{8}$/', $date)) {
             throw new \InvalidArgumentException("Date must be YYYYMMDD: {$date}");
         }
-        $this->data[self::IDX_PUBDATE] = $date;
+        $this->data[self::IDX_PUBDATE] = $date ?? '';
         return $this;
     }
 
