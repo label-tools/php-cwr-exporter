@@ -14,9 +14,9 @@ class SwtRecord extends \LabelTools\PhpCwrExporter\Records\SwtRecord
     public function __construct(
         string $interestedPartyNumber,
         string $inclusionExclusionIndicator,
-        int $prCollectionShare = 0,
-        int $mrCollectionShare = 0,
-        int $srCollectionShare = 0,
+        float|int $prCollectionShare = 0,
+        float|int $mrCollectionShare = 0,
+        float|int $srCollectionShare = 0,
         null|int|TisCode $tisNumericCode = null,
         string $sharesChange = '',
         ?int $sequenceNumber = 1

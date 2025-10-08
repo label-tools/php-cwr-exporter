@@ -159,7 +159,10 @@ class Version implements VersionInterface
                         interestedPartyNumber:       $wr->interestedPartyNumber,
                         tisNumericCode:              $terr['tis_code'] ?? null,
                         inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
-                        sequenceNumber:              ++$swtSeq
+                        sequenceNumber:              ++$swtSeq,
+                        prCollectionShare:           $terr['pr_collection_share'] ?? 0,
+                        mrCollectionShare:           $terr['mr_collection_share'] ?? 0,
+                        srCollectionShare:           $terr['sr_collection_share'] ?? 0,
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
                 }

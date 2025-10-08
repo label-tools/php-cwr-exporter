@@ -48,6 +48,9 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                     'pr_affiliation_society' => SocietyCode::BMI->value,
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
+                        'pr_collection_share' => 12.5,
+                        'mr_collection_share' => 25,
+                        'sr_collection_share' => 30.12,
                         'inclusion_exclusion_indicator' => 'I',
                     ]]
                 ]],
@@ -319,4 +322,18 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
     expect($field($spt2, 40, 5))->toBe('03333'); // MR Collection Share 33.33%
     expect($field($spt2, 45, 5))->toBe('10000'); // SR Collection Share 100.00%
     expect(trim($field($spt2, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
+
+    // --- SWT field-level spot checks ---
+    $swtIndexes = [];
+    foreach ($lines as $i => $rec) {
+        if ($field($rec, 1, 3) === 'SWT') { $swtIndexes[] = $i; }
+    }
+    expect(count($swtIndexes))->toBe(2);
+
+    // Check first SWT record (from first work)
+    $swt1 = $lines[$swtIndexes[0]];
+    expect($field($swt1, 29, 5))->toBe('01250'); // PR Collection Share 12.50%
+    expect($field($swt1, 34, 5))->toBe('02500'); // MR Collection Share 25.00%
+    expect($field($swt1, 39, 5))->toBe('03012'); // SR Collection Share 30.12%
+    expect(trim($field($swt1, 45, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
 });
