@@ -46,6 +46,7 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
                     'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                     'ipi_name_number' => '123456789',
                     'pr_affiliation_society' => SocietyCode::BMI->value,
+                    'publisher_interested_party_number' => 'P000001', //use for linking to publisher
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'pr_collection_share' => 12.5,
@@ -289,18 +290,25 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
     expect($field($alt2, 80, 2))->toBe(TitleType::ALTERNATIVE_TITLE->value);
     expect($field($alt2, 82, 2))->toBe(LanguageCode::FRENCH->value);
 
-    // --- Transaction level validations around shares (spec §4.2/Transaction Level Validation) ---
-    // Our fixture defines a single writer CA and a publisher chain with PR 50%, MR/SR 100% collection shares.
-    // We cannot re-calculate all shares without parsing all detail records, but we can ensure there is at least one SWR/OWR and one SPU/PWR present under each NWR.
-    foreach ($txHeaderIndexes as $t => $startIndex) {
-        $nextBoundary = $t + 1 < $txCount ? $txHeaderIndexes[$t + 1] : $grtIndex; // up to GRT
-        $slice = array_slice($lines, $startIndex + 1, $nextBoundary - $startIndex - 1);
-        $types = array_map(fn($r) => $field($r, 1, 3), $slice);
-        expect($types)->toContain('SPU'); // at least one controlled publisher (spec: SPU required if writer shares < 100%)
-        expect($types)->toContain('SWR'); // at least one writer (spec)
-        expect($types)->toContain('PWR'); // link publisher to writer (spec)
-        expect($types)->toContain('SPT'); // at least one territory for publisher
-    }
+    // --- Transaction-level validations and PWR linking checks ---
+    // Get records for the first transaction (Work 1)
+    $tx1_slice = array_slice($lines, $txHeaderIndexes[0] + 1, $txHeaderIndexes[1] - $txHeaderIndexes[0] - 1);
+    $tx1_types = array_map(fn($r) => $field($r, 1, 3), $tx1_slice);
+
+    // Assert basic record presence for Work 1
+    expect($tx1_types)->toContain('SPU'); // Publisher
+    expect($tx1_types)->toContain('SWR'); // Writer
+    expect($tx1_types)->toContain('SPT'); // Publisher Territory
+
+    // Assert PWR record EXISTS for Work 1, as the writer has a publisher_interested_party_number
+    expect($tx1_types)->toContain('PWR');
+
+    // Get records for the second transaction (Work 2)
+    $tx2_slice = array_slice($lines, $txHeaderIndexes[1] + 1, $grtIndex - $txHeaderIndexes[1] - 1);
+    $tx2_types = array_map(fn($r) => $field($r, 1, 3), $tx2_slice);
+
+    // Assert PWR record DOES NOT EXIST for Work 2, as the writer is not linked to a publisher
+    expect($tx2_types)->not->toContain('PWR');
 
     // --- SPT field-level spot checks ---
     $sptIndexes = [];

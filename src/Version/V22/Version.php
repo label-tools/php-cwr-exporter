@@ -180,20 +180,27 @@ class Version implements VersionInterface
                 }
             }
 
-            // PWR link: connect each writer to the first publisher sequence if publishers exist
+            // PWR link: Link represented writers to their publishers
             if (!empty($work->publishers)) {
-                $firstPublisherSequence = 1; // SPU sequence starts at 1
-                $firstPublisher = $work->publishers[0];
+                $publisherMap = [];
+                foreach ($work->publishers as $pubIndex => $pub) {
+                    $publisherMap[$pub->interestedPartyNumber] = ['def' => $pub, 'seq' => $pubIndex + 1];
+                }
+
                 foreach ($work->writers ?? [] as $wr) {
-                    $lines[] = (new PwrRecord(
-                        publisherIpNumber:              $firstPublisher->interestedPartyNumber,
-                        publisherName:                  $firstPublisher->publisherName,
-                        submitterAgreementNumber:       $firstPublisher->submitterAgreementNumber ?? '',
-                        societyAssignedAgreementNumber: (property_exists($firstPublisher, 'societyAssignedAgreementNumber') ? (string) $firstPublisher->societyAssignedAgreementNumber : ''),
-                        writerIpNumber:                 $wr->interestedPartyNumber,
-                        publisherSequenceNumber:        $firstPublisherSequence
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
+                    // Only create a PWR link if the writer is represented by a publisher in this work
+                    if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
+                        $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];
+                        $lines[] = (new PwrRecord(
+                            publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
+                            publisherName:                  $publisherData['def']->publisherName,
+                            submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
+                            societyAssignedAgreementNumber: (property_exists($publisherData['def'], 'societyAssignedAgreementNumber') ? (string) $publisherData['def']->societyAssignedAgreementNumber : ''),
+                            writerIpNumber:                 $wr->interestedPartyNumber,
+                            publisherSequenceNumber:        $publisherData['seq'],
+                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                          ->toString();
+                    }
                 }
             }
 

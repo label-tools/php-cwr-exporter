@@ -13,7 +13,9 @@ class WriterDefinition
         public readonly WriterDesignation|string $writerDesignationCode,
         public readonly ?string $ipiNameNumber = null,
         public readonly ?string $prAffiliationSociety = null,
-        public readonly array $territories = []
+        public readonly array $territories = [],
+        public readonly null|int|string $publisherInterestedPartyNumber = null, //this was added so we know how to link writers to publishers
+
     ) {
         if ($this->interestedPartyNumber === '') {
             throw new \InvalidArgumentException('Interested Party Number is required.');
@@ -39,6 +41,7 @@ class WriterDefinition
         $ipiNameNumber = $data['ipi_name_number'] ?? null;
         $prAffiliationSociety = $data['pr_affiliation_society'] ?? null;
         $territories = $data['territories'] ?? [];
+        $publisherInterestedPartyNumber = $data['publisher_interested_party_number'] ?? null;
 
         return new self(
             interestedPartyNumber: $interestedPartyNumber,
@@ -48,6 +51,7 @@ class WriterDefinition
             ipiNameNumber: $ipiNameNumber,
             prAffiliationSociety: $prAffiliationSociety,
             territories: $territories,
+            publisherInterestedPartyNumber: $publisherInterestedPartyNumber,
         );
     }
 }
