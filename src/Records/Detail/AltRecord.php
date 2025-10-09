@@ -39,8 +39,8 @@ class AltRecord extends Record
 
     public function setAlternateTitle(string $title): self
     {
-        $title = trim($title);
-        if ($title === '' || strlen($title) > 60) {
+        $title = trim(mb_strtoupper($title));
+        if ($title === '' || mb_strlen($title) > 60) {
             throw new \InvalidArgumentException('Alternate Title must be 1–60 characters: ' . $title);
         }
         $this->data[self::IDX_ALTERNATE_TITLE] = $title;

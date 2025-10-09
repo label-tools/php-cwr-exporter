@@ -24,7 +24,7 @@ describe('ALT (Alternate Title) Record', function () {
             expect(substr($out, 3, 16))->toBePadded('0', 16, '0');
 
             // 19–78: Alternate Title (60 chars)
-            expect(substr($out, 19, 60))->toBePadded('My Alternate Title', 60);
+            expect(substr($out, 19, 60))->toBePadded('MY ALTERNATE TITLE', 60);
 
             // 79–80: Title Type (2 chars) => FT
             expect(substr($out, 79, 2))->toBe(TitleType::FORMAL_TITLE->value);
@@ -76,16 +76,57 @@ describe('ALT (Alternate Title) Record', function () {
 
         it('accepts national-character types when Language Code is provided', function () {
             $record = new AltRecord(
-                alternateTitle: 'Título',
+                alternateTitle: 'TÍTULOÍÍÍÍÍ',
                 titleType: TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS,
                 languageCode: LanguageCode::SPANISH
             );
 
             $out = $record->setRecordPrefix(0,0)->toString();
 
-            expect(strlen($out))->toBe(83);
-            expect(substr($out, 79, 2))->toBe(TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS->value);
-            expect(substr($out, 81, 2))->toBePadded('ES', 2);
+
+            expect(mb_strlen($out))->toBe(83);
+
+            // 19–78: Alternate Title (60 chars)
+            $title = mb_substr($out, 19, 60);
+
+            expect(strlen($title))->toBe(66); //without mb.. will count all the bytes of non-ascii chars
+            expect(mb_strlen($title))->toBe(60);
+            expect(mb_substr($out, 19, 60))->toBePadded('TÍTULOÍÍÍÍÍ', 60);
+
+            // 79–80: Title Type (2 chars)
+            expect(mb_substr($out, 79, 2))->toBe(TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS->value);
+
+            // 81–82: Language Code (2 chars)
+            expect(mb_substr($out, 81, 2))->toBe(LanguageCode::SPANISH->value);
+
+        });
+
+        it('alt title with special character', function () {
+            $record = new AltRecord(
+                alternateTitle: 'NADA MÁS',
+                titleType: TitleType::ALTERNATIVE_TITLE,
+            );
+
+            $out = $record->setRecordPrefix(0,0)->toString();
+
+            expect(mb_strlen($out))->toBe(83);
+            expect(mb_substr($out, 19, 60))->toBePadded('NADA MÁS', 60);
+            expect(mb_substr($out, 79, 2))->toBe(TitleType::ALTERNATIVE_TITLE->value);
+        });
+
+        it('accepts national characters in title', function () {
+            $record = new AltRecord(
+                alternateTitle: 'NADA MÁS',
+                titleType: TitleType::ALTERNATIVE_TITLE_NATIONAL_CHARACTERS,
+                languageCode: LanguageCode::SPANISH
+            );
+
+            $out = $record->setRecordPrefix(0,0)->toString();
+
+            expect(mb_strlen($out))->toBe(83);
+            expect(mb_substr($out, 19, 60))->toBePadded('NADA MÁS', 60);
+            expect(mb_substr($out, 79, 2))->toBe(TitleType::ALTERNATIVE_TITLE_NATIONAL_CHARACTERS->value);
+            expect(mb_substr($out, 81, 2))->toBe(LanguageCode::SPANISH->value);
         });
     });
 });

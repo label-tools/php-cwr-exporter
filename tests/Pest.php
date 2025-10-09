@@ -29,11 +29,11 @@ expect()->extend('toBeOne', function () {
 });
 
 expect()->extend('toBePadded', function ($expected, int $width, string $pad_string = ' ', $pad_type = STR_PAD_RIGHT) {
-    return $this->toBe(str_pad((string) $expected, $width, $pad_string, $pad_type));
+    return $this->toBe(mb_str_pad((string) $expected, $width, $pad_string, $pad_type));
 });
 
 expect()->extend('toBePaddedLeft', function ($expected, int $width, string $pad_string = ' ') {
-    return $this->toBe(str_pad((string) $expected, $width, $pad_string, STR_PAD_LEFT));
+    return $this->toBe(mb_str_pad((string) $expected, $width, $pad_string, STR_PAD_LEFT));
 });
 
 

@@ -82,7 +82,55 @@ abstract class Record
         $data = $this->data;
         ksort($data);
 
-        return vsprintf($this->stringFormat, $data);
+
+        return $this->mbVsprintf($this->stringFormat, $data);
+    }
+
+    /**
+     * A multi-byte-safe version of vsprintf.
+     *
+     * It parses the format string and applies padding to string arguments ('s' type specifier)
+     * using mb_strlen to correctly handle multi-byte characters. Other format specifiers are
+     * passed through to the native sprintf.
+     *
+     * @param string $format The format string.
+     * @param array  $args   The arguments.
+     * @return string The formatted string.
+     */
+    private function mbVsprintf(string $format, array $args): string
+    {
+        $argIndex = 1;
+        // Split the format string by '%' placeholders, keeping the delimiters
+        $parts = preg_split('/(%[-]?\d*[sduxX])/', $format, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        $newFormat = '';
+        foreach ($parts as $part) {
+            // Check if the part is a format specifier
+            if (preg_match('/^%(?<align>[-]?)(?<pad>\d*)(?<type>[sduxX])$/', $part, $matches)) {
+                $value = $args[$argIndex++] ?? '';
+                $type = $matches['type'];
+                $align = $matches['align'];
+                $padWidth = (int)($matches['pad'] ?? 0);
+
+                if ($type === 's') {
+                    // Handle string padding with multi-byte awareness
+                    $valueStr = (string)$value;
+                    $valueLen = mb_strlen($valueStr);
+                    $normalValueLen = strlen($valueStr);
+
+                    if ($padWidth > 0 && $valueLen !== $normalValueLen) {
+                        // Number of extra bytes beyond character count (e.g., 'Á' => 2 bytes vs 1 char => +1)
+                        $byteOverhead = $normalValueLen - $valueLen; // always >= 0 for multibyte
+                        // Build a new specifier that increases the width by the byte overhead
+                        // so sprintf pads by enough bytes to yield the intended display width.
+                        $adjustedWidth = $padWidth + $byteOverhead;
+                        $part = '%' . $align . $adjustedWidth . $type;
+                    }
+                }
+            }
+            $newFormat .= $part;
+        }
+
+        return vsprintf($newFormat, $args);
     }
 
     protected function defaultDate(?string $value = null, string $format = 'Ymd'): string
