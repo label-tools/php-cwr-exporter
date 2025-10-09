@@ -2,18 +2,18 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V22;
 
-use LabelTools\PhpCwrExporter\Records\AltRecord;
 use LabelTools\PhpCwrExporter\Contracts\VersionInterface;
-use LabelTools\PhpCwrExporter\Version\V22\Records\HdrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\GrhRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\NwrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\SwrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\SwtRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\PwrRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\SpuRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\SptRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\GrtRecord;
-use LabelTools\PhpCwrExporter\Version\V22\Records\TrlRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Control\GrtRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Control\GrhRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Control\HdrRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Control\TrlRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\AltRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\PwrRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\SptRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\SpuRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\SwrRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\SwtRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Transaction\NwrRecord;
 
 /**
  * CWR Version 2.2 implementation.
