@@ -136,7 +136,8 @@ abstract class Record
 
     protected function setAlphaNumeric($index, ?string $value): void
     {
-        $value = trim($value);
+        $value = trim((string)$value);
+
         // Ensure ASCII only
         if (!mb_check_encoding($value, 'ASCII')) {
             throw new \InvalidArgumentException("Value must be ASCII: {$value}");
@@ -146,7 +147,7 @@ abstract class Record
         $upper = strtoupper($value);
 
         // Reject control characters (NUL..US and DEL). Allow space (0x20) through tilde (0x7E).
-        if (!preg_match('/^[\x20-\x7E]+$/', $upper)) {
+        if (!empty($upper) && !preg_match('/^[\x20-\x7E]+$/', $upper)) {
             throw new \InvalidArgumentException("Value must contain printable ASCII characters only: {$value}");
         }
 

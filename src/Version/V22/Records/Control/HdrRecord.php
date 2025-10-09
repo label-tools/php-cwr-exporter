@@ -59,7 +59,8 @@ class HdrRecord extends V21HdrRecord
         if ($softwarePackage !== null && mb_strlen($softwarePackage) > 30) {
             throw new \InvalidArgumentException("Software Package must be at most 30 characters long.");
         }
-        $this->data[self::INDEX_SW_PACKAGE] = $softwarePackage;
+
+        $this->setAlphaNumeric(self::INDEX_SW_PACKAGE, $softwarePackage);
         return $this;
     }
 

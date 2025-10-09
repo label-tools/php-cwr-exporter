@@ -185,7 +185,7 @@ describe('Transmission Header Record', function () {
             );
 
             $record = $hdr->toString();
-            expect(substr($record, 107, 30))->toBe(str_pad('MySoftware', 30));
+            expect(substr($record, 107, 30))->toBe(str_pad('MYSOFTWARE', 30));
             expect(substr($record, 137, 30))->toBe(str_pad('v1.0.0', 30));
         });
 
