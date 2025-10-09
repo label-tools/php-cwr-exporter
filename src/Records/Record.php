@@ -192,6 +192,28 @@ abstract class Record
         $this->data[$index] = $d->format($format);
     }
 
+    protected function setList(int $index, string $lookupEnum, BackedEnum|string|null $value, ?string $fieldName = null): self
+    {
+        if (!is_subclass_of($lookupEnum, BackedEnum::class)) {
+            throw new \InvalidArgumentException('$lookupEnum must be a class name of a BackedEnum.');
+        }
+
+        if (empty($value)) {
+            $this->data[$index] = '';
+            return $this;
+        }
+
+        try {
+            $enum = $value instanceof $lookupEnum ? $value : $lookupEnum::from($value);
+            $this->data[$index] = $enum->value;
+        } catch (\ValueError $e) {
+            $fieldName ??= (new \ReflectionClass($lookupEnum))->getShortName();
+            throw new \InvalidArgumentException("Invalid value for {$fieldName}. Given: {$value}", 0, $e);
+        }
+
+        return $this;
+    }
+
     protected function setTime($index, null|string|DateTime $time = null, $defaultTimeOnEmpty = false, $fieldName = null): void
     {
         $format = 'His';

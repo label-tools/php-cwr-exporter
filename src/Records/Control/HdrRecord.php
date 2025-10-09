@@ -25,8 +25,14 @@ class HdrRecord extends Record
     protected string $senderType;
     protected string $senderId;
 
-    public function __construct(null|SenderType|string $senderType = null, ?string $senderId = null, ?string $senderName = null, ?string $creationDate = null, ?string $creationTime = null, ?string $transmissionDate = null)
-    {
+    public function __construct(
+        SenderType|string $senderType,
+        string $senderId,
+        string $senderName,
+        null|string|DateTime $creationDate = null, //this could be left null and we will default to now
+        null|string|DateTime $creationTime = null,
+        null|string|DateTime $transmissionDate = null
+    ){
         parent::__construct(); //ALWAYS CALL PARENT CONSTRUCTOR FIRST
 
         if (!empty($senderType) && !empty($senderId)) {
@@ -38,8 +44,7 @@ class HdrRecord extends Record
         $this->setCreationDate($creationDate);
         $this->setCreationTime($creationTime);
         $this->setTransmissionDate($transmissionDate);
-
-        $this->data[self::INDEX_EDI_VERSION] = static::$ediVersion;
+        $this->setAlphaNumeric(self::INDEX_EDI_VERSION, static::$ediVersion);
     }
 
     public function setSenderTypeAndId(string|SenderType $senderType, string $senderId): self

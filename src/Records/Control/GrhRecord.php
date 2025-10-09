@@ -20,39 +20,20 @@ class GrhRecord extends Record
     ) {
         parent::__construct();
 
-        if (!is_null($transactionType)) {
-            $this->setTransactionType($transactionType);
-        } else {
-            $this->data[self::INDEX_TRANSACTION_TYPE] = ''; // Default to '01' if not provided
-        }
-        if (!is_null($groupId)) {
-            $this->setGroupId($groupId);
-        } else {
-            $this->data[self::INDEX_GROUP_ID] = 1; // Default to 0 if not provided
-        }
+        $this->setTransactionType($transactionType ?? '');
+        $this->setGroupId($groupId ?? 1);
     }
 
     public function setTransactionType(string|TransactionType $transactionType): self
     {
-        $transactionType = $this->validateTransactionType($transactionType);
-        $this->data[self::INDEX_TRANSACTION_TYPE] = $transactionType->value;
-        return $this;
+        return $this->setList(self::INDEX_TRANSACTION_TYPE, TransactionType::class, $transactionType);
     }
 
     public function setGroupId(int $groupId): self
     {
         $this->validateGroupId($groupId);
-        $this->data[self::INDEX_GROUP_ID] = $groupId;
+        $this->setNumeric(self::INDEX_GROUP_ID, $groupId);
         return $this;
-    }
-
-    private function validateTransactionType(string|TransactionType $transactionType): TransactionType
-    {
-        try {
-            return $transactionType instanceof TransactionType ? $transactionType : TransactionType::from($transactionType);
-        } catch (\ValueError $e) {
-            throw new \InvalidArgumentException("Transaction Type must match an entry in the Transaction Type table.");
-        }
     }
 
     /**
@@ -83,7 +64,7 @@ class GrhRecord extends Record
     private function isGroupIdUnique(int $groupId): bool
     {
         return true;
-        // Placeholder logic: Replace with the actual logic to check against previously used Group IDs
+        // @todo Placeholder logic: Replace with the actual logic to check against previously used Group IDs
         $usedGroupIds = []; // This would come from the file context or a tracking mechanism
         return !in_array($groupId, $usedGroupIds, true);
     }
