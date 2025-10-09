@@ -15,12 +15,12 @@ class GrhRecord extends Record
     private const INDEX_GROUP_ID = 3;
 
     public function __construct(
-        null|string|TransactionType $transactionType = null,
+        string|TransactionType $transactionType,
         ?int $groupId = null,
     ) {
         parent::__construct();
 
-        $this->setTransactionType($transactionType ?? '');
+        $this->setTransactionType($transactionType);
         $this->setGroupId($groupId ?? 1);
     }
 

@@ -22,8 +22,7 @@ describe('Group Header Record', function () {
         });
 
         it('builds a valid GRH record according to the spec via fluent', function () {
-            $record = (new GrhRecord())
-                ->setTransactionType('NWR')
+            $record = (new GrhRecord('NWR'))
                 ->setGroupId(1);
 
             $record = $record->toString();
@@ -61,8 +60,7 @@ describe('Group Header Record', function () {
 
     describe('CWR v2.1', function () {
         it('builds a valid GRH record for CWR v2.1', function () {
-            $record = (new V21GrhRecord())
-                ->setTransactionType('NWR')
+            $record = (new V21GrhRecord('NWR'))
                 ->setGroupId(1);
 
             $record = $record->toString();
@@ -78,8 +76,7 @@ describe('Group Header Record', function () {
 
     describe('CWR v2.2', function () {
         it('builds a valid GRH record for CWR v2.2', function () {
-            $record = (new V22GrhRecord())
-                ->setTransactionType('NWR')
+            $record = (new V22GrhRecord('NWR'))
                 ->setGroupId(1)
                 ->setBatchRequest(123);
 

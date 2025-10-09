@@ -15,7 +15,7 @@ class GrhRecord extends BaseGrhRecord
     private const INDEX_SUBMISSION_DISTRO_TYPE = 6;
 
     public function __construct(
-        null|string|TransactionType $transactionType = null,
+        string|TransactionType $transactionType,
         ?int $groupId = null,
         ?int $batchRequest = null
     ) {
