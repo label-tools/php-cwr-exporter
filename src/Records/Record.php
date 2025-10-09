@@ -3,6 +3,7 @@
 namespace LabelTools\PhpCwrExporter\Records;
 
 use BackedEnum;
+use DateTime;
 
 abstract class Record
 {
@@ -131,6 +132,77 @@ abstract class Record
         }
 
         return vsprintf($newFormat, $args);
+    }
+
+    protected function setAlphaNumeric($index, ?string $value): void
+    {
+        $value = trim($value);
+        // Ensure ASCII only
+        if (!mb_check_encoding($value, 'ASCII')) {
+            throw new \InvalidArgumentException("Value must be ASCII: {$value}");
+        }
+
+        // Enforce uppercase for alphabetic characters, but allow ANY printable ASCII punctuation
+        $upper = strtoupper($value);
+
+        // Reject control characters (NUL..US and DEL). Allow space (0x20) through tilde (0x7E).
+        if (!preg_match('/^[\x20-\x7E]+$/', $upper)) {
+            throw new \InvalidArgumentException("Value must contain printable ASCII characters only: {$value}");
+        }
+
+        $this->data[$index] = $upper;
+    }
+
+    /**Numeric fields are to be right justified and zero filled. If there is an
+    implied decimal point, it will be defined in the record layout. If there
+    is no data to be entered in a numeric field, zeroes must be entered. */
+    protected function setNumeric($index, ?int $value): void
+    {
+        if (empty($value)) {
+            $this->data[$index] = 0;
+            return;
+        }
+        $this->data[$index] = (int)$value;
+    }
+
+    /**
+     * Dates are all formatted as YYYYMMDD. If there is no data to be entered in a date field, zeroes must be entered.
+     */
+    protected function setDate($index, null|string|DateTime $date = null, $defaultDateOnEmpty = false, $fieldName = null): void
+    {
+        $format = 'Ymd';
+        $fieldName ??= 'Date';
+
+        if (empty($date)) {
+            $this->data[$index] = $defaultDateOnEmpty ? (new DateTime())->format($format) : '00000000';
+            return;
+        }
+
+        if ($date instanceof DateTime) {
+            $this->data[$index] = $date->format($format);
+            return;
+        }
+
+        $d = DateTime::createFromFormat($format, $date);
+
+        if (!$d || $d->format($format) !== $date) {
+            throw new \InvalidArgumentException("{$fieldName} must be a valid date in 'YYYYMMDD' format. Given: {$date}");
+        }
+
+        $this->data[$index] = $d->format($format);
+    }
+
+    protected function setTime($index, null|string|DateTime $time = null, $defaultTimeOnEmpty = false, $fieldName = null): void
+    {
+        $format = 'His';
+        $fieldName ??= 'Time';
+
+        if (empty($time)) {
+            $this->data[$index] = $defaultTimeOnEmpty ? (new DateTime())->format($format) : '000000';
+            return;
+        }
+
+        $this->data[$index] = $time instanceof DateTime ? $time->format($format) : (new DateTime($time))->format($format);
     }
 
     protected function defaultDate(?string $value = null, string $format = 'Ymd'): string

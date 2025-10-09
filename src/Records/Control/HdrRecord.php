@@ -2,6 +2,7 @@
 
 namespace LabelTools\PhpCwrExporter\Records\Control;
 
+use DateTime;
 use LabelTools\PhpCwrExporter\Enums\SenderType;
 use LabelTools\PhpCwrExporter\Records\Record;
 
@@ -41,7 +42,6 @@ class HdrRecord extends Record
         $this->data[self::INDEX_EDI_VERSION] = static::$ediVersion;
     }
 
-
     public function setSenderTypeAndId(string|SenderType $senderType, string $senderId): self
     {
         try {
@@ -53,38 +53,33 @@ class HdrRecord extends Record
         $this->validateSenderId($senderTypeEnum, $senderId);
         $this->senderType = $this->resolveSenderType($senderTypeEnum, $senderId);
         $this->senderId = $this->resolveSenderId($senderTypeEnum, $senderId);
-        $this->data[self::INDEX_SENDER_TYPE] = $this->senderType;
-        $this->data[self::INDEX_SENDER_ID] = $this->senderId;
+        $this->setAlphaNumeric(self::INDEX_SENDER_TYPE, $this->senderType);
+        $this->setNumeric(self::INDEX_SENDER_ID, $this->senderId);
         return $this;
     }
 
     public function setSenderName(?string $senderName): self
     {
         $this->validateSenderName($senderName);
-        $this->data[self::INDEX_SENDER_NAME] = $senderName;
+        $this->setAlphaNumeric(self::INDEX_SENDER_NAME, $senderName);
         return $this;
     }
 
-    public function setCreationDate(?string $creationDate): self
+    public function setCreationDate(null|string|DateTime $creationDate): self
     {
-        $creationDate = $this->defaultDate($creationDate, 'Ymd');
-        $this->validateDate($creationDate, 'Creation Date');
-        $this->data[self::INDEX_CREATION_DATE] = $creationDate;
+        $this->setDate(self::INDEX_CREATION_DATE, $creationDate, true, 'Creation Date');
         return $this;
     }
 
-    public function setCreationTime(?string $creationTime): self
+    public function setCreationTime(null|string|DateTime $creationTime): self
     {
-        $creationTime = $this->defaultDate($creationTime, 'His');
-        $this->data[self::INDEX_CREATION_TIME] = $creationTime;
+        $this->setTime(self::INDEX_CREATION_TIME, $creationTime, true, 'Creation Time');
         return $this;
     }
 
-    public function setTransmissionDate(?string $transmissionDate): self
+    public function setTransmissionDate(null|string|DateTime $transmissionDate): self
     {
-        $transmissionDate = $this->defaultDate($transmissionDate, 'Ymd');
-        $this->validateDate($transmissionDate, 'Transmission Date');
-        $this->data[self::INDEX_TRANSMISSION_DATE] = $transmissionDate;
+        $this->setDate(self::INDEX_TRANSMISSION_DATE, $transmissionDate, true, 'Transmission Date');
         return $this;
     }
 
@@ -111,15 +106,6 @@ class HdrRecord extends Record
     {
         if (strlen($senderName) > 45) {
             throw new \InvalidArgumentException("Sender Name must not exceed 45 characters.");
-        }
-    }
-
-    private function validateDate(string $date, string $fieldName): void
-    {
-        $format = 'Ymd';
-        $d = \DateTime::createFromFormat($format, $date);
-        if (!$d || $d->format($format) !== $date) {
-            throw new \InvalidArgumentException("$fieldName must be a valid date in 'YYYYMMDD' format.");
         }
     }
 

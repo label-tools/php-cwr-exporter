@@ -152,7 +152,7 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
     // --- HDR checks (spec §3.5) ---
     $hdr = $lines[0];
     expect(trim($field($hdr, 4, 11)))->toBe('01265713057'); // Sender ID
-    expect(trim($field($hdr, 15, 45)))->toBe('Publishing Company'); // Sender Name
+    expect(trim($field($hdr, 15, 45)))->toBe('PUBLISHING COMPANY'); // Sender Name
 
     // --- HDR checks (spec §3.5) ---
     $hdr = $lines[0];

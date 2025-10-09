@@ -71,141 +71,150 @@ class Version implements VersionInterface
         $lines = [];
 
         foreach ($works as $work) {
-            // Reset record sequence for this transaction
-            $this->recordSequence = 0;
+            try {
+                $workLines = [];
+                // Reset record sequence for this transaction
+                $this->recordSequence = 0;
 
-            // NWR work header
-            $lines[] = new NwrRecord(
-                workTitle:             $work->title,
-                submitterWorkNumber:   $work->submitterWorkNumber,
-                mwDistributionCategory: $work->distributionCategory,
-                versionType:           $work->versionType,
-                languageCode:          $work->language           ?? null,
-                iswc:                  $work->iswc              ?? null,
-                copyrightDate:         $work->copyright_date    ?? null,
-                copyrightNumber:       $work->copyright_number  ?? null,
-                duration:              $work->duration          ?? null,
-                recordedIndicator:     $work->recorded          ?? false,
-                textMusicRelationship: $work->text_music_relationship ?? ''
-            )->setRecordPrefix($this->transactionSequence, $this->recordSequence)
-            ->toString();
+                // NWR work header
+                $workLines[] = (new NwrRecord(
+                    workTitle:             $work->title,
+                    submitterWorkNumber:   $work->submitterWorkNumber,
+                    mwDistributionCategory: $work->distributionCategory,
+                    versionType:           $work->versionType,
+                    languageCode:          $work->language           ?? null,
+                    iswc:                  $work->iswc              ?? null,
+                    copyrightDate:         $work->copyright_date    ?? null,
+                    copyrightNumber:       $work->copyright_number  ?? null,
+                    duration:              $work->duration          ?? null,
+                    recordedIndicator:     $work->recorded          ?? false,
+                    textMusicRelationship: $work->text_music_relationship ?? ''
+                ))->setRecordPrefix($this->transactionSequence, $this->recordSequence)
+                ->toString();
 
-            // SPU & SPT for each publisher
-            foreach ($work->publishers as $pubIndex => $pub) {
-                // SPU publisher record
-                $lines[] = (new SpuRecord(
-                    publisherSequence:           $pubIndex + 1,
-                    interestedPartyNumber:       $pub->interestedPartyNumber,
-                    publisherName:               $pub->publisherName,
-                    publisherType:               $pub->publisherType,
-                    taxId:                       $pub->taxId,
-                    publisherIpiName:            $pub->publisherIpiName,
-                    submitterAgreementNumber:    $pub->submitterAgreementNumber,
-                    prAffiliationSociety:        $pub->prAffiliationSociety,
-                    prOwnershipShare:            $pub->prOwnershipShare,
-                    mrAffiliationSociety:        $pub->mrAffiliationSociety,
-                    mrOwnershipShare:            $pub->mrOwnershipShare,
-                    srAffiliationSociety:        $pub->srAffiliationSociety,
-                    srOwnershipShare:            $pub->srOwnershipShare
-                ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                  ->toString();
-
-                // SPT territory records
-                foreach ($pub->territories ?? [] as $terrIndex => $terr) {
-                    $lines[] = (new SptRecord(
-                        interestedPartyNumber:        $pub->interestedPartyNumber,
-                        prCollectionShare:            $terr['pr_collection_share'] ?? 0,
-                        mrCollectionShare:            $terr['mr_collection_share'] ?? 0,
-                        srCollectionShare:            $terr['sr_collection_share'] ?? 0,
-                        tisNumericCode:               $terr['tis_code'],
-                        inclusionExclusionIndicator:  $terr['inclusion_exclusion_indicator'] ?? 'I',
-                        sharesChange:                 $terr['shares_change_flag'] ?? '',
-                        sequenceNumber:               $terrIndex + 1
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                }
-            }
-
-            // SWR & SWT for each writer
-            foreach ($work->writers ?? [] as $writerIndex => $wr) {
-                // SWR writer record
-                $lines[] = (new SwrRecord(
-                    interestedPartyNumber:   $wr->interestedPartyNumber,
-                    writerLastName:          $wr->writerLastName,
-                    writerFirstName:         $wr->writerFirstName,
-                    writerDesignationCode:   $wr->writerDesignationCode,
-                    taxId:                   '',
-                    writerIpiNameNumber:     $wr->ipiNameNumber ?? '',
-                    prAffiliationSociety:    $wr->prAffiliationSociety ?? null,
-                    prOwnershipShare:        property_exists($wr, 'prOwnershipShare') ? (int) $wr->prOwnershipShare : 0,
-                    mrAffiliationSociety:    property_exists($wr, 'mrAffiliationSociety') ? $wr->mrAffiliationSociety : null,
-                    mrOwnershipShare:        property_exists($wr, 'mrOwnershipShare') ? (int) $wr->mrOwnershipShare : 0,
-                    srAffiliationSociety:    property_exists($wr, 'srAffiliationSociety') ? $wr->srAffiliationSociety : null,
-                    srOwnershipShare:        property_exists($wr, 'srOwnershipShare') ? (int) $wr->srOwnershipShare : 0,
-                    reversionaryIndicator:   '',
-                    firstRecordingRefusalIndicator: '',
-                    workForHireIndicator:    '',
-                    filler:                  '',
-                    writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
-                    personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
-                    usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : ''
-                ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                  ->toString();
-
-                // SWT territory records for the writer (sequence starts at 1 per writer)
-                $swtSeq = 0;
-                foreach ($wr->territories ?? [] as $terr) {
-                    $lines[] = (new SwtRecord(
-                        interestedPartyNumber:       $wr->interestedPartyNumber,
-                        tisNumericCode:              $terr['tis_code'] ?? null,
-                        inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
-                        sequenceNumber:              ++$swtSeq,
-                        prCollectionShare:           $terr['pr_collection_share'] ?? 0,
-                        mrCollectionShare:           $terr['mr_collection_share'] ?? 0,
-                        srCollectionShare:           $terr['sr_collection_share'] ?? 0,
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                }
-            }
-
-            // ALT records for each alternate title
-            if (!empty($work->alternateTitles)) {
-                foreach ($work->alternateTitles as $alt) {
-                    $lines[] = (new AltRecord(
-                        alternateTitle: $alt['alternate_title'],
-                        titleType:      $alt['title_type'],
-                        languageCode:   $alt['language_code'] ?? null
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                }
-            }
-
-            // PWR link: Link represented writers to their publishers
-            if (!empty($work->publishers)) {
-                $publisherMap = [];
+                // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {
-                    $publisherMap[$pub->interestedPartyNumber] = ['def' => $pub, 'seq' => $pubIndex + 1];
-                }
+                    // SPU publisher record
+                    $workLines[] = (new SpuRecord(
+                        publisherSequence:           $pubIndex + 1,
+                        interestedPartyNumber:       $pub->interestedPartyNumber,
+                        publisherName:               $pub->publisherName,
+                        publisherType:               $pub->publisherType,
+                        taxId:                       $pub->taxId,
+                        publisherIpiName:            $pub->publisherIpiName,
+                        submitterAgreementNumber:    $pub->submitterAgreementNumber,
+                        prAffiliationSociety:        $pub->prAffiliationSociety,
+                        prOwnershipShare:            $pub->prOwnershipShare,
+                        mrAffiliationSociety:        $pub->mrAffiliationSociety,
+                        mrOwnershipShare:            $pub->mrOwnershipShare,
+                        srAffiliationSociety:        $pub->srAffiliationSociety,
+                        srOwnershipShare:            $pub->srOwnershipShare
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
 
-                foreach ($work->writers ?? [] as $wr) {
-                    // Only create a PWR link if the writer is represented by a publisher in this work
-                    if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
-                        $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];
-                        $lines[] = (new PwrRecord(
-                            publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
-                            publisherName:                  $publisherData['def']->publisherName,
-                            submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
-                            societyAssignedAgreementNumber: (property_exists($publisherData['def'], 'societyAssignedAgreementNumber') ? (string) $publisherData['def']->societyAssignedAgreementNumber : ''),
-                            writerIpNumber:                 $wr->interestedPartyNumber,
-                            publisherSequenceNumber:        $publisherData['seq'],
+                    // SPT territory records
+                    foreach ($pub->territories ?? [] as $terrIndex => $terr) {
+                        $workLines[] = (new SptRecord(
+                            interestedPartyNumber:        $pub->interestedPartyNumber,
+                            prCollectionShare:            $terr['pr_collection_share'] ?? 0,
+                            mrCollectionShare:            $terr['mr_collection_share'] ?? 0,
+                            srCollectionShare:            $terr['sr_collection_share'] ?? 0,
+                            tisNumericCode:               $terr['tis_code'],
+                            inclusionExclusionIndicator:  $terr['inclusion_exclusion_indicator'] ?? 'I',
+                            sharesChange:                 $terr['shares_change_flag'] ?? '',
+                            sequenceNumber:               $terrIndex + 1
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
                     }
                 }
-            }
 
-            // Advance to next transaction
-            $this->transactionSequence++;
+                // SWR & SWT for each writer
+                foreach ($work->writers ?? [] as $writerIndex => $wr) {
+                    // SWR writer record
+                    $workLines[] = (new SwrRecord(
+                        interestedPartyNumber:   $wr->interestedPartyNumber,
+                        writerLastName:          $wr->writerLastName,
+                        writerFirstName:         $wr->writerFirstName,
+                        writerDesignationCode:   $wr->writerDesignationCode,
+                        taxId:                   '',
+                        writerIpiNameNumber:     $wr->ipiNameNumber ?? '',
+                        prAffiliationSociety:    $wr->prAffiliationSociety ?? null,
+                        prOwnershipShare:        property_exists($wr, 'prOwnershipShare') ? (int) $wr->prOwnershipShare : 0,
+                        mrAffiliationSociety:    property_exists($wr, 'mrAffiliationSociety') ? $wr->mrAffiliationSociety : null,
+                        mrOwnershipShare:        property_exists($wr, 'mrOwnershipShare') ? (int) $wr->mrOwnershipShare : 0,
+                        srAffiliationSociety:    property_exists($wr, 'srAffiliationSociety') ? $wr->srAffiliationSociety : null,
+                        srOwnershipShare:        property_exists($wr, 'srOwnershipShare') ? (int) $wr->srOwnershipShare : 0,
+                        reversionaryIndicator:   '',
+                        firstRecordingRefusalIndicator: '',
+                        workForHireIndicator:    '',
+                        filler:                  '',
+                        writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
+                        personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
+                        usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : ''
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+
+                    // SWT territory records for the writer (sequence starts at 1 per writer)
+                    $swtSeq = 0;
+                    foreach ($wr->territories ?? [] as $terr) {
+                        $workLines[] = (new SwtRecord(
+                            interestedPartyNumber:       $wr->interestedPartyNumber,
+                            tisNumericCode:              $terr['tis_code'] ?? null,
+                            inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
+                            sequenceNumber:              ++$swtSeq,
+                            prCollectionShare:           $terr['pr_collection_share'] ?? 0,
+                            mrCollectionShare:           $terr['mr_collection_share'] ?? 0,
+                            srCollectionShare:           $terr['sr_collection_share'] ?? 0,
+                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                          ->toString();
+                    }
+                }
+
+                // ALT records for each alternate title
+                if (!empty($work->alternateTitles)) {
+                    foreach ($work->alternateTitles as $alt) {
+                        $workLines[] = (new AltRecord(
+                            alternateTitle: $alt['alternate_title'],
+                            titleType:      $alt['title_type'],
+                            languageCode:   $alt['language_code'] ?? null
+                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                          ->toString();
+                    }
+                }
+
+                // PWR link: Link represented writers to their publishers
+                if (!empty($work->publishers)) {
+                    $publisherMap = [];
+                    foreach ($work->publishers as $pubIndex => $pub) {
+                        $publisherMap[$pub->interestedPartyNumber] = ['def' => $pub, 'seq' => $pubIndex + 1];
+                    }
+
+                    foreach ($work->writers ?? [] as $wr) {
+                        // Only create a PWR link if the writer is represented by a publisher in this work
+                        if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
+                            $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];
+                            $workLines[] = (new PwrRecord(
+                                publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
+                                publisherName:                  $publisherData['def']->publisherName,
+                                submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
+                                societyAssignedAgreementNumber: (property_exists($publisherData['def'], 'societyAssignedAgreementNumber') ? (string) $publisherData['def']->societyAssignedAgreementNumber : ''),
+                                writerIpNumber:                 $wr->interestedPartyNumber,
+                                publisherSequenceNumber:        $publisherData['seq'],
+                            ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                              ->toString();
+                        }
+                    }
+                }
+
+                // If we got here, the work is valid. Add its lines to the main array and advance transaction.
+                $lines = array_merge($lines, $workLines);
+                $this->transactionSequence++;
+            } catch (\Throwable $e) {
+                // Something went wrong with this work. You can log the error or handle it as needed.
+                // For example: error_log("Skipping work {$work->submitterWorkNumber}: " . $e->getMessage());
+                // The invalid work is skipped, and we continue to the next one.
+                continue;
+            }
         }
 
         return $lines;

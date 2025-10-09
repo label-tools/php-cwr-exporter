@@ -23,7 +23,7 @@ describe('Transmission Header Record', function () {
             expect(substr($record, 0, 3))->toBe('HDR');               // Record Type
             expect(substr($record, 3, 2))->toBe('PB');                // Sender Type
             expect(substr($record, 5, 9))->toBe('123456789');         // Sender ID
-            expect(substr($record, 14, 45))->toBe(str_pad('Test Publisher Name', 45)); // Sender Name
+            expect(substr($record, 14, 45))->toBePadded('TEST PUBLISHER NAME', 45); // Sender Name
             expect(substr($record, 59, 5))->toBe('01.10');            // EDI Version
             expect(substr($record, 64, 8))->toBe('20240527');         // Creation Date
             expect(substr($record, 72, 6))->toBe('153000');           // Creation Time
