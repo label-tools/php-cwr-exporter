@@ -150,7 +150,7 @@ class NwrRecord extends Record
             throw new \InvalidArgumentException("Work Title cannot exceed 60 characters : {$title}");
         }
 
-        $this->data[self::IDX_TITLE] = $title;
+        $this->data[static::IDX_TITLE] = $title;
         return $this;
     }
 
@@ -161,7 +161,7 @@ class NwrRecord extends Record
         if ($num === '') {
             throw new \InvalidArgumentException("Submitter Work Number is required.");
         }
-        $this->data[self::IDX_SUBMITTER] = $num;
+        $this->data[static::IDX_SUBMITTER] = $num;
         return $this;
     }
 
@@ -171,7 +171,7 @@ class NwrRecord extends Record
         if ($iswc !== '' && !preg_match('/^T\d{10}$/', $iswc)) {
             throw new \InvalidArgumentException("Invalid ISWC: {$iswc}");
         }
-        $this->data[self::IDX_ISWC] = $iswc;
+        $this->data[static::IDX_ISWC] = $iswc;
         return $this;
     }
 
@@ -181,13 +181,13 @@ class NwrRecord extends Record
         if (!empty($date) && !preg_match('/^\d{8}$/', $date)) {
             throw new \InvalidArgumentException("Date must be YYYYMMDD: {$date}");
         }
-        $this->data[self::IDX_COPYDATE] = $date ?? '';
+        $this->data[static::IDX_COPYDATE] = $date ?? '';
         return $this;
     }
 
     public function setCopyrightNumber(?string $num): self
     {
-        $this->data[self::IDX_COPYNUM] = $num ?? '';
+        $this->data[static::IDX_COPYNUM] = $num ?? '';
         return $this;
     }
 
@@ -201,7 +201,7 @@ class NwrRecord extends Record
         } catch (\ValueError $e) {
             throw new \InvalidArgumentException("Invalid Musical Work Distribution Category: {$cat}");
         }
-        $this->data[self::IDX_MWDC] = $cat->value;
+        $this->data[static::IDX_MWDC] = $cat->value;
         return $this;
     }
 
@@ -210,7 +210,7 @@ class NwrRecord extends Record
         if (!empty($dur) && !preg_match('/^[0-9]{6}$/', $dur)) {
             throw new \InvalidArgumentException("Duration must be HHMMSS: {$dur}");
         }
-        $mwdc = $this->data[self::IDX_MWDC] ?? '';
+        $mwdc = $this->data[static::IDX_MWDC] ?? '';
         if ($mwdc === MusicalWorkDistributionCategory::SERIOUS->value && ($dur === '000000' || empty($dur))) {
             throw new \InvalidArgumentException("Duration must be > 000000 when category is SER");
         }
@@ -219,13 +219,13 @@ class NwrRecord extends Record
         //duration for works where the Musical Work Distribution
         //Category is equal to JAZ (e.g. BMI).
 
-        $this->data[self::IDX_DURATION] = $dur ?? '';
+        $this->data[static::IDX_DURATION] = $dur ?? '';
         return $this;
     }
 
     public function setRecordedIndicator(null|bool|string $ind): self
     {
-        $this->data[self::IDX_REC] = $this->flagToValue($ind);
+        $this->data[static::IDX_REC] = $this->flagToValue($ind);
         return $this;
     }
 
@@ -238,7 +238,7 @@ class NwrRecord extends Record
                 throw new \InvalidArgumentException("Invalid Text Music Relationship: {$rel}");
             }
         }
-        $this->data[self::IDX_TEXTREL] = $rel;
+        $this->data[static::IDX_TEXTREL] = $rel;
         return $this;
     }
 
@@ -251,7 +251,7 @@ class NwrRecord extends Record
                 throw new \InvalidArgumentException("Invalid Composite Type: {$type}");
             }
         }
-        $this->data[self::IDX_COMP] = $type;
+        $this->data[static::IDX_COMP] = $type;
         return $this;
     }
 
@@ -265,7 +265,7 @@ class NwrRecord extends Record
         } catch (\ValueError $e) {
             throw new \InvalidArgumentException("Invalid Version Type: {$type}");
         }
-        $this->data[self::IDX_VER] = $type->value;
+        $this->data[static::IDX_VER] = $type->value;
         return $this;
     }
 
@@ -278,17 +278,17 @@ class NwrRecord extends Record
                 throw new \InvalidArgumentException("Invalid Excerpt Type: {$type}");
             }
         }
-        $this->data[self::IDX_EXCERPT] = $type;
+        $this->data[static::IDX_EXCERPT] = $type;
         return $this;
     }
 
     public function setMusicArrangement(string $arr): self
     {
-        if (empty($this->data[self::IDX_VER])) {
+        if (empty($this->data[static::IDX_VER])) {
             throw new \LogicException("Version Type must be set before setting Music Arrangement.");
         }
 
-        if ($this->data[self::IDX_VER] === VersionType::MODIFIED_VERSION_OF_A_MUSICAL_WORK->value && $arr === '') {
+        if ($this->data[static::IDX_VER] === VersionType::MODIFIED_VERSION_OF_A_MUSICAL_WORK->value && $arr === '') {
             throw new \InvalidArgumentException("Music Arrangement is required when Version Type is MOD.");
         }
 
@@ -300,7 +300,7 @@ class NwrRecord extends Record
             }
         }
 
-        $this->data[self::IDX_ARRANGE] = $arr;
+        $this->data[static::IDX_ARRANGE] = $arr;
         return $this;
     }
 
@@ -313,19 +313,19 @@ class NwrRecord extends Record
                 throw new \InvalidArgumentException("Invalid Lyric Adaptation: {$lya}");
             }
         }
-        $this->data[self::IDX_LYRIC] = $lya;
+        $this->data[static::IDX_LYRIC] = $lya;
         return $this;
     }
 
     public function setContactName(string $name): self
     {
-        $this->data[self::IDX_CONTACT] = $name;
+        $this->data[static::IDX_CONTACT] = $name;
         return $this;
     }
 
     public function setContactId(string $id): self
     {
-        $this->data[self::IDX_CONTACTID] = $id;
+        $this->data[static::IDX_CONTACTID] = $id;
         return $this;
     }
 
@@ -338,13 +338,13 @@ class NwrRecord extends Record
                 throw new \InvalidArgumentException("Invalid CWR Work Type: {$type}");
             }
         }
-        $this->data[self::IDX_WORKTYPE] = $type;
+        $this->data[static::IDX_WORKTYPE] = $type;
         return $this;
     }
 
     public function setGrandRightsInd(null|bool|string $ind): self
     {
-        $this->data[self::IDX_GRAND] = $this->boolToValue($ind);
+        $this->data[static::IDX_GRAND] = $this->boolToValue($ind);
         return $this;
     }
 
@@ -354,14 +354,14 @@ class NwrRecord extends Record
             throw new \InvalidArgumentException("Composite Component Count must be >= 0.");
         }
 
-        $this->data[self::IDX_COMPCT] = $count;
+        $this->data[static::IDX_COMPCT] = $count;
         return $this;
     }
 
     protected function validateCompositeComponentCount(): void
     {
-        $compositeType = $this->data[self::IDX_COMP] ?? '';
-        $componentCount = $this->data[self::IDX_COMPCT] ?? 0;
+        $compositeType = $this->data[static::IDX_COMP] ?? '';
+        $componentCount = $this->data[static::IDX_COMPCT] ?? 0;
 
         if ($compositeType && $componentCount === 0) {
             throw new \InvalidArgumentException("Composite Type is set but Component Count is missing.");
@@ -377,26 +377,26 @@ class NwrRecord extends Record
         if (!empty($date) && !preg_match('/^\d{8}$/', $date)) {
             throw new \InvalidArgumentException("Date must be YYYYMMDD: {$date}");
         }
-        $this->data[self::IDX_PUBDATE] = $date ?? '';
+        $this->data[static::IDX_PUBDATE] = $date ?? '';
         return $this;
     }
 
     public function setExceptionalClause(null|bool|string $clause = null): self
     {
 
-        $this->data[self::IDX_EXCEPTION] = $this->flagToValue($clause);
+        $this->data[static::IDX_EXCEPTION] = $this->flagToValue($clause);
         return $this;
     }
 
     public function setOpusNumber(string $opus): self
     {
-        $this->data[self::IDX_OPUS] = $opus;
+        $this->data[static::IDX_OPUS] = $opus;
         return $this;
     }
 
     public function setCatalogueNumber(string $cat): self
     {
-        $this->data[self::IDX_CATNUM] = $cat;
+        $this->data[static::IDX_CATNUM] = $cat;
         return $this;
     }
 }

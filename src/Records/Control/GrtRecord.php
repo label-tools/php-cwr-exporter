@@ -30,14 +30,14 @@ class GrtRecord extends Record
     public function setTransactionCount(int $transactionCount): self
     {
         $this->validateCount($transactionCount, 'Transaction Count');
-        $this->data[self::IDX_TRANSACTION_COUNT] = $transactionCount;
+        $this->data[static::IDX_TRANSACTION_COUNT] = $transactionCount;
         return $this;
     }
 
     public function setRecordCount(int $recordCount): self
     {
         $this->validateCount($recordCount, 'Record Count');
-        $this->data[self::IDX_RECORD_COUNT] = $recordCount;
+        $this->data[static::IDX_RECORD_COUNT] = $recordCount;
         return $this;
     }
 

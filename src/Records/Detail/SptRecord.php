@@ -60,7 +60,7 @@ class SptRecord extends Record
 
     private function setConstant(): self
     {
-        return $this->setAlphaNumeric(self::IDX_CONSTANT, '', 'Constant');
+        return $this->setAlphaNumeric(static::IDX_CONSTANT, '', 'Constant');
     }
 
     private function setInclusionExclusionIndicator(string $indicator): self
@@ -68,7 +68,7 @@ class SptRecord extends Record
         if ($indicator !== 'I' && $indicator !== 'E') {
             throw new InvalidArgumentException('Inclusion/Exclusion Indicator must be "I" or "E".');
         }
-        $this->data[self::IDX_INCL_EXCL] = $indicator;
+        $this->data[static::IDX_INCL_EXCL] = $indicator;
         return $this;
     }
 
@@ -77,7 +77,7 @@ class SptRecord extends Record
         if (!empty($flag) && $flag !== 'Y') {
             throw new InvalidArgumentException('Shares Change flag must be empty or "Y".');
         }
-        $this->data[self::IDX_SHARES_CHANGE] = $flag;
+        $this->data[static::IDX_SHARES_CHANGE] = $flag;
         return $this;
     }
 

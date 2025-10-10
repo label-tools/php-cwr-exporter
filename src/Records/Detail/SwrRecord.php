@@ -144,7 +144,7 @@ class SwrRecord extends Record
         if ($flag !== '' && !in_array($flag, ['Y',''], true)) {
             throw new \InvalidArgumentException("Reversionary Indicator must be 'Y' or blank.");
         }
-        $this->data[self::IDX_REVERSIONARY_IND] = $flag;
+        $this->data[static::IDX_REVERSIONARY_IND] = $flag;
         return $this;
     }
 
@@ -154,7 +154,7 @@ class SwrRecord extends Record
         if ($flag !== '' && !in_array($flag, ['Y','N'], true)) {
             throw new \InvalidArgumentException("First Recording Refusal Indicator must be 'Y', 'N', or blank.");
         }
-        $this->data[self::IDX_FIRST_RECORDING_REFUSAL_IND] = $flag;
+        $this->data[static::IDX_FIRST_RECORDING_REFUSAL_IND] = $flag;
         return $this;
     }
 
@@ -164,14 +164,14 @@ class SwrRecord extends Record
         if ($flag !== '' && !in_array($flag, ['Y','N'], true)) {
             throw new \InvalidArgumentException("Work For Hire Indicator must be 'Y', 'N', or blank.");
         }
-        $this->data[self::IDX_WORK_FOR_HIRE_IND] = $flag;
+        $this->data[static::IDX_WORK_FOR_HIRE_IND] = $flag;
         return $this;
     }
 
     public function setFiller(string $filler): static
     {
         // Always fill with a blank or single ASCII space
-        $this->data[self::IDX_FILLER] = ' ';
+        $this->data[static::IDX_FILLER] = ' ';
         return $this;
     }
 
@@ -181,7 +181,7 @@ class SwrRecord extends Record
         if ($base !== '' && !preg_match('/^[A-Za-z0-9]{1,13}$/', $base)) {
             throw new \InvalidArgumentException("Writer IPI Base Number must be 1-13 alphanumeric chars or blank.");
         }
-        $this->data[self::IDX_WRITER_IPI_BASE_NUMBER] = $base;
+        $this->data[static::IDX_WRITER_IPI_BASE_NUMBER] = $base;
         return $this;
     }
 
@@ -191,7 +191,7 @@ class SwrRecord extends Record
         if ($num !== '' && !preg_match('/^[0-9]{1,12}$/', $num)) {
             throw new \InvalidArgumentException("Personal Number must be 1-12 digits or blank.");
         }
-        $this->data[self::IDX_PERSONAL_NUMBER] = $num;
+        $this->data[static::IDX_PERSONAL_NUMBER] = $num;
         return $this;
     }
 
@@ -201,7 +201,7 @@ class SwrRecord extends Record
         if ($id === '' || strlen($id) > 9) {
             throw new \InvalidArgumentException("Interested Party Number must be 1-9 characters.");
         }
-        $this->data[self::IDX_INTERESTED_PARTY_NUMBER] = $id;
+        $this->data[static::IDX_INTERESTED_PARTY_NUMBER] = $id;
         return $this;
     }
 
@@ -214,7 +214,7 @@ class SwrRecord extends Record
         if (!preg_match('/^[\x20-\x7E]*$/', $writerLastName)) {
             throw new \InvalidArgumentException("Last Name must be ASCII printable chars: {$writerLastName}");
         }
-        $this->data[self::IDX_WRITER_LAST_NAME] = $writerLastName;
+        $this->data[static::IDX_WRITER_LAST_NAME] = $writerLastName;
         return $this;
     }
 
@@ -227,14 +227,14 @@ class SwrRecord extends Record
         if ($writerFirstName !== '' && !preg_match('/^[\x20-\x7E]*$/', $writerFirstName)) {
             throw new \InvalidArgumentException("First Name must be ASCII printable chars: {$writerFirstName}");
         }
-        $this->data[self::IDX_WRITER_FIRST_NAME] = $writerFirstName;
+        $this->data[static::IDX_WRITER_FIRST_NAME] = $writerFirstName;
         return $this;
     }
 
     public function setWriterUnknownIndicator(false|string $flag): static
     {
         // For SWR, must always be blank
-        $this->data[self::IDX_WRITER_UNKNOWN_IND] = '';
+        $this->data[static::IDX_WRITER_UNKNOWN_IND] = '';
         return $this;
     }
 
@@ -250,7 +250,7 @@ class SwrRecord extends Record
                 throw new \InvalidArgumentException("Invalid Writer Designation Code: {$oldCode}");
             }
         }
-        $this->data[self::IDX_WRITER_DESIGNATION_CODE] = $code->value;
+        $this->data[static::IDX_WRITER_DESIGNATION_CODE] = $code->value;
         return $this;
     }
 
@@ -262,7 +262,7 @@ class SwrRecord extends Record
                 throw new \InvalidArgumentException("Tax ID must be 1-9 alphanumeric chars.");
             }
         }
-        $this->data[self::IDX_TAX_ID] = $taxId;
+        $this->data[static::IDX_TAX_ID] = $taxId;
         return $this;
     }
 
@@ -274,28 +274,28 @@ class SwrRecord extends Record
                 throw new \InvalidArgumentException("IPI Name Number must be 1-11 alphanumeric chars.");
             }
         }
-        $this->data[self::IDX_WRITER_IPI_NAME_NUMBER] = $ipi;
+        $this->data[static::IDX_WRITER_IPI_NAME_NUMBER] = $ipi;
         return $this;
     }
 
     public function setPrAffiliationSociety(int|SocietyCode|null $soc): static
     {
         $value = $this->normalizeSociety($soc);
-        $this->data[self::IDX_PR_AFFILIATION_SOCIETY] = $value;
+        $this->data[static::IDX_PR_AFFILIATION_SOCIETY] = $value;
         return $this;
     }
 
     public function setMrAffiliationSociety(int|SocietyCode|null $soc): static
     {
         $value = $this->normalizeSociety($soc);
-        $this->data[self::IDX_MR_AFFILIATION_SOCIETY] = $value;
+        $this->data[static::IDX_MR_AFFILIATION_SOCIETY] = $value;
         return $this;
     }
 
     public function setSrAffiliationSociety(int|SocietyCode|null $soc): static
     {
         $value = $this->normalizeSociety($soc);
-        $this->data[self::IDX_SR_AFFILIATION_SOCIETY] = $value;
+        $this->data[static::IDX_SR_AFFILIATION_SOCIETY] = $value;
         return $this;
     }
 
@@ -305,16 +305,16 @@ class SwrRecord extends Record
 
         // If recordType = SWR, lastName and designationCode are required.
         if (static::$recordType === 'SWR') {
-            if (empty($this->data[self::IDX_WRITER_LAST_NAME])) {
+            if (empty($this->data[static::IDX_WRITER_LAST_NAME])) {
                 throw new \RuntimeException("SWR: Last Name is required.");
             }
-            if (empty($this->data[self::IDX_WRITER_LAST_NAME])) {
+            if (empty($this->data[static::IDX_WRITER_LAST_NAME])) {
                 throw new \RuntimeException("SWR:Designation Code are required.");
             }
         }
         // If writerUnknownIndicator is non-blank, lastName must be blank (but for SWR it's always blank)
-        if (!empty($this->data[self::IDX_WRITER_UNKNOWN_IND])) {
-            if (!empty($this->data[self::IDX_WRITER_LAST_NAME])) {
+        if (!empty($this->data[static::IDX_WRITER_UNKNOWN_IND])) {
+            if (!empty($this->data[static::IDX_WRITER_LAST_NAME])) {
                 throw new \RuntimeException("If Writer Unknown Indicator is set, Last Name must be blank.");
             }
         }

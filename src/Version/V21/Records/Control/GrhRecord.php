@@ -24,8 +24,8 @@ class GrhRecord extends BaseGrhRecord
         // Initialize character set
         $this->stringFormat .= "%-5s%-10s%-2s";
 
-        $this->data[self::IDX_VERSION_NUMBER] = static::$versionNumber;
-        $this->data[self::IDX_SUBMISSION_DISTRO_TYPE] = static::$submissionDistributionType;
+        $this->data[static::IDX_VERSION_NUMBER] = static::$versionNumber;
+        $this->data[static::IDX_SUBMISSION_DISTRO_TYPE] = static::$submissionDistributionType;
 
         $this->setBatchRequest($batchRequest);
     }
@@ -35,7 +35,7 @@ class GrhRecord extends BaseGrhRecord
         if (!is_null($batchRequest) && $batchRequest < 0) {
             throw new \InvalidArgumentException("Batch request must be a non-negative integer.");
         }
-        $this->data[self::IDX_BATCH_REQUEST] = isset($batchRequest) ? str_pad($batchRequest, 10, '0', STR_PAD_LEFT) : '';
+        $this->data[static::IDX_BATCH_REQUEST] = isset($batchRequest) ? str_pad($batchRequest, 10, '0', STR_PAD_LEFT) : '';
         return $this;
     }
 }

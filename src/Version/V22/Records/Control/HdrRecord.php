@@ -39,7 +39,7 @@ class HdrRecord extends V21HdrRecord
         if ($version !== null && !preg_match('/^[0-9]{1,3}\.[0-9]{1,3}$/', $version)) {
             throw new \InvalidArgumentException("Version must be in format 'X.Y' where X and Y are numbers.");
         }
-        return $this->setAlphaNumeric(self::IDX_VERSION, $version, 'Version');
+        return $this->setAlphaNumeric(static::IDX_VERSION, $version, 'Version');
     }
 
     public function setRevision(?int $revision): self
@@ -47,7 +47,7 @@ class HdrRecord extends V21HdrRecord
         if ($revision !== null && ($revision < 0 || $revision > 999)) {
             throw new \InvalidArgumentException("Revision must be a number between 0 and 999.");
         }
-        return $this->setNumeric(self::IDX_REVISION, $revision, 'Revision');
+        return $this->setNumeric(static::IDX_REVISION, $revision, 'Revision');
     }
 
     public function setSoftwarePackage(?string $softwarePackage): self
@@ -55,7 +55,7 @@ class HdrRecord extends V21HdrRecord
         if ($softwarePackage !== null && mb_strlen($softwarePackage) > 30) {
             throw new \InvalidArgumentException("Software Package must be at most 30 characters long.");
         }
-        return $this->setAlphaNumeric(self::IDX_SW_PACKAGE, $softwarePackage, 'Software Package');
+        return $this->setAlphaNumeric(static::IDX_SW_PACKAGE, $softwarePackage, 'Software Package');
     }
 
     public function setSoftwarePackageVersion(?string $softwarePackageVersion): self
@@ -63,6 +63,6 @@ class HdrRecord extends V21HdrRecord
         if ($softwarePackageVersion !== null && mb_strlen($softwarePackageVersion) > 30) {
             throw new \InvalidArgumentException("Software Package Version must be at most 30 characters long.");
         }
-        return $this->setAlphaNumeric(self::IDX_SW_PACKAGE_VERSION, $softwarePackageVersion, 'Software Package Version');
+        return $this->setAlphaNumeric(static::IDX_SW_PACKAGE_VERSION, $softwarePackageVersion, 'Software Package Version');
     }
 }

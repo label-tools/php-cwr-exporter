@@ -31,7 +31,7 @@ class HdrRecord extends BaseHdrRecord
     {
         $this->validateCharacterSet($characterSet);
         $this->characterSet = $characterSet ?? '';
-        $this->data[self::IDX_CHARACTER_SET] = $this->characterSet;
+        $this->data[static::IDX_CHARACTER_SET] = $this->characterSet;
         return $this;
     }
 

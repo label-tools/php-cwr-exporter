@@ -21,7 +21,7 @@ class PwrRecord extends \LabelTools\PhpCwrExporter\Records\Detail\PwrRecord
 
     public function setWriterIpNumber(string $writerIpNumber): self
     {
-        $this->data[self::IDX_WRITER_IP_NUMBER] = $writerIpNumber;
+        $this->data[static::IDX_WRITER_IP_NUMBER] = $writerIpNumber;
         return $this;
     }
 

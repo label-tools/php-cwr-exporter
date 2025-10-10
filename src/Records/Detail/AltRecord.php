@@ -44,12 +44,12 @@ class AltRecord extends Record
             throw new \InvalidArgumentException('Alternate Title must be 1-60 characters: ' . $title);
         }
         // Allow non-ASCII characters in alternate titles
-        return $this->setAlphaNumeric(self::IDX_ALTERNATE_TITLE, $title, 'Alternate Title', allowsNonAscii:true);
+        return $this->setAlphaNumeric(static::IDX_ALTERNATE_TITLE, $title, 'Alternate Title', allowsNonAscii:true);
     }
 
     public function setTitleType(string|TitleType $type): self
     {
-        return $this->setEnumValue(self::IDX_TITLE_TYPE, TitleType::class, $type);
+        return $this->setEnumValue(static::IDX_TITLE_TYPE, TitleType::class, $type);
     }
 
     protected function validateBeforeToString(): void
@@ -57,11 +57,11 @@ class AltRecord extends Record
         parent::validateBeforeToString();
 
         // Alternate Title is always required
-        if (empty($this->data[self::IDX_ALTERNATE_TITLE])) {
+        if (empty($this->data[static::IDX_ALTERNATE_TITLE])) {
             throw new \InvalidArgumentException('ALT: Alternate Title is required.');
         }
 
-        $type = $this->data[self::IDX_TITLE_TYPE] ?? '';
+        $type = $this->data[static::IDX_TITLE_TYPE] ?? '';
         $lang = $this->getLanguageCode();
 
         // If the title type is one of the “national-characters” variants,

@@ -31,7 +31,7 @@ class SptRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SptRecord
     {
         parent::validateBeforeToString();
 
-        if (!isset($this->data[self::IDX_SEQUENCE_NUMBER]) || $this->data[self::IDX_SEQUENCE_NUMBER] < 1 || $this->data[self::IDX_SEQUENCE_NUMBER] > 999) {
+        if (!isset($this->data[static::IDX_SEQUENCE_NUMBER]) || $this->data[static::IDX_SEQUENCE_NUMBER] < 1 || $this->data[static::IDX_SEQUENCE_NUMBER] > 999) {
             throw new \InvalidArgumentException('Sequence number must be set and greater than 0 and less than or equal to 999.');
         }
     }

@@ -81,7 +81,7 @@ class NwrRecord extends BaseNwrRecord
      */
     public function setPriorityFlag(null|bool|string $flag): self
     {
-        $this->data[self::IDX_PRIORITY_FLAG] = $this->flagToValue($flag);
+        $this->data[static::IDX_PRIORITY_FLAG] = $this->flagToValue($flag);
         return $this;
     }
 }

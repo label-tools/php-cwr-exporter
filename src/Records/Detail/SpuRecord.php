@@ -111,7 +111,7 @@ class SpuRecord extends Record
 
     public function setPublisherType(PublisherType|string $type): self
     {
-        return $this->setEnumValue(self::IDX_PUBLISHER_TYPE, PublisherType::class, $type);
+        return $this->setEnumValue(static::IDX_PUBLISHER_TYPE, PublisherType::class, $type);
     }
 
     public function setTaxId(?string $taxId): self

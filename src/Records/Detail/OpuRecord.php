@@ -45,7 +45,7 @@ class OpuRecord extends SpuRecord
      */
     public function setPublisherType(null|PublisherType|string $type): self
     {
-        return $this->setEnumValue(self::IDX_PUBLISHER_TYPE, PublisherType::class, $type, isRequired: false);
+        return $this->setEnumValue(static::IDX_PUBLISHER_TYPE, PublisherType::class, $type, isRequired: false);
     }
 
 }

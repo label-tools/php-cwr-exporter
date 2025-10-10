@@ -72,7 +72,7 @@ class SwrRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SwrRecord
         if ($flag !== '' && !in_array($flag, ['Y',''], true)) {
             throw new \InvalidArgumentException("USA License Indicator must be 'Y' or blank.");
         }
-        $this->data[self::IDX_USA_LICENSE_IND] = $flag;
+        $this->data[static::IDX_USA_LICENSE_IND] = $flag;
         return $this;
     }
 

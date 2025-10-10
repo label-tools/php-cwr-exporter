@@ -28,7 +28,7 @@ class GrhRecord extends Record
 
     public function setTransactionType(string|TransactionType $transactionType): self
     {
-        return $this->setEnumValue(self::IDX_TRANSACTION_TYPE, TransactionType::class, $transactionType);
+        return $this->setEnumValue(static::IDX_TRANSACTION_TYPE, TransactionType::class, $transactionType);
     }
 
 }

@@ -41,7 +41,7 @@ class PwrRecord extends Record
         if ($ip === '' || strlen($ip) > 9) {
             throw new \InvalidArgumentException('Publisher IP # must be 1-9 characters.');
         }
-        return $this->setAlphaNumeric(self::IDX_PUBLISHER_IP_NUMBER, $ip, 'Publisher IP #');
+        return $this->setAlphaNumeric(static::IDX_PUBLISHER_IP_NUMBER, $ip, 'Publisher IP #');
     }
 
     public function setPublisherName(string $name): self
@@ -50,7 +50,7 @@ class PwrRecord extends Record
         if ($name === '' || strlen($name) > 45) {
             throw new \InvalidArgumentException("Publisher Name is required and must not exceed 45 characters.");
         }
-        return $this->setAlphaNumeric(self::IDX_PUBLISHER_NAME, $name, 'Publisher Name');
+        return $this->setAlphaNumeric(static::IDX_PUBLISHER_NAME, $name, 'Publisher Name');
     }
 
     public function setSubmitterAgreementNumber(?string $agr): self
@@ -59,7 +59,7 @@ class PwrRecord extends Record
         if ($agr !== '' && strlen($agr) > 14) {
             throw new \InvalidArgumentException("Submitter Agreement Number must not exceed 14 characters.");
         }
-        return $this->setAlphaNumeric(self::IDX_SUBMITTER_AGREEMENT_NO, $agr, 'Submitter Agreement Number');
+        return $this->setAlphaNumeric(static::IDX_SUBMITTER_AGREEMENT_NO, $agr, 'Submitter Agreement Number');
     }
 
     public function setSocietyAssignedAgreementNumber(?string $soc): self
@@ -68,7 +68,7 @@ class PwrRecord extends Record
         if ($soc !== '' && strlen($soc) > 14) {
             throw new \InvalidArgumentException("Society-Assigned Agreement Number must not exceed 14 characters.");
         }
-        return $this->setAlphaNumeric(self::IDX_SOCIETY_AGREEMENT_NO, $soc, 'Society-Assigned Agreement Number');
+        return $this->setAlphaNumeric(static::IDX_SOCIETY_AGREEMENT_NO, $soc, 'Society-Assigned Agreement Number');
     }
 
     protected function validateBeforeToString(): void
@@ -76,10 +76,10 @@ class PwrRecord extends Record
         parent::validateBeforeToString();
 
         // Publisher IP # and Publisher Name are always required (already enforced in setters).
-        if (empty($this->data[self::IDX_PUBLISHER_IP_NUMBER])) {
+        if (empty($this->data[static::IDX_PUBLISHER_IP_NUMBER])) {
             throw new \RuntimeException("PWR: Publisher IP # is required.");
         }
-        if (empty($this->data[self::IDX_PUBLISHER_NAME])) {
+        if (empty($this->data[static::IDX_PUBLISHER_NAME])) {
             throw new \RuntimeException("PWR: Publisher Name is required.");
         }
         // No further interdependent checks in v2.0

@@ -78,7 +78,7 @@ class SwtRecord extends Record
         if (!in_array($flag, ['I', 'E'], true)) {
             throw new \InvalidArgumentException("Inclusion/Exclusion Indicator must be 'I' or 'E'.");
         }
-        $this->data[self::IDX_INCLUSION_EXCLUSION_INDICATOR] = $flag;
+        $this->data[static::IDX_INCLUSION_EXCLUSION_INDICATOR] = $flag;
         return $this;
     }
 
@@ -91,7 +91,7 @@ class SwtRecord extends Record
         if ($flag !== '' && $flag !== 'Y') {
             throw new \InvalidArgumentException("Shares Change flag must be blank or 'Y'.");
         }
-        $this->data[self::IDX_SHARES_CHANGE] = $flag;
+        $this->data[static::IDX_SHARES_CHANGE] = $flag;
         return $this;
     }
 
@@ -100,16 +100,16 @@ class SwtRecord extends Record
         parent::validateBeforeToString();
 
         // Mandatory fields for SWT:
-        if (empty($this->data[self::IDX_INTERESTED_PARTY_NUMBER]) && static::$recordType == 'SWT') {
+        if (empty($this->data[static::IDX_INTERESTED_PARTY_NUMBER]) && static::$recordType == 'SWT') {
             throw new \RuntimeException("Interested Party Number is required.");
         }
-        if (!isset($this->data[self::IDX_INCLUSION_EXCLUSION_INDICATOR])) {
+        if (!isset($this->data[static::IDX_INCLUSION_EXCLUSION_INDICATOR])) {
             throw new \RuntimeException("Inclusion/Exclusion Indicator is required.");
         }
-        if (empty($this->data[self::IDX_TIS_NUMERIC_CODE])) {
+        if (empty($this->data[static::IDX_TIS_NUMERIC_CODE])) {
             throw new \RuntimeException("TIS Numeric Code is required.");
         }
-        // if (!isset($this->data[self::IDX_SEQUENCE_NUMBER])) {
+        // if (!isset($this->data[static::IDX_SEQUENCE_NUMBER])) {
         //     throw new \RuntimeException("SWT: Sequence Number is required (Version 2.1).");
         // }
     }

@@ -44,7 +44,7 @@ class HdrRecord extends Record
         $this->setCreationDate($creationDate);
         $this->setCreationTime($creationTime);
         $this->setTransmissionDate($transmissionDate);
-        $this->setAlphaNumeric(self::IDX_EDI_VERSION, static::$ediVersion);
+        $this->setAlphaNumeric(static::IDX_EDI_VERSION, static::$ediVersion);
     }
 
     public function setSenderTypeAndId(string|SenderType $senderType, string $senderId): self
@@ -58,33 +58,33 @@ class HdrRecord extends Record
         $this->validateSenderId($senderTypeEnum, $senderId);
         $this->senderType = $this->resolveSenderType($senderTypeEnum, $senderId);
         $this->senderId = $this->resolveSenderId($senderTypeEnum, $senderId);
-        $this->setAlphaNumeric(self::IDX_SENDER_TYPE, $this->senderType);
-        $this->setNumeric(self::IDX_SENDER_ID, $this->senderId);
+        $this->setAlphaNumeric(static::IDX_SENDER_TYPE, $this->senderType);
+        $this->setNumeric(static::IDX_SENDER_ID, $this->senderId);
         return $this;
     }
 
     public function setSenderName(?string $senderName): self
     {
         $this->validateSenderName($senderName);
-        $this->setAlphaNumeric(self::IDX_SENDER_NAME, $senderName);
+        $this->setAlphaNumeric(static::IDX_SENDER_NAME, $senderName);
         return $this;
     }
 
     public function setCreationDate(null|string|DateTime $creationDate): self
     {
-        $this->setDate(self::IDX_CREATION_DATE, $creationDate, true, 'Creation Date');
+        $this->setDate(static::IDX_CREATION_DATE, $creationDate, true, 'Creation Date');
         return $this;
     }
 
     public function setCreationTime(null|string|DateTime $creationTime): self
     {
-        $this->setTime(self::IDX_CREATION_TIME, $creationTime, true, 'Creation Time');
+        $this->setTime(static::IDX_CREATION_TIME, $creationTime, true, 'Creation Time');
         return $this;
     }
 
     public function setTransmissionDate(null|string|DateTime $transmissionDate): self
     {
-        $this->setDate(self::IDX_TRANSMISSION_DATE, $transmissionDate, true, 'Transmission Date');
+        $this->setDate(static::IDX_TRANSMISSION_DATE, $transmissionDate, true, 'Transmission Date');
         return $this;
     }
 
