@@ -556,3 +556,128 @@ it('builds a CWR 2.2 with some new works using addWork', function () {
         $prevRecSeq = $recSeq;
     }
 });
+
+it('builds a CWR 2.2 file and writes it to a stream', function () {
+    $works = [
+        [
+            'submitter_work_number' => '00000001',
+            'title' => 'SONG TITLE',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'iswc' => 'T1234567890',
+            'alternate_titles' => [
+                [
+                    'alternate_title' => 'A DIFFERENT TITLE',
+                    'title_type' => TitleType::ALTERNATIVE_TITLE,
+                    'language_code' => null,
+                ],
+                [
+                    'alternate_title' => 'A DIFFERENT TITLE TWO',
+                    'title_type' => TitleType::ALTERNATIVE_TITLE,
+                    'language_code' => LanguageCode::FRENCH->value,
+                ]
+            ],
+            'writers' => [[
+                'interested_party_number' => 'W000001',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'P000001', //use for linking to publisher
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 12.5,
+                    'mr_collection_share' => 25,
+                    'sr_collection_share' => 30.12,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]]
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000001',
+                'name' => 'Publishing Company',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'tax_id' => null,
+                'submitter_agreement_number' => null,
+                'pr_affiliation_society' => null,
+                'pr_ownership_share' => 50,
+                'mr_affiliation_society' => null,
+                'mr_ownership_share' => 100,
+                'sr_affiliation_society' => null,
+                'sr_ownership_share' => 100,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 50.0,
+                    'mr_collection_share' => 100.0,
+                    'sr_collection_share' => 100.0,
+                ]]
+            ]]
+        ],
+        [
+            'submitter_work_number' => '00000002',
+            'title' => 'SONG WITH COOL TITLE',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'iswc' => 'T1234567890',
+            'writers' => [[
+                'interested_party_number' => 'W000001',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]]
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000001',
+                'name' => 'Publishing Company',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'tax_id' => null,
+                'submitter_agreement_number' => null,
+                'pr_affiliation_society' => null,
+                'pr_ownership_share' => 50,
+                'mr_affiliation_society' => null,
+                'mr_ownership_share' => 100,
+                'sr_affiliation_society' => null,
+                'sr_ownership_share' => 100,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 25.3,
+                    'mr_collection_share' => 33.33,
+                    'sr_collection_share' => 100.0,
+                ]]
+            ]]
+        ],
+    ];
+
+    $cwr = CwrBuilder::v22()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01265713057')
+        ->senderName('Publishing Company')
+        ->software('LabelTools CWR Exporter', '1.0.0')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works);
+
+    $stream = fopen('php://memory', 'r+');
+    $cwr->exportToStream($stream);
+
+    rewind($stream);
+    $payload = stream_get_contents($stream);
+    fclose($stream);
+
+    // Basic sanity
+    expect($payload)->toBeString();
+    expect($payload)->not->toBeEmpty();
+
+    dd($payload);
+
+});
