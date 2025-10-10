@@ -26,7 +26,7 @@ class GrhRecord extends Record
 
     public function setTransactionType(string|TransactionType $transactionType): self
     {
-        return $this->setList(self::INDEX_TRANSACTION_TYPE, TransactionType::class, $transactionType);
+        return $this->setEnumValue(self::INDEX_TRANSACTION_TYPE, TransactionType::class, $transactionType);
     }
 
     public function setGroupId(int $groupId): self

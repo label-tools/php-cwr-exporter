@@ -28,7 +28,7 @@ describe('PWR (Publisher For Writer) Record', function () {
             expect(substr($out, 19, 9))->toBePadded('PUBLISHER', 9);
 
             // 28-72: Publisher Name (45 chars). We passed "Acme Publishing" (14 chars):
-            expect(substr($out, 28, 45))->toBePadded('Acme Publishing', 45);
+            expect(substr($out, 28, 45))->toBePadded('ACME PUBLISHING', 45);
 
             // 73-86: Submitter Agreement Number (14 chars) → all spaces
             expect(substr($out, 73, 14))->toBePadded('', 14);

@@ -17,19 +17,19 @@ describe('ALT (Alternate Title) Record', function () {
             // Total length = 19 (prefix) + 60 (title) + 2 (type) + 2 (lang) = 83
             expect(strlen($out))->toBe(83);
 
-            // 0–2:   "ALT"
+            // 0-2:   "ALT"
             expect(substr($out, 0, 3))->toBe('ALT');
 
-            // 3–18:
+            // 3-18:
             expect(substr($out, 3, 16))->toBePadded('0', 16, '0');
 
-            // 19–78: Alternate Title (60 chars)
+            // 19-78: Alternate Title (60 chars)
             expect(substr($out, 19, 60))->toBePadded('MY ALTERNATE TITLE', 60);
 
-            // 79–80: Title Type (2 chars) => FT
+            // 79-80: Title Type (2 chars) => FT
             expect(substr($out, 79, 2))->toBe(TitleType::FORMAL_TITLE->value);
 
-            // 81–82: Language Code (2 chars) => two spaces
+            // 81-82: Language Code (2 chars) => two spaces
             expect(substr($out, 81, 2))->toBePadded('', 2);
         });
 
@@ -50,7 +50,7 @@ describe('ALT (Alternate Title) Record', function () {
             );
         })->throws(
             \InvalidArgumentException::class,
-            'Alternate Title must be 1–60 characters: '
+            'Alternate Title must be 1-60 characters: '
         );
 
         it('throws when Alternate Title exceeds 60 characters', function () {
@@ -60,7 +60,7 @@ describe('ALT (Alternate Title) Record', function () {
             );
         })->throws(
             \InvalidArgumentException::class,
-            'Alternate Title must be 1–60 characters: ' . str_repeat('A', 61)
+            'Alternate Title must be 1-60 characters: ' . str_repeat('A', 61)
         );
 
         it('throws when Title Type requires Language Code but none provided', function () {
@@ -86,17 +86,17 @@ describe('ALT (Alternate Title) Record', function () {
 
             expect(mb_strlen($out))->toBe(83);
 
-            // 19–78: Alternate Title (60 chars)
+            // 19-78: Alternate Title (60 chars)
             $title = mb_substr($out, 19, 60);
 
             expect(strlen($title))->toBe(66); //without mb.. will count all the bytes of non-ascii chars
             expect(mb_strlen($title))->toBe(60);
             expect(mb_substr($out, 19, 60))->toBePadded('TÍTULOÍÍÍÍÍ', 60);
 
-            // 79–80: Title Type (2 chars)
+            // 79-80: Title Type (2 chars)
             expect(mb_substr($out, 79, 2))->toBe(TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS->value);
 
-            // 81–82: Language Code (2 chars)
+            // 81-82: Language Code (2 chars)
             expect(mb_substr($out, 81, 2))->toBe(LanguageCode::SPANISH->value);
 
         });

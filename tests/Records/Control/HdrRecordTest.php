@@ -185,8 +185,8 @@ describe('Transmission Header Record', function () {
             );
 
             $record = $hdr->toString();
-            expect(substr($record, 107, 30))->toBe(str_pad('MYSOFTWARE', 30));
-            expect(substr($record, 137, 30))->toBe(str_pad('v1.0.0', 30));
+            expect(substr($record, 107, 30))->toBePadded('MYSOFTWARE', 30);
+            expect(substr($record, 137, 30))->toBePadded('V1.0.0', 30);
         });
 
         // -- v2.2 validation errors --

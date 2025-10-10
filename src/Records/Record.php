@@ -134,42 +134,70 @@ abstract class Record
         return vsprintf($newFormat, $args);
     }
 
-    protected function setAlphaNumeric($index, ?string $value): void
+    protected function setAlphaNumeric($index, ?string $value, string $fieldName = 'Field', bool $allowsNonAscii = false): self
     {
         $value = trim((string)$value);
 
-        // Ensure ASCII only
-        if (!mb_check_encoding($value, 'ASCII')) {
-            throw new \InvalidArgumentException("Value must be ASCII: {$value}");
-        }
+        if ($allowsNonAscii) {
+            // For non-ASCII, convert to uppercase using multi-byte function
+            // and remove non-printable characters except for basic whitespace.
+            $upper = \voku\helper\ASCII::remove_invisible_characters(mb_strtoupper($value, 'UTF-8'));
+        } else {
+            // Ensure ASCII only
+            if (!mb_check_encoding($value, 'ASCII')) {
+                throw new \InvalidArgumentException("{$fieldName} must be ASCII: {$value}");
+            }
 
-        // Enforce uppercase for alphabetic characters, but allow ANY printable ASCII punctuation
-        $upper = strtoupper($value);
+            // Enforce uppercase for alphabetic characters, but allow ANY printable ASCII punctuation
+            $upper = strtoupper($value);
 
-        // Reject control characters (NUL..US and DEL). Allow space (0x20) through tilde (0x7E).
-        if (!empty($upper) && !preg_match('/^[\x20-\x7E]+$/', $upper)) {
-            throw new \InvalidArgumentException("Value must contain printable ASCII characters only: {$value}");
+            // Reject control characters (NUL..US and DEL). Allow space (0x20) through tilde (0x7E).
+            if (!empty($upper) && !preg_match('/^[\x20-\x7E]+$/', $upper)) {
+                throw new \InvalidArgumentException("{$fieldName}  must contain printable ASCII characters only: {$value}");
+            }
         }
 
         $this->data[$index] = $upper;
+        return $this;
     }
 
     /**Numeric fields are to be right justified and zero filled. If there is an
     implied decimal point, it will be defined in the record layout. If there
     is no data to be entered in a numeric field, zeroes must be entered. */
-    protected function setNumeric($index, ?int $value): void
+    protected function setNumeric($index, ?int $value, ?string $fieldName = 'Field'): self
     {
         if (empty($value)) {
-            $this->data[$index] = 0;
-            return;
+            $value = 0;
         }
         $this->data[$index] = (int)$value;
+        return $this;
+    }
+
+    protected function setEnumValue(int $key, string $enumClass, BackedEnum|string $value, ?string $fieldLabel = null, bool $isRequired = true): self
+    {
+        $fieldLabel ??= preg_replace('/(?<!^)[A-Z]/', ' $0', (new \ReflectionClass($enumClass))->getShortName());
+
+        if ($isRequired && empty($value)) {
+            throw new \InvalidArgumentException("{$fieldLabel} is required.");
+        } elseif (empty($value)) {
+            $this->data[$key] = '';
+            return $this;
+        }
+
+        try {
+            $enumValue = $value instanceof $enumClass ? $value : $enumClass::from($value);
+        } catch (\ValueError $e) {
+            throw new \InvalidArgumentException("Invalid {$fieldLabel}: {$value}");
+        }
+
+        $this->data[$key] = $enumValue->value;
+        return $this;
     }
 
     /**
      * Dates are all formatted as YYYYMMDD. If there is no data to be entered in a date field, zeroes must be entered.
      */
-    protected function setDate($index, null|string|DateTime $date = null, $defaultDateOnEmpty = false, $fieldName = null): void
+    protected function setDate($index, null|string|DateTime $date = null, $defaultDateOnEmpty = false, string $fieldName = 'Field'): void
     {
         $format = 'Ymd';
         $fieldName ??= 'Date';
@@ -191,28 +219,6 @@ abstract class Record
         }
 
         $this->data[$index] = $d->format($format);
-    }
-
-    protected function setList(int $index, string $lookupEnum, BackedEnum|string|null $value, ?string $fieldName = null): self
-    {
-        if (!is_subclass_of($lookupEnum, BackedEnum::class)) {
-            throw new \InvalidArgumentException('$lookupEnum must be a class name of a BackedEnum.');
-        }
-
-        if (empty($value)) {
-            $this->data[$index] = '';
-            return $this;
-        }
-
-        try {
-            $enum = $value instanceof $lookupEnum ? $value : $lookupEnum::from($value);
-            $this->data[$index] = $enum->value;
-        } catch (\ValueError $e) {
-            $fieldName ??= (new \ReflectionClass($lookupEnum))->getShortName();
-            throw new \InvalidArgumentException("Invalid value for {$fieldName}. Given: {$value}", 0, $e);
-        }
-
-        return $this;
     }
 
     protected function setTime($index, null|string|DateTime $time = null, $defaultTimeOnEmpty = false, $fieldName = null): void
@@ -258,27 +264,6 @@ abstract class Record
         }
 
         return $flag;
-    }
-
-    protected function setEnumValue(int $key, string $enumClass, BackedEnum|string $value, ?string $fieldLabel = null, bool $isRequired = true): self
-    {
-        $fieldLabel ??= preg_replace('/(?<!^)[A-Z]/', ' $0', (new \ReflectionClass($enumClass))->getShortName());
-
-        if ($isRequired && empty($value)) {
-            throw new \InvalidArgumentException("{$fieldLabel} is required.");
-        } elseif (empty($value)) {
-            $this->data[$key] = '';
-            return $this;
-        }
-
-        try {
-            $enumValue = $value instanceof $enumClass ? $value : $enumClass::from($value);
-        } catch (\ValueError $e) {
-            throw new \InvalidArgumentException("Invalid {$fieldLabel}: {$value}");
-        }
-
-        $this->data[$key] = $enumValue->value;
-        return $this;
     }
 
     /**

@@ -41,28 +41,17 @@ class AltRecord extends Record
     {
         $title = trim(mb_strtoupper($title));
         if ($title === '' || mb_strlen($title) > 60) {
-            throw new \InvalidArgumentException('Alternate Title must be 1–60 characters: ' . $title);
+            throw new \InvalidArgumentException('Alternate Title must be 1-60 characters: ' . $title);
         }
-        $this->data[self::IDX_ALTERNATE_TITLE] = $title;
-        return $this;
+        // Allow non-ASCII characters in alternate titles
+        return $this->setAlphaNumeric(self::IDX_ALTERNATE_TITLE, $title, 'Alternate Title', allowsNonAscii:true);
     }
 
     public function setTitleType(string|TitleType $type): self
     {
-        // enum guarantees a valid 2-character code
-        $titleType = $this->validateTitleType($type);
-        $this->data[self::IDX_TITLE_TYPE] = $titleType->value;
-        return $this;
+        return $this->setEnumValue(self::IDX_TITLE_TYPE, TitleType::class, $type);
     }
 
-    private function validateTitleType(string|TitleType $titleType): TitleType
-    {
-        try {
-            return $titleType instanceof TitleType ? $titleType : TitleType::from($titleType);
-        } catch (\ValueError $e) {
-            throw new \InvalidArgumentException("Title Type must match an entry in the Title Type table.");
-        }
-    }
 
     protected function validateBeforeToString(): void
     {

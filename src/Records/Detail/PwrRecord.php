@@ -53,7 +53,7 @@ class PwrRecord extends Record
             throw new \InvalidArgumentException("Publisher Name is required and must not exceed 45 characters.");
         }
         $this->data[self::IDX_PUBLISHER_NAME] = $name;
-        return $this;
+        return $this->setAlphaNumeric(self::IDX_PUBLISHER_NAME, $name, 'Publisher Name');
     }
 
     public function setSubmitterAgreementNumber(?string $agr): self
