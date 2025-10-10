@@ -28,10 +28,10 @@ class HdrRecord extends Record
     public function __construct(
         SenderType|string $senderType,
         string $senderId,
-        string $senderName,
-        null|string|DateTime $creationDate = null, //this could be left null and we will default to now
+        string $senderName = '',
+        null|string|DateTime $creationDate = null,
         null|string|DateTime $creationTime = null,
-        null|string|DateTime $transmissionDate = null
+        null|string|DateTime $transmissionDate = null,
     ){
         parent::__construct(); //ALWAYS CALL PARENT CONSTRUCTOR FIRST
 

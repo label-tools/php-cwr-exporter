@@ -65,11 +65,8 @@ class Version implements VersionInterface
      * @param array $options
      * @return string[]
      */
-
-    public function renderDetailLines(array $works, array $options): array
+    public function renderDetailLines(array $works, array $options): \Generator
     {
-        $lines = [];
-
         foreach ($works as $work) {
             try {
                 $workLines = [];
@@ -77,7 +74,7 @@ class Version implements VersionInterface
                 $this->recordSequence = 0;
 
                 // NWR work header
-                $workLines[] = (new NwrRecord(
+                yield (new NwrRecord(
                     workTitle:             $work->title,
                     submitterWorkNumber:   $work->submitterWorkNumber,
                     mwDistributionCategory: $work->distributionCategory,
@@ -95,7 +92,7 @@ class Version implements VersionInterface
                 // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {
                     // SPU publisher record
-                    $workLines[] = (new SpuRecord(
+                    yield (new SpuRecord(
                         publisherSequence:           $pubIndex + 1,
                         interestedPartyNumber:       $pub->interestedPartyNumber,
                         publisherName:               $pub->publisherName,
@@ -114,7 +111,7 @@ class Version implements VersionInterface
 
                     // SPT territory records
                     foreach ($pub->territories ?? [] as $terrIndex => $terr) {
-                        $workLines[] = (new SptRecord(
+                        yield (new SptRecord(
                             interestedPartyNumber:        $pub->interestedPartyNumber,
                             prCollectionShare:            $terr['pr_collection_share'] ?? 0,
                             mrCollectionShare:            $terr['mr_collection_share'] ?? 0,
@@ -131,7 +128,7 @@ class Version implements VersionInterface
                 // SWR & SWT for each writer
                 foreach ($work->writers ?? [] as $writerIndex => $wr) {
                     // SWR writer record
-                    $workLines[] = (new SwrRecord(
+                    yield (new SwrRecord(
                         interestedPartyNumber:   $wr->interestedPartyNumber,
                         writerLastName:          $wr->writerLastName,
                         writerFirstName:         $wr->writerFirstName,
@@ -157,7 +154,7 @@ class Version implements VersionInterface
                     // SWT territory records for the writer (sequence starts at 1 per writer)
                     $swtSeq = 0;
                     foreach ($wr->territories ?? [] as $terr) {
-                        $workLines[] = (new SwtRecord(
+                        yield (new SwtRecord(
                             interestedPartyNumber:       $wr->interestedPartyNumber,
                             tisNumericCode:              $terr['tis_code'],
                             inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
@@ -173,7 +170,7 @@ class Version implements VersionInterface
                 // ALT records for each alternate title
                 if (!empty($work->alternateTitles)) {
                     foreach ($work->alternateTitles as $alt) {
-                        $workLines[] = (new AltRecord(
+                        yield (new AltRecord(
                             alternateTitle: $alt['alternate_title'],
                             titleType:      $alt['title_type'],
                             languageCode:   $alt['language_code'] ?? null
@@ -193,7 +190,7 @@ class Version implements VersionInterface
                         // Only create a PWR link if the writer is represented by a publisher in this work
                         if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
                             $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];
-                            $workLines[] = (new PwrRecord(
+                            yield (new PwrRecord(
                                 publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
                                 publisherName:                  $publisherData['def']->publisherName,
                                 submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
@@ -206,18 +203,14 @@ class Version implements VersionInterface
                     }
                 }
 
-                // If we got here, the work is valid. Add its lines to the main array and advance transaction.
-                $lines = array_merge($lines, $workLines);
                 $this->transactionSequence++;
             } catch (\Throwable $e) {
                 // Something went wrong with this work. You can log the error or handle it as needed.
                 // For example: error_log("Skipping work {$work->submitterWorkNumber}: " . $e->getMessage());
                 // The invalid work is skipped, and we continue to the next one.
-                continue;
+                yield null; // Yield null to signify a skipped work
             }
         }
-
-        return $lines;
     }
 
     public function renderTrailer(array $options): array
