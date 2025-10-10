@@ -19,7 +19,7 @@ describe('SPU (Publisher Controlled) Record', function () {
             // Interested Party # (9 A)
             expect(substr($str, 21, 9))->toBe(str_pad('IP00001', 9, ' '));
             // Publisher Name (45 A)
-            expect(substr($str, 30, 45))->toBe(str_pad('MyPub', 45, ' '));
+            expect(substr($str, 30, 45))->toBe(str_pad('MYPUB', 45, ' '));
             // Publisher Unknown Indicator (must be blank)
             expect(substr($str, 75, 1))->toBe(' ');
             // Publisher Type (2 L)
@@ -63,7 +63,7 @@ describe('SPU (Publisher Controlled) Record', function () {
         })->throws(InvalidArgumentException::class);
 
         it('throws when Interested Party # is empty', function () {
-            (new SpuRecord(1, '', 'Pub', 'E', '', 'IPI'))->toString();
+            (new SpuRecord(1, '', 'Pub', 'E', '', 'IPI'))->setRecordPrefix(0, 0)->toString();
         })->throws(InvalidArgumentException::class);
 
         it('throws when Publisher Name is empty', function () {
@@ -71,11 +71,7 @@ describe('SPU (Publisher Controlled) Record', function () {
         })->throws(InvalidArgumentException::class);
 
         it('throws when Publisher Type is invalid', function () {
-            (new SpuRecord(1, 'IP', 'Pub', 'XX', '', 'IPI'))->toString();
-        })->throws(InvalidArgumentException::class);
-
-        it('throws when Tax ID is non-numeric', function () {
-            (new SpuRecord(1, 'IP', 'Pub', 'E', 'ABC', 'IPI'))->toString();
+            (new SpuRecord(1, 'IP', 'Pub', 'XX', '', 'IPI'))->setRecordPrefix(0, 0)->toString();
         })->throws(InvalidArgumentException::class);
 
         // it('throws when Publisher IPI Name # is empty', function () {

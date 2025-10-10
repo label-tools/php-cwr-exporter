@@ -27,15 +27,6 @@ abstract class Record
 
     protected const IDX_RECORD_TYPE = 1;
 
-    protected function validateBeforeToString(): void
-    {
-        if ($this->hasRecordPrefix() && empty($this->data[static::IDX_RECORD_TYPE])) {
-            throw new \LogicException(
-                sprintf('The record prefix for %s has not been set. Please call setRecordPrefix() before generating the string.', static::class)
-            );
-        }
-    }
-
     public function __construct()
     {
         if (empty(static::$recordType)) {
@@ -49,7 +40,16 @@ abstract class Record
         }
     }
 
-    public function hasRecordPrefix(): bool
+    protected function validateBeforeToString(): void
+    {
+        if ($this->hasRecordPrefix() && empty($this->data[static::IDX_RECORD_TYPE])) {
+            throw new \LogicException(
+                sprintf('The record prefix for %s has not been set. Please call setRecordPrefix() before generating the string.', static::class)
+            );
+        }
+    }
+
+    protected function hasRecordPrefix(): bool
     {
         return str_starts_with($this->stringFormat, "%-19s");
     }
@@ -82,8 +82,6 @@ abstract class Record
         $this->validateBeforeToString();
         $data = $this->data;
         ksort($data);
-
-
         return $this->mbVsprintf($this->stringFormat, $data);
     }
 
@@ -197,19 +195,19 @@ abstract class Record
     /**
      * Dates are all formatted as YYYYMMDD. If there is no data to be entered in a date field, zeroes must be entered.
      */
-    protected function setDate($index, null|string|DateTime $date = null, $defaultDateOnEmpty = false, string $fieldName = 'Field'): void
+    protected function setDate($index, null|string|DateTime $date = null, $defaultDateOnEmpty = false, string $fieldName = 'Field'): self
     {
         $format = 'Ymd';
         $fieldName ??= 'Date';
 
         if (empty($date)) {
-            $this->data[$index] = $defaultDateOnEmpty ? (new DateTime())->format($format) : '00000000';
-            return;
+            $this->data[$index] = $defaultDateOnEmpty ? (new DateTime())->format($format) : '';
+            return $this;
         }
 
         if ($date instanceof DateTime) {
             $this->data[$index] = $date->format($format);
-            return;
+            return $this;
         }
 
         $d = DateTime::createFromFormat($format, $date);
@@ -219,51 +217,52 @@ abstract class Record
         }
 
         $this->data[$index] = $d->format($format);
+        return $this;
     }
 
-    protected function setTime($index, null|string|DateTime $time = null, $defaultTimeOnEmpty = false, $fieldName = null): void
+    protected function setTime($index, null|string|DateTime $time = null, $defaultTimeOnEmpty = false, $fieldName = null): self
     {
         $format = 'His';
         $fieldName ??= 'Time';
 
         if (empty($time)) {
             $this->data[$index] = $defaultTimeOnEmpty ? (new DateTime())->format($format) : '000000';
-            return;
+            return $this;
         }
 
         $this->data[$index] = $time instanceof DateTime ? $time->format($format) : (new DateTime($time))->format($format);
+        return $this;
+    }
+
+    protected function setBoolean($index, null|bool|string $value = null, string $fieldName = 'Record Indicator'): self
+    {
+        if (is_null($value) || is_bool($value)) {
+            $value =  is_null($value) ? '' : ($value ? 'Y' : 'N');
+        }
+
+        if (!empty($value) && !in_array($value, ['Y', 'N'], true)) {
+            throw new \InvalidArgumentException("{$fieldName} must be Y, N");
+        }
+        $this->data[$index] = $value;
+        return $this;
+    }
+
+    protected function setFlag($index, null|bool|string $flag = null, string $fieldName = 'Record Indicator'): self
+    {
+        if (is_null($flag) || is_bool($flag)) {
+            $flag =  is_null($flag) ? '' : ($flag ? 'Y' : 'N');
+        }
+
+        if (!empty($flag) && !in_array($flag, ['Y', 'N', 'U'], true)) {
+            throw new \InvalidArgumentException("{$fieldName} must be Y, N, or U. {$flag} given");
+        }
+        $this->data[$index] = $flag;
+        return $this;
     }
 
     protected function defaultDate(?string $value = null, string $format = 'Ymd'): string
     {
         return $value ?? (new \DateTime())->format($format);
-    }
-
-    protected function boolToValue(null|bool|string $value): string
-    {
-        if (is_null($value) || is_bool($value)) {
-            return is_null($value) ? '' : ($value ? 'Y' : 'N');
-        }
-
-        if (!in_array($value, ['Y', 'N'], true)) {
-            throw new \InvalidArgumentException("Recorded Indicator must be Y, N");
-        }
-
-        return $value;
-
-    }
-
-    protected function flagToValue(null|bool|string $flag = null): string
-    {
-        if (is_null($flag) || is_bool($flag)) {
-            return is_null($flag) ? '' : ($flag ? 'Y' : 'N');
-        }
-
-        if (!in_array($flag, ['Y', 'N', 'U'], true)) {
-            throw new \InvalidArgumentException("Recorded Indicator must be Y, N, or U");
-        }
-
-        return $flag;
     }
 
     /**

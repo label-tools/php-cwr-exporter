@@ -73,15 +73,8 @@ class NwrRecord extends BaseNwrRecord
         $this->setPriorityFlag($priorityFlag);
     }
 
-    /**
-     * Set the priority flag (Y/N or space).
-     *
-     * @param bool|string|null $flag
-     * @return $this
-     */
     public function setPriorityFlag(null|bool|string $flag): self
     {
-        $this->data[static::IDX_PRIORITY_FLAG] = $this->flagToValue($flag);
-        return $this;
+        return $this->setFlag(static::IDX_PRIORITY_FLAG, $flag, 'Priority Flag');
     }
 }

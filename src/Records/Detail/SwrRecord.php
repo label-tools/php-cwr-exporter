@@ -148,6 +148,7 @@ class SwrRecord extends Record
         return $this;
     }
 
+    //type = flag
     public function setFirstRecordingRefusalIndicator(string $flag): static
     {
         $flag = trim($flag);

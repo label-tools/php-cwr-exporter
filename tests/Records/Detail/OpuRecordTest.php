@@ -57,11 +57,7 @@ describe('OPU (Other Publisher) Record', function () {
         })->throws(InvalidArgumentException::class);
 
         it('throws when Publisher Type is invalid', function () {
-            (new OpuRecord(1, 'IP', 'Pub', 'XX', '', 'IPI'))->toString();
-        })->throws(InvalidArgumentException::class);
-
-        it('throws when Tax ID is non-numeric', function () {
-            (new OpuRecord(1, 'IP', 'Pub', 'E', 'ABC', 'IPI'))->toString();
+            (new OpuRecord(1, 'IP', 'Pub', 'XX', '', 'IPI'))->setRecordPrefix(0, 0)->toString();
         })->throws(InvalidArgumentException::class);
 
         it('throws when PR Ownership Share is out of range', function () {

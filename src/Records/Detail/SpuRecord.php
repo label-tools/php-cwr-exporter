@@ -93,106 +93,69 @@ class SpuRecord extends Record
 
     public function setPublisherSequence(int $seq): self
     {
-        if ($seq < 1) {
-            throw new \InvalidArgumentException("Publisher Sequence # must be >= 1.");
-        }
-        $this->data[static::IDX_PUBLISHER_SEQUENCE] = $seq;
-        return $this;
+        $fieldName = 'Publisher Sequence #';
+        $this->validateCount($seq, $fieldName, min: 1, max: 99);
+        return $this->setNumeric(static::IDX_PUBLISHER_SEQUENCE, $seq, $fieldName);
     }
 
     public function setPublisherName(string $name): self
     {
+        $fieldName = 'Publisher Name';
         if (empty($name) && static::$recordType === 'SPU') {
-            throw new \InvalidArgumentException("Publisher Name is required for SPU.");
+            throw new \InvalidArgumentException("{$fieldName} is required for SPU.");
         }
-        $this->data[static::IDX_PUBLISHER_NAME] = $name;
-        return $this;
+        return $this->setAlphaNumeric(static::IDX_PUBLISHER_NAME, $name, $fieldName);
     }
 
     public function setPublisherType(PublisherType|string $type): self
     {
-        return $this->setEnumValue(static::IDX_PUBLISHER_TYPE, PublisherType::class, $type);
+        return $this->setEnumValue(static::IDX_PUBLISHER_TYPE, PublisherType::class, $type, 'Publisher Type');
     }
 
     public function setTaxId(?string $taxId): self
-    {   if (empty($taxId)) {
-            $taxId = '';
-        }
-        elseif ($taxId !== '' && !ctype_digit($taxId)) {
-            throw new \InvalidArgumentException("Tax ID must be numeric.");
-        }
-        $this->data[static::IDX_TAX_ID] = $taxId;
-        return $this;
+    {
+        return $this->setAlphaNumeric(static::IDX_TAX_ID, $taxId, 'Tax ID #');
     }
 
     public function setPublisherIpiName(string $ipi): self
     {
-
-        $this->data[static::IDX_PUBLISHER_IPI_NAME] = $ipi;
-        return $this;
+        return $this->setAlphaNumeric(static::IDX_PUBLISHER_IPI_NAME, $ipi, 'Publisher IPI Name Number');
     }
 
     public function setSubmitterAgreementNumber(?string $agr): self
     {
-        $this->data[static::IDX_SUBMITTER_AGREEMENT] = $agr;
-        return $this;
+        return $this->setAlphaNumeric(static::IDX_SUBMITTER_AGREEMENT, $agr, 'Submitter Agreement Number');
     }
 
     public function setPrAffiliationSociety(?string $soc): self
     {
-        // If entered, must be numeric and match a SocietyCode
-        $this->validateSocietyCode($soc);
-        $this->data[static::IDX_PR_AFFILIATION_SOCIETY] = $soc;
-        return $this;
+        return $this->setEnumValue(static::IDX_PR_AFFILIATION_SOCIETY, SocietyCode::class, $soc, 'PR Affiliation Society', isRequired:false);
     }
 
     public function setMrSociety(int|string|null $soc): self
     {
-        $this->validateSocietyCode($soc);
-        $this->data[static::IDX_MR_AFFILIATION_SOCIETY] = $soc;
-        return $this;
+        return $this->setEnumValue(static::IDX_MR_AFFILIATION_SOCIETY, SocietyCode::class, $soc, 'MR Affiliation Society', isRequired:false);
     }
 
     public function setSrSociety(int|string|null $soc): self
     {
-        $this->validateSocietyCode($soc);
-        $this->data[static::IDX_SR_AFFILIATION_SOCIETY] = $soc;
-        return $this;
+        return $this->setEnumValue(static::IDX_SR_AFFILIATION_SOCIETY, SocietyCode::class, $soc, 'SR Affiliation Society', isRequired:false);
     }
 
     public function setSpecialAgreementsIndicator(null|bool|string $flag): self
     {
-        $this->data[static::IDX_SPECIAL_AGREEMENTS_IND] = $this->flagToValue($flag);
-        return $this;
+        return $this->setFlag(static::IDX_SPECIAL_AGREEMENTS_IND, $flag, 'Special Agreements Indicator');
     }
 
     public function setFirstRecordingRefusalIndicator(null|bool|string $flag): self
     {
-        $this->data[static::IDX_FIRST_RECORDING_REFUSAL_IND] = $this->flagToValue($flag);
-        return $this;
+        return $this->setFlag(static::IDX_FIRST_RECORDING_REFUSAL_IND, $flag, 'First Recording Refusal Indicator');
     }
 
     public function setFiller(string $filler): self
     {
         $this->data[static::IDX_FILLER] = ' ';
         return $this;
-    }
-
-    protected function validateSocietyCode(int|string|null $soc): ?string
-    {
-         // If entered, must be numeric and match a SocietyCode
-        if (empty($soc)) {
-            return null;
-        } elseif ($soc !== '') {
-            if (!ctype_digit($soc)) {
-                throw new \InvalidArgumentException("Society must be numeric: {$soc}");
-            }
-            if (SocietyCode::tryFrom((int) $soc) === null) {
-                throw new \InvalidArgumentException("Invalid Society: {$soc}");
-            }
-        }
-
-        return $soc;
     }
 
     protected function validateBeforeToString(): void
