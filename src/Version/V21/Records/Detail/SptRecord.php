@@ -8,7 +8,7 @@ class SptRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SptRecord
 {
     use HasSequenceNumber;
 
-    protected const INDEX_SEQUENCE_NUM = 10;
+    protected const IDX_SEQUENCE_NUMBER = 10;
 
     public function __construct(
         string $interestedPartyNumber,
@@ -27,16 +27,11 @@ class SptRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SptRecord
         $this->setSequenceNumber($sequenceNumber);
     }
 
-    protected function getSequenceNumberIndex(): int
-    {
-        return self::INDEX_SEQUENCE_NUM;
-    }
-
     protected function validateBeforeToString(): void
     {
         parent::validateBeforeToString();
 
-        if (!isset($this->data[self::INDEX_SEQUENCE_NUM]) || $this->data[self::INDEX_SEQUENCE_NUM] < 1 || $this->data[self::INDEX_SEQUENCE_NUM] > 999) {
+        if (!isset($this->data[self::IDX_SEQUENCE_NUMBER]) || $this->data[self::IDX_SEQUENCE_NUMBER] < 1 || $this->data[self::IDX_SEQUENCE_NUMBER] > 999) {
             throw new \InvalidArgumentException('Sequence number must be set and greater than 0 and less than or equal to 999.');
         }
     }

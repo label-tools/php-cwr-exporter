@@ -8,7 +8,7 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\PwrRecord as V21PwrReco
 class PwrRecord extends V21PwrRecord
 {
     use HasSequenceNumber;
-    protected const IDX_PUBLISHER_SEQUENCE_NUMBER = 7;
+    protected const IDX_SEQUENCE_NUMBER = 7;
 
     public function __construct(
         string $publisherIpNumber,
@@ -24,10 +24,6 @@ class PwrRecord extends V21PwrRecord
         $this->setSequenceNumber($publisherSequenceNumber);
     }
 
-    protected function getSequenceNumberIndex(): int
-    {
-        return self::IDX_PUBLISHER_SEQUENCE_NUMBER;
-    }
 
     protected function validateBeforeToString(): void
     {

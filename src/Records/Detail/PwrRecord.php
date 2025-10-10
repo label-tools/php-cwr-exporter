@@ -41,9 +41,7 @@ class PwrRecord extends Record
         if ($ip === '' || strlen($ip) > 9) {
             throw new \InvalidArgumentException('Publisher IP # must be 1-9 characters.');
         }
-
-        $this->data[self::IDX_PUBLISHER_IP_NUMBER] = $ip;
-        return $this;
+        return $this->setAlphaNumeric(self::IDX_PUBLISHER_IP_NUMBER, $ip, 'Publisher IP #');
     }
 
     public function setPublisherName(string $name): self
@@ -52,7 +50,6 @@ class PwrRecord extends Record
         if ($name === '' || strlen($name) > 45) {
             throw new \InvalidArgumentException("Publisher Name is required and must not exceed 45 characters.");
         }
-        $this->data[self::IDX_PUBLISHER_NAME] = $name;
         return $this->setAlphaNumeric(self::IDX_PUBLISHER_NAME, $name, 'Publisher Name');
     }
 
@@ -62,8 +59,7 @@ class PwrRecord extends Record
         if ($agr !== '' && strlen($agr) > 14) {
             throw new \InvalidArgumentException("Submitter Agreement Number must not exceed 14 characters.");
         }
-        $this->data[self::IDX_SUBMITTER_AGREEMENT_NO] = $agr;
-        return $this;
+        return $this->setAlphaNumeric(self::IDX_SUBMITTER_AGREEMENT_NO, $agr, 'Submitter Agreement Number');
     }
 
     public function setSocietyAssignedAgreementNumber(?string $soc): self
@@ -72,8 +68,7 @@ class PwrRecord extends Record
         if ($soc !== '' && strlen($soc) > 14) {
             throw new \InvalidArgumentException("Society-Assigned Agreement Number must not exceed 14 characters.");
         }
-        $this->data[self::IDX_SOCIETY_AGREEMENT_NO] = $soc;
-        return $this;
+        return $this->setAlphaNumeric(self::IDX_SOCIETY_AGREEMENT_NO, $soc, 'Society-Assigned Agreement Number');
     }
 
     protected function validateBeforeToString(): void

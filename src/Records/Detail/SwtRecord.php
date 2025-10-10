@@ -5,11 +5,13 @@ namespace LabelTools\PhpCwrExporter\Records\Detail;
 use LabelTools\PhpCwrExporter\Enums\TisCode;
 use LabelTools\PhpCwrExporter\Fields\HasCollectionShare;
 use LabelTools\PhpCwrExporter\Fields\HasInterestedPartyNumber;
+use LabelTools\PhpCwrExporter\Fields\HasTisNumericCode;
 use LabelTools\PhpCwrExporter\Records\Record;
 
 class SwtRecord extends Record
 {
     use HasInterestedPartyNumber;
+    use HasTisNumericCode;
     use HasCollectionShare;
 
     protected static string $recordType = 'SWT';
@@ -20,10 +22,8 @@ class SwtRecord extends Record
     protected const IDX_MR_COLLECTION_SHARE = 4;
     protected const IDX_SR_COLLECTION_SHARE = 5;
     protected const IDX_INCLUSION_EXCLUSION_INDICATOR = 6;
-    protected const IDX_TIS_NUMERIC_CODE             = 7;
-    protected const IDX_SHARES_CHANGE                = 8;
-    // Version 2.1 field
-    //protected const IDX_SEQUENCE_NUMBER              = 9;
+    protected const IDX_TIS_NUMERIC_CODE = 7;
+    protected const IDX_SHARES_CHANGE = 8;
 
     /**
      * Fixed-length string format for SWT layout (including Version 2.1 Sequence #)
@@ -51,10 +51,10 @@ class SwtRecord extends Record
     public function __construct(
         string $interestedPartyNumber,
         string $inclusionExclusionIndicator,
-        int|float $prCollectionShare = 0,
-        int|float $mrCollectionShare = 0,
-        int|float $srCollectionShare = 0,
-        null|int|TisCode $tisNumericCode = null,
+        int|float $prCollectionShare,
+        int|float $mrCollectionShare,
+        int|float $srCollectionShare,
+        int|TisCode $tisNumericCode,
         string $sharesChange = ''
     ) {
         parent::__construct();
@@ -69,7 +69,6 @@ class SwtRecord extends Record
             ->setSharesChange($sharesChange);
     }
 
-
     /**
      * @param string $flag Must be 'I' or 'E'.
      */
@@ -80,26 +79,6 @@ class SwtRecord extends Record
             throw new \InvalidArgumentException("Inclusion/Exclusion Indicator must be 'I' or 'E'.");
         }
         $this->data[self::IDX_INCLUSION_EXCLUSION_INDICATOR] = $flag;
-        return $this;
-    }
-
-    /**
-     * @param int|TisCode $code Either an integer territory code or a TisCode enum.
-     */
-    public function setTisNumericCode(int|TisCode $code): static
-    {
-        if ($code instanceof TisCode) {
-            $numeric = $code->value;
-        } else {
-            // Validate via enum
-            try {
-                $numeric = TisCode::from($code)->value;
-            } catch (\ValueError $e) {
-                throw new \InvalidArgumentException("Invalid TIS code: {$code}");
-            }
-        }
-        // Store as string so that left-aligned 4‐char can be padded
-        $this->data[self::IDX_TIS_NUMERIC_CODE] = (string)$numeric;
         return $this;
     }
 

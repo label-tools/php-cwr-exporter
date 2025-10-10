@@ -52,7 +52,6 @@ class AltRecord extends Record
         return $this->setEnumValue(self::IDX_TITLE_TYPE, TitleType::class, $type);
     }
 
-
     protected function validateBeforeToString(): void
     {
         parent::validateBeforeToString();
@@ -78,10 +77,5 @@ class AltRecord extends Record
                 "ALT: Language Code is required when Title Type is '{$type}'."
             );
         }
-    }
-
-    protected function getLanguageCodeIndex(): int
-    {
-        return self::IDX_LANG;
     }
 }

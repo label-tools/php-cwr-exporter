@@ -187,7 +187,7 @@ describe('SPT (Publisher Territory) Record', function () {
             tisNumericCode: 9999,
             sharesChange: ''
         );
-    })->throws(InvalidArgumentException::class, 'Invalid TIS Numeric Code.');
+    })->throws(InvalidArgumentException::class, 'Invalid TIS Numeric Code');
 
     it('throws when Shares Change flag is not "" or "Y"', function () {
         new SptRecord(

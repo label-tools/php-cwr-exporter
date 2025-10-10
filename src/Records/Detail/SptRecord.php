@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use LabelTools\PhpCwrExporter\Enums\TisCode;
 use LabelTools\PhpCwrExporter\Fields\HasCollectionShare;
 use LabelTools\PhpCwrExporter\Fields\HasInterestedPartyNumber;
+use LabelTools\PhpCwrExporter\Fields\HasTisNumericCode;
 use LabelTools\PhpCwrExporter\Records\Record;
 
 //The SPT record defines the territory and the collection shares for the preceding SPU publisher.
@@ -13,6 +14,7 @@ class SptRecord extends Record
 {
     use HasInterestedPartyNumber;
     use HasCollectionShare;
+    use HasTisNumericCode;
 
     protected static string $recordType = 'SPT';
 
@@ -33,7 +35,7 @@ class SptRecord extends Record
     protected const IDX_MR_COLLECTION_SHARE = 5;
     protected const IDX_SR_COLLECTION_SHARE = 6;
     protected const IDX_INCL_EXCL = 7;
-    protected const IDX_TIS = 8;
+    protected const IDX_TIS_NUMERIC_CODE = 8;
     protected const IDX_SHARES_CHANGE = 9;
 
     public function __construct(
@@ -58,8 +60,7 @@ class SptRecord extends Record
 
     private function setConstant(): self
     {
-        $this->data[self::IDX_CONSTANT] = str_repeat(' ', 6);
-        return $this;
+        return $this->setAlphaNumeric(self::IDX_CONSTANT, '', 'Constant');
     }
 
     private function setInclusionExclusionIndicator(string $indicator): self
@@ -68,15 +69,6 @@ class SptRecord extends Record
             throw new InvalidArgumentException('Inclusion/Exclusion Indicator must be "I" or "E".');
         }
         $this->data[self::IDX_INCL_EXCL] = $indicator;
-        return $this;
-    }
-
-    private function setTisNumericCode(string $code): self
-    {
-        if (TisCode::tryFrom($code) === null) {
-            throw new InvalidArgumentException('Invalid TIS Numeric Code.');
-        }
-        $this->data[self::IDX_TIS] = $code;
         return $this;
     }
 

@@ -9,15 +9,15 @@ class SwtRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SwtRecord
 {
     use HasSequenceNumber;
 
-    protected const INDEX_SEQUENCE_NUM = 9;
+    protected const IDX_SEQUENCE_NUMBER = 9;
 
     public function __construct(
         string $interestedPartyNumber,
         string $inclusionExclusionIndicator,
-        float|int $prCollectionShare = 0,
-        float|int $mrCollectionShare = 0,
-        float|int $srCollectionShare = 0,
-        null|int|TisCode $tisNumericCode = null,
+        float|int $prCollectionShare,
+        float|int $mrCollectionShare,
+        float|int $srCollectionShare,
+        int|TisCode $tisNumericCode,
         string $sharesChange = '',
         ?int $sequenceNumber = 1
     ) {
@@ -29,9 +29,5 @@ class SwtRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SwtRecord
         $this->setSequenceNumber($sequenceNumber);
     }
 
-    protected function getSequenceNumberIndex(): int
-    {
-        return self::INDEX_SEQUENCE_NUM;
-    }
 }
 

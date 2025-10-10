@@ -48,30 +48,30 @@ class NwrRecord extends Record
         "%-25s";   // Catalogue Number (25 A)
 
 
-    private const IDX_TITLE = 2;
-    private const IDX_LANG = 3;
-    private const IDX_SUBMITTER = 4;
-    private const IDX_ISWC = 5;
-    private const IDX_COPYDATE = 6;
-    private const IDX_COPYNUM = 7;
-    private const IDX_MWDC = 8;
-    private const IDX_DURATION = 9;
-    private const IDX_REC = 10;
-    private const IDX_TEXTREL = 11;
-    private const IDX_COMP = 12;
-    private const IDX_VER = 13;
-    private const IDX_EXCERPT = 14;
-    private const IDX_ARRANGE = 15;
-    private const IDX_LYRIC = 16;
-    private const IDX_CONTACT = 17;
-    private const IDX_CONTACTID = 18;
-    private const IDX_WORKTYPE = 19;
-    private const IDX_GRAND = 20;
-    private const IDX_COMPCT = 21;
-    private const IDX_PUBDATE = 22;
-    private const IDX_EXCEPTION = 23;
-    private const IDX_OPUS = 24;
-    private const IDX_CATNUM = 25;
+    protected const IDX_TITLE = 2;
+    protected const IDX_LANG = 3;
+    protected const IDX_SUBMITTER = 4;
+    protected const IDX_ISWC = 5;
+    protected const IDX_COPYDATE = 6;
+    protected const IDX_COPYNUM = 7;
+    protected const IDX_MWDC = 8;
+    protected const IDX_DURATION = 9;
+    protected const IDX_REC = 10;
+    protected const IDX_TEXTREL = 11;
+    protected const IDX_COMP = 12;
+    protected const IDX_VER = 13;
+    protected const IDX_EXCERPT = 14;
+    protected const IDX_ARRANGE = 15;
+    protected const IDX_LYRIC = 16;
+    protected const IDX_CONTACT = 17;
+    protected const IDX_CONTACTID = 18;
+    protected const IDX_WORKTYPE = 19;
+    protected const IDX_GRAND = 20;
+    protected const IDX_COMPCT = 21;
+    protected const IDX_PUBDATE = 22;
+    protected const IDX_EXCEPTION = 23;
+    protected const IDX_OPUS = 24;
+    protected const IDX_CATNUM = 25;
 
     public function __construct(
         string $workTitle,
@@ -154,10 +154,6 @@ class NwrRecord extends Record
         return $this;
     }
 
-    protected function getLanguageCodeIndex(): int
-    {
-        return self::IDX_LANG;
-    }
 
     public function setSubmitterWorkNumber(string $num): self
     {

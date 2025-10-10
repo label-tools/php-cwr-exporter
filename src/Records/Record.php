@@ -173,7 +173,7 @@ abstract class Record
         return $this;
     }
 
-    protected function setEnumValue(int $key, string $enumClass, BackedEnum|string $value, ?string $fieldLabel = null, bool $isRequired = true): self
+    protected function setEnumValue(int $key, string $enumClass, null|BackedEnum|string $value, ?string $fieldLabel = null, bool $isRequired = true): self
     {
         $fieldLabel ??= preg_replace('/(?<!^)[A-Z]/', ' $0', (new \ReflectionClass($enumClass))->getShortName());
 
@@ -286,5 +286,15 @@ abstract class Record
 
         // Convert to CWR format (e.g., 50.5 -> 5050)
         return (int) round($share * 100);
+    }
+
+    protected static function getIdxFromString($indexString): int
+    {
+        $const = get_called_class() . '::'.$indexString;
+
+        if (!defined($const)) {
+            throw new \LogicException(static::class . " must define constant {$indexString}.");
+        }
+        return constant($const);
     }
 }

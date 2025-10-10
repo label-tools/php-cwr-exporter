@@ -6,31 +6,22 @@ trait HasOwnershipShare
 {
     public function setPrOwnershipShare(null|int|float $share): self
     {
-        $this->data[static::IDX_PR_OWNERSHIP_SHARE] = $this->normalizeShare(
-            $share,
-            maxPercent: 50,
-            fieldName: 'PR Ownership Share'
-        );
-        return $this;
+        $fieldName = 'PR Ownership Share';
+        $share = $this->normalizeShare($share, 50, $fieldName);
+        return $this->setNumeric(static::getIdxFromString('IDX_PR_OWNERSHIP_SHARE'), $share, $fieldName);
     }
 
     public function setMrOwnershipShare(null|int|float $share): self
     {
-        $this->data[static::IDX_MR_OWNERSHIP_SHARE] = $this->normalizeShare(
-            $share,
-            maxPercent:100,
-            fieldName: 'MR Ownership Share'
-        );
-        return $this;
+        $fieldName = 'MR Ownership Share';
+        $share = $this->normalizeShare($share, 100, $fieldName);
+        return $this->setNumeric(static::getIdxFromString('IDX_MR_OWNERSHIP_SHARE'), $share, $fieldName);
     }
 
     public function setSrOwnershipShare(null|int|float $share): self
     {
-        $this->data[static::IDX_SR_OWNERSHIP_SHARE] = $this->normalizeShare(
-            $share,
-            100,
-            fieldName: 'SR Ownership Share'
-        );
-        return $this;
+        $fieldName = 'SR Ownership Share';
+        $share = $this->normalizeShare($share, 100, $fieldName);
+        return $this->setNumeric(static::getIdxFromString('IDX_SR_OWNERSHIP_SHARE'), $share, $fieldName);
     }
 }

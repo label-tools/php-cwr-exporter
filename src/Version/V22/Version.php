@@ -159,7 +159,7 @@ class Version implements VersionInterface
                     foreach ($wr->territories ?? [] as $terr) {
                         $workLines[] = (new SwtRecord(
                             interestedPartyNumber:       $wr->interestedPartyNumber,
-                            tisNumericCode:              $terr['tis_code'] ?? null,
+                            tisNumericCode:              $terr['tis_code'],
                             inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
                             sequenceNumber:              ++$swtSeq,
                             prCollectionShare:           $terr['pr_collection_share'] ?? 0,

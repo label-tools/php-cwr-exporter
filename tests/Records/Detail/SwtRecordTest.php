@@ -192,7 +192,7 @@ describe('SWT (Song Territory) Record', function () {
                 tisNumericCode:              9999, // not valid
                 sharesChange: '',
             );
-        })->throws(InvalidArgumentException::class, 'Invalid TIS code: 9999');
+        })->throws(InvalidArgumentException::class, 'Invalid TIS Numeric Code');
 
         it('throws when Shares Change is invalid', function () {
             new SwtRecord(
