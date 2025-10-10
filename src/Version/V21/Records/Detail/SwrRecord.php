@@ -7,7 +7,7 @@ use LabelTools\PhpCwrExporter\Enums\WriterDesignation;
 
 class SwrRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SwrRecord
 {
-    private const IDX_USA_LICENSE_IND = 21;
+    protected const IDX_USA_LICENSE_IND = 21;
 
 
     public function __construct(

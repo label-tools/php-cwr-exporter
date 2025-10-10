@@ -25,11 +25,11 @@ abstract class Record
      */
     protected string $stringFormat;
 
-    private const INDEX_RECORD_TYPE = 1;
+    protected const IDX_RECORD_TYPE = 1;
 
     protected function validateBeforeToString(): void
     {
-        if ($this->hasRecordPrefix() && empty($this->data[self::INDEX_RECORD_TYPE])) {
+        if ($this->hasRecordPrefix() && empty($this->data[self::IDX_RECORD_TYPE])) {
             throw new \LogicException(
                 sprintf('The record prefix for %s has not been set. Please call setRecordPrefix() before generating the string.', static::class)
             );
@@ -45,7 +45,7 @@ abstract class Record
         // If the format expects a full 19-character prefix, set placeholders for transaction and record sequence numbers
         if (!$this->hasRecordPrefix()) {
             // Initialize the data array with the record type
-            $this->data[self::INDEX_RECORD_TYPE] = static::$recordType;
+            $this->data[self::IDX_RECORD_TYPE] = static::$recordType;
         }
     }
 
@@ -73,7 +73,7 @@ abstract class Record
     {
         //@todo we need to block record that dont need record prefix from calling this
         $prefix = sprintf('%-3s%08d%08d', static::$recordType, $transactionSequence, $recordSequence);
-        $this->data[self::INDEX_RECORD_TYPE] = $prefix;
+        $this->data[self::IDX_RECORD_TYPE] = $prefix;
         return $this;
     }
 
@@ -296,5 +296,12 @@ abstract class Record
             throw new \LogicException(static::class . " must define constant {$indexString}.");
         }
         return constant($const);
+    }
+
+    protected function validateCount(int $value, string $fieldName, int $min = 0, int $max = 99999999): void
+    {
+        if ($value < $min || $value > $max) {
+            throw new \InvalidArgumentException("$fieldName must be between $min and $max.");
+        }
     }
 }

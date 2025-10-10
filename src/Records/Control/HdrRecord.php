@@ -14,13 +14,13 @@ class HdrRecord extends Record
     // Format: RecordType(3) + SenderType(2) + SenderID(9) + SenderName(45) + EdiVersion(5) + CreationDate(8) + CreationTime(6) + TransmissionDate(8)
     protected string $stringFormat = "%-3s%-2s%-9s%-45s%-5s%-8s%-6s%-8s";
 
-    private const INDEX_SENDER_TYPE = 2;
-    private const INDEX_SENDER_ID = 3;
-    private const INDEX_SENDER_NAME = 4;
-    private const INDEX_EDI_VERSION = 5;
-    private const INDEX_CREATION_DATE = 6;
-    private const INDEX_CREATION_TIME = 7;
-    private const INDEX_TRANSMISSION_DATE = 8;
+    protected const IDX_SENDER_TYPE = 2;
+    protected const IDX_SENDER_ID = 3;
+    protected const IDX_SENDER_NAME = 4;
+    protected const IDX_EDI_VERSION = 5;
+    protected const IDX_CREATION_DATE = 6;
+    protected const IDX_CREATION_TIME = 7;
+    protected const IDX_TRANSMISSION_DATE = 8;
 
     protected string $senderType;
     protected string $senderId;
@@ -44,7 +44,7 @@ class HdrRecord extends Record
         $this->setCreationDate($creationDate);
         $this->setCreationTime($creationTime);
         $this->setTransmissionDate($transmissionDate);
-        $this->setAlphaNumeric(self::INDEX_EDI_VERSION, static::$ediVersion);
+        $this->setAlphaNumeric(self::IDX_EDI_VERSION, static::$ediVersion);
     }
 
     public function setSenderTypeAndId(string|SenderType $senderType, string $senderId): self
@@ -58,33 +58,33 @@ class HdrRecord extends Record
         $this->validateSenderId($senderTypeEnum, $senderId);
         $this->senderType = $this->resolveSenderType($senderTypeEnum, $senderId);
         $this->senderId = $this->resolveSenderId($senderTypeEnum, $senderId);
-        $this->setAlphaNumeric(self::INDEX_SENDER_TYPE, $this->senderType);
-        $this->setNumeric(self::INDEX_SENDER_ID, $this->senderId);
+        $this->setAlphaNumeric(self::IDX_SENDER_TYPE, $this->senderType);
+        $this->setNumeric(self::IDX_SENDER_ID, $this->senderId);
         return $this;
     }
 
     public function setSenderName(?string $senderName): self
     {
         $this->validateSenderName($senderName);
-        $this->setAlphaNumeric(self::INDEX_SENDER_NAME, $senderName);
+        $this->setAlphaNumeric(self::IDX_SENDER_NAME, $senderName);
         return $this;
     }
 
     public function setCreationDate(null|string|DateTime $creationDate): self
     {
-        $this->setDate(self::INDEX_CREATION_DATE, $creationDate, true, 'Creation Date');
+        $this->setDate(self::IDX_CREATION_DATE, $creationDate, true, 'Creation Date');
         return $this;
     }
 
     public function setCreationTime(null|string|DateTime $creationTime): self
     {
-        $this->setTime(self::INDEX_CREATION_TIME, $creationTime, true, 'Creation Time');
+        $this->setTime(self::IDX_CREATION_TIME, $creationTime, true, 'Creation Time');
         return $this;
     }
 
     public function setTransmissionDate(null|string|DateTime $transmissionDate): self
     {
-        $this->setDate(self::INDEX_TRANSMISSION_DATE, $transmissionDate, true, 'Transmission Date');
+        $this->setDate(self::IDX_TRANSMISSION_DATE, $transmissionDate, true, 'Transmission Date');
         return $this;
     }
 

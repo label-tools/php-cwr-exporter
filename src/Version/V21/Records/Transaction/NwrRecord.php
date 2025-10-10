@@ -10,7 +10,7 @@ use LabelTools\PhpCwrExporter\Records\Transaction\NwrRecord as BaseNwrRecord;
 class NwrRecord extends BaseNwrRecord
 {
 
-    private const IDX_PRIORITY_FLAG = 26;
+    protected const IDX_PRIORITY_FLAG = 26;
 
     public function __construct(
         string $workTitle,

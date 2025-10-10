@@ -8,7 +8,7 @@ class HdrRecord extends BaseHdrRecord
 {
     public ?string $characterSet; // optional L {15}
 
-    private const INDEX_CHARACTER_SET = 9;
+    protected const IDX_CHARACTER_SET = 9;
 
     public function __construct(
         string $senderType,
@@ -31,7 +31,7 @@ class HdrRecord extends BaseHdrRecord
     {
         $this->validateCharacterSet($characterSet);
         $this->characterSet = $characterSet ?? '';
-        $this->data[self::INDEX_CHARACTER_SET] = $this->characterSet;
+        $this->data[self::IDX_CHARACTER_SET] = $this->characterSet;
         return $this;
     }
 
