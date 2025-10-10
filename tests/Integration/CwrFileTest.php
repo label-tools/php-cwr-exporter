@@ -12,7 +12,7 @@ use LabelTools\PhpCwrExporter\Enums\TransactionType;
 use LabelTools\PhpCwrExporter\Enums\VersionType;
 use LabelTools\PhpCwrExporter\Enums\WriterDesignation;
 
-it('builds a CWR 2.2 with one New Registration Work', function () {
+it('builds a CWR 2.2 with some new works using works array', function () {
     $cwr = CwrBuilder::v22()
         ->senderType(SenderType::PUBLISHER)
         ->senderId('01265713057')
@@ -344,4 +344,215 @@ it('builds a CWR 2.2 with one New Registration Work', function () {
     expect($field($swt1, 34, 5))->toBe('02500'); // MR Collection Share 25.00%
     expect($field($swt1, 39, 5))->toBe('03012'); // SR Collection Share 30.12%
     expect(trim($field($swt1, 45, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
+});
+
+it('builds a CWR 2.2 with some new works using addWork', function () {
+    $works = [[
+        'submitter_work_number' => '00000001',
+        'title' => 'SONG TITLE',
+        'title_type' => TitleType::ORIGINAL_TITLE,
+        'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+        'version_type'=> VersionType::ORIGINAL_WORK,
+        'iswc' => 'T1234567890',
+        'alternate_titles' => [
+            [
+                'alternate_title' => 'A DIFFERENT TITLE',
+                'title_type' => TitleType::ALTERNATIVE_TITLE,
+                'language_code' => null,
+            ],
+            [
+                'alternate_title' => 'A DIFFERENT TITLE TWO',
+                'title_type' => TitleType::ALTERNATIVE_TITLE,
+                'language_code' => LanguageCode::FRENCH->value,
+            ]
+        ],
+        'writers' => [[
+            'interested_party_number' => 'W000001',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'ipi_name_number' => '123456789',
+            'pr_affiliation_society' => SocietyCode::BMI->value,
+            'publisher_interested_party_number' => 'P000001', //use for linking to publisher
+            'territories' => [[
+                'tis_code' => TisCode::WORLD->value,
+                'pr_collection_share' => 12.5,
+                'mr_collection_share' => 25,
+                'sr_collection_share' => 30.12,
+                'inclusion_exclusion_indicator' => 'I',
+            ]]
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'tax_id' => null,
+            'submitter_agreement_number' => null,
+            'pr_affiliation_society' => null,
+            'pr_ownership_share' => 50,
+            'mr_affiliation_society' => null,
+            'mr_ownership_share' => 100,
+            'sr_affiliation_society' => null,
+            'sr_ownership_share' => 100,
+            'territories' => [[
+                'tis_code' => TisCode::WORLD->value,
+                'inclusion_exclusion_indicator' => 'I',
+                'pr_collection_share' => 50.0,
+                'mr_collection_share' => 100.0,
+                'sr_collection_share' => 100.0,
+            ]]
+        ]]
+    ], [
+        'submitter_work_number' => '00000002',
+        'title' => 'SONG WITH COOL TITLE',
+        'title_type' => TitleType::ORIGINAL_TITLE,
+        'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+        'version_type'=> VersionType::ORIGINAL_WORK,
+        'iswc' => 'T1234567890',
+        'writers' => [[
+            'interested_party_number' => 'W000001',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'ipi_name_number' => '123456789',
+            'pr_affiliation_society' => SocietyCode::BMI->value,
+            'territories' => [[
+                'tis_code' => TisCode::WORLD->value,
+                'inclusion_exclusion_indicator' => 'I',
+            ]]
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'tax_id' => null,
+            'submitter_agreement_number' => null,
+            'pr_affiliation_society' => null,
+            'pr_ownership_share' => 50,
+            'mr_affiliation_society' => null,
+            'mr_ownership_share' => 100,
+            'sr_affiliation_society' => null,
+            'sr_ownership_share' => 100,
+            'territories' => [[
+                'tis_code' => TisCode::WORLD->value,
+                'inclusion_exclusion_indicator' => 'I',
+                'pr_collection_share' => 25.3,
+                'mr_collection_share' => 33.33,
+                'sr_collection_share' => 100.0,
+            ]]
+        ]]
+    ]];
+
+    $cwr = CwrBuilder::v22()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01265713057')
+        ->senderName('Publishing Company')
+        ->software('LabelTools CWR Exporter', '1.0.0')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value);
+
+    foreach ($works as $work) {
+        $cwr->addWork($work);
+    }
+
+    $payload = $cwr->export();
+
+    // Basic sanity
+    expect($payload)->toBeString();
+    expect($payload)->not->toBeEmpty();
+    expect(count($cwr->getWorks()))->toBe(2);
+
+    // Split into physical records (CRLF per spec; accept \n during tests)
+    $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
+
+    // Helper to read fixed-width fields (1-based positions in spec)
+    $field = function (string $record, int $start, int $size): string {
+        $zeroBased = $start - 1; // spec is 1-indexed
+        return substr($record, $zeroBased, $size);
+    };
+
+    // Helper to assert zero-padded numeric fields of fixed size
+    $expectPaddedN = function (string $raw, int $size, int $value): void {
+        expect($raw)->toHaveLength($size);
+        expect($raw)->toMatch('/^\d+$/');
+        expect($raw)->toBe(str_pad((string) $value, $size, '0', STR_PAD_LEFT));
+    };
+
+    // --- File level checks (spec §3.4) ---
+    // First record must be HDR, second GRH, last TRL
+    expect($field($lines[0], 1, 3))->toBe('HDR'); // §3.4(2)
+    expect($field($lines[1], 1, 3))->toBe('GRH'); // §3.4(3)
+    expect($field(end($lines), 1, 3))->toBe('TRL'); // §3.4(5)
+
+    // --- HDR checks (spec §3.5) ---
+    $hdr = $lines[0];
+    expect(trim($field($hdr, 4, 11)))->toBe('01265713057'); // Sender ID
+    expect(trim($field($hdr, 15, 45)))->toBe('PUBLISHING COMPANY'); // Sender Name
+
+    // Find GRT and TRL
+    $grtIndex = null; $trlIndex = count($lines) - 1;
+    foreach ($lines as $i => $rec) {
+        if ($field($rec, 1, 3) === 'GRT') { $grtIndex = $i; break; }
+    }
+    expect($grtIndex)->not->toBeNull();
+
+    // Count transactions inside the group: each NWR header starts a transaction
+    $txHeaderIndexes = [];
+    foreach ($lines as $i => $rec) {
+        if ($field($rec, 1, 3) === 'NWR') { $txHeaderIndexes[] = $i; }
+    }
+    $txCount = count($txHeaderIndexes);
+
+    // Expect 2 works (we provided 2 in the builder)
+    expect($txCount)->toBe(2);
+
+    // --- TRL checks (spec §3.8) ---
+    $trl = $lines[$trlIndex];
+    expect($field($trl, 1, 3))->toBe('TRL');
+    // TRL Group Count must be zero-padded to 5 and equal to 1 (spec §3.8)
+    $trlGrpRaw = $field($trl, 4, 5);
+    $expectPaddedN($trlGrpRaw, 5, 1);
+    expect((int) $trlGrpRaw)->toBe(1);
+
+    // TRL Transaction Count must be zero-padded to 8 and equal to number of NWR transactions (spec §3.8)
+    $trlTxRaw = $field($trl, 9, 8);
+    $expectPaddedN($trlTxRaw, 8, $txCount);
+    expect((int) $trlTxRaw)->toBe($txCount);
+
+    // TRL Record Count must be zero-padded to 8 and equal to total physical records (HDR + all group records + TRL) (spec §3.8)
+
+    $trlRecRaw = $field($trl, 17, 8);
+    $expectPaddedN($trlRecRaw, 8, count($lines));
+    expect((int) $trlRecRaw)->toBe(count($lines));
+
+    // --- Record prefix sequencing validations (spec §2 Record Prefix table) ---
+    // For each transaction: first NWR header must have TxSeq 00000000 and RecSeq 00000000; detail records keep same TxSeq and increment RecSeq; next transaction increments TxSeq by 1.
+    $prevTxSeq = null;
+    $prevRecSeq = null;
+    foreach ($lines as $i => $rec) {
+        $type = $field($rec, 1, 3);
+        if (in_array($type, ['HDR','GRH','GRT','TRL'], true)) {
+            continue; // control records are not part of transaction prefix rules
+        }
+        $txSeq = (int) $field($rec, 4, 8);
+        $recSeq = (int) $field($rec, 12, 8);
+
+        if ($type === 'NWR') {
+            if ($prevTxSeq === null) {
+                expect($txSeq)->toBe(0); // first transaction must start at 0 (spec Record Prefix note)
+            } else {
+                expect($txSeq)->toBe($prevTxSeq + 1); // subsequent transactions increment by 1 (spec)
+            }
+            expect($recSeq)->toBe(0); // header record sequence is zero (spec)
+            $prevRecSeq = 0;
+            $prevTxSeq = $txSeq;
+            continue;
+        }
+
+        // Detail records: TxSeq equals last header's, RecSeq increments by 1
+        expect($txSeq)->toBe($prevTxSeq); // detail records carry same TxSeq (spec)
+        expect($recSeq)->toBe($prevRecSeq + 1); // record sequence increments (spec)
+        $prevRecSeq = $recSeq;
+    }
 });

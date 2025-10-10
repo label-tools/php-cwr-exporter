@@ -145,4 +145,9 @@ class CwrBuilder
         }
         return $this->exporter->export($this->works, $this->options);
     }
+
+    public function getWorks(): array
+    {
+        return $this->works;
+    }
 }
