@@ -16,7 +16,7 @@ class AltRecord extends Record
     // Indexes into Record::$data for each field
     protected const IDX_ALTERNATE_TITLE = 2; // 60 chars (positions 20–79)
     protected const IDX_TITLE_TYPE = 3; // 2 chars  (80–81)
-    protected const IDX_LANG  = 4; // 2 chars  (82–83)
+    protected const IDX_LANGUAGE  = 4; // 2 chars  (82–83)
 
     // String format: prefix + alternate title + title type + language code
     protected string $stringFormat =

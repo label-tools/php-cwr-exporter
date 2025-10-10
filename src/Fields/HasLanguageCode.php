@@ -8,12 +8,12 @@ trait HasLanguageCode
 {
     public function setLanguageCode(null|string|LanguageCode $languageCode): self
     {
-        return $this->setEnumValue(static::getIdxFromString('IDX_LANG'), LanguageCode::class, $languageCode, 'Language Code', false);
+        return $this->setEnumValue(static::getIdxFromString('IDX_LANGUAGE'), LanguageCode::class, $languageCode, 'Language Code', false);
     }
 
     protected function getLanguageCode(): ?LanguageCode
     {
-        $code = $this->data[static::getIdxFromString('IDX_LANG')] ?? '';
+        $code = $this->data[static::getIdxFromString('IDX_LANGUAGE')] ?? '';
         return $code === '' ? null : LanguageCode::from($code);
     }
 }

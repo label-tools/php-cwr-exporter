@@ -9,7 +9,7 @@ describe('New Work Registration (NWR) Record', function () {
         it('builds valid record with required fields', function () {
             $record = new NwrRecord(
                 workTitle: 'My Song Title',
-                submitterWorkNumber: 'SUB123',
+                submitterWorkNumber: 'Sub123',
                 mwDistributionCategory: 'POP',
                 versionType: 'ORI'
             );
@@ -23,7 +23,7 @@ describe('New Work Registration (NWR) Record', function () {
             expect(substr($str, 11, 8))->toBePaddedLeft('1', 8, '0');
 
             // Title (60 A)
-            expect(substr($str, 19, 60))->toBePadded('My Song Title', 60);
+            expect(substr($str, 19, 60))->toBePadded('MY SONG TITLE', 60);
             // Language Code (defaults to spaces)
             expect(substr($str, 79, 2))->toBePadded('', 2);
             // Submitter Work # (14 A)
