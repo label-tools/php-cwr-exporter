@@ -119,6 +119,7 @@ class SpuRecord extends Record
 
     public function setPublisherIpiName(string $ipi): self
     {
+        //@todo validate ipi
         return $this->setAlphaNumeric(static::IDX_PUBLISHER_IPI_NAME, $ipi, 'Publisher IPI Name Number');
     }
 

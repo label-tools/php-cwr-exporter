@@ -2,6 +2,7 @@
 namespace LabelTools\PhpCwrExporter;
 
 use LabelTools\PhpCwrExporter\Definitions\WorkDefinition;
+use LabelTools\PhpCwrExporter\Version\V21\Version as V21Version;
 use LabelTools\PhpCwrExporter\Version\V22\Version as V22Version;
 use LabelTools\PhpCwrExporter\Enums\SenderType;
 
@@ -17,6 +18,12 @@ class CwrBuilder
 
     public static function make(CwrExporter $exporter): self
     {
+        return new self($exporter);
+    }
+
+    public static function v21(): self
+    {
+        $exporter = new CwrExporter(new V21Version());
         return new self($exporter);
     }
 
