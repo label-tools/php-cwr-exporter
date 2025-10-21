@@ -2,11 +2,7 @@
 
 A PHP library for generating Common Works Registration (CWR) files from simple PHP arrays.
 
-This library simplifies the process of creating CWR files by abstracting the complex, fixed-width format into a structured, easy-to-use builder pattern.
-
-> **Note:** This library currently only supports **CWR v2.2**.
-
-## Installation
+This library simplifies the process of creating CWR files by abstracting the complex, fixed-width format into a structured, easy-to-use builder pattern. It supports **CWR v2.2** and **CWR v2.1 (revision 8)**.
 
 Install the library via Composer:
 
@@ -16,19 +12,40 @@ composer require labeltools/php-cwr-exporter
 
 ## Basic Usage
 
-The `CwrBuilder` provides a fluent interface to construct your CWR file. You start by defining the sender and transaction details, then provide an array of works to be registered.
+The `CwrBuilder` provides a fluent interface to construct your CWR file. You start by selecting the CWR version, defining the sender and transaction details, then provide an array of works to be registered.
+
+### CWR v2.2 Example
 
 ```php
 use LabelTools\PhpCwrExporter\CwrBuilder;
 use LabelTools\PhpCwrExporter\Enums\SenderType;
 use LabelTools\PhpCwrExporter\Enums\TransactionType;
-use LabelTools\PhpCwrExporter\Enums\MusicalWorkDistributionCategory;
-use LabelTools\PhpCwrExporter\Enums\PublisherType;
-use LabelTools\PhpCwrExporter\Enums\TitleType;
-use LabelTools\PhpCwrExporter\Enums\VersionType;
-use LabelTools\PhpCwrExporter\Enums\WriterDesignation;
+// ... other enums
 
 $cwr = CwrBuilder::v22()
+    ->senderType(SenderType::PUBLISHER)
+    ->senderId('SENDER_ID')
+    ->senderName('My Publishing Company')
+    ->software('My Awesome App', '1.0')
+    ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+    ->works([
+        // ... array of work definitions
+    ]);
+
+$payload = $cwr->export();
+
+file_put_contents('CWR_EXPORT.V22', $payload);
+```
+
+### CWR v2.1 Example
+
+```php
+use LabelTools\PhpCwrExporter\CwrBuilder;
+use LabelTools\PhpCwrExporter\Enums\SenderType;
+use LabelTools\PhpCwrExporter\Enums\TransactionType;
+// ... other enums
+
+$cwr = CwrBuilder::v21()
     ->senderType(SenderType::PUBLISHER)
     ->senderId('SENDER_ID')
     ->senderName('My Publishing Company')
@@ -39,7 +56,7 @@ $cwr = CwrBuilder::v22()
 
 $payload = $cwr->export();
 
-file_put_contents('CWR_EXPORT.V22', $payload);
+file_put_contents('CWR_EXPORT.V21', $payload);
 ```
 
 ## Data Structure
@@ -176,4 +193,3 @@ $works = [
     ]
 ];
 ```
-
