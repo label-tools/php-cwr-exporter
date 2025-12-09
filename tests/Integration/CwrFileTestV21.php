@@ -312,8 +312,8 @@ it('builds a CWR 2.1 with some new works using works array', function () {
         }
     }
     expect($pwrRecord)->not->toBeNull();
-    // CWR v2.1 PWR record is 101 characters. It does not have the Publisher Sequence # from v2.2.
-    expect(strlen($pwrRecord))->toBe(101);
+    // CWR v2.1 PWR record is 110 characters (includes Writer IP Number) and does not have the Publisher Sequence # from v2.2.
+    expect(strlen($pwrRecord))->toBe(110);
 
     // Get records for the second transaction (Work 2)
     $tx2_slice = array_slice($lines, $txHeaderIndexes[1] + 1, $grtIndex - $txHeaderIndexes[1] - 1);

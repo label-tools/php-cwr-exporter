@@ -77,7 +77,8 @@ class Version implements VersionInterface
                     copyrightNumber:       $work->copyright_number  ?? null,
                     duration:              $work->duration          ?? null,
                     recordedIndicator:     $work->recorded          ?? false,
-                    textMusicRelationship: $work->text_music_relationship ?? ''
+                    textMusicRelationship: $work->text_music_relationship ?? '',
+                    priorityFlag: $work->priority ?? false, //
                 ))->setRecordPrefix($this->transactionSequence, $this->recordSequence)
                 ->toString();
 
