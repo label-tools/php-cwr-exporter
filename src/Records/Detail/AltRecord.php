@@ -43,8 +43,7 @@ class AltRecord extends Record
         if ($title === '' || mb_strlen($title) > 60) {
             throw new \InvalidArgumentException('Alternate Title must be 1-60 characters: ' . $title);
         }
-        // Allow non-ASCII characters in alternate titles
-        return $this->setAlphaNumeric(static::IDX_ALTERNATE_TITLE, $title, 'Alternate Title', allowsNonAscii:true);
+        return $this->setAlphaNumeric(static::IDX_ALTERNATE_TITLE, $title, 'Alternate Title');
     }
 
     public function setTitleType(string|TitleType $type): self
