@@ -43,7 +43,9 @@ class AltRecord extends Record
         if ($title === '' || mb_strlen($title) > 60) {
             throw new \InvalidArgumentException('Alternate Title must be 1-60 characters: ' . $title);
         }
-        return $this->setAlphaNumeric(static::IDX_ALTERNATE_TITLE, $title, 'Alternate Title');
+        // Defer validation to validateBeforeToString(), so we can check title type
+        $this->data[static::IDX_ALTERNATE_TITLE] = $title;
+        return $this;
     }
 
     public function setTitleType(string|TitleType $type): self
@@ -56,25 +58,43 @@ class AltRecord extends Record
         parent::validateBeforeToString();
 
         // Alternate Title is always required
-        if (empty($this->data[static::IDX_ALTERNATE_TITLE])) {
+        $title = $this->data[static::IDX_ALTERNATE_TITLE] ?? '';
+        if (empty($title)) {
             throw new \InvalidArgumentException('ALT: Alternate Title is required.');
         }
 
         $type = $this->data[static::IDX_TITLE_TYPE] ?? '';
         $lang = $this->getLanguageCode();
 
+        $isNationalCharacters = in_array($type, [
+            TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS->value,
+            TitleType::ALTERNATIVE_TITLE_NATIONAL_CHARACTERS->value,
+        ], true);
+
         // If the title type is one of the “national-characters” variants,
         // then language code must be present
         if (
-            in_array($type, [
-                TitleType::ORIGINAL_TITLE_NATIONAL_CHARACTERS->value,
-                TitleType::ALTERNATIVE_TITLE_NATIONAL_CHARACTERS->value,
-            ], true)
+            $isNationalCharacters
             && empty($lang)
         ) {
             throw new \InvalidArgumentException(
                 "ALT: Language Code is required when Title Type is '{$type}'."
             );
+        }
+
+        // Now validate the title content based on the type
+        if ($isNationalCharacters) {
+            $this->data[static::IDX_ALTERNATE_TITLE] = \voku\helper\ASCII::remove_invisible_characters($title);
+        } else {
+            // Ensure ASCII only
+            if (!mb_check_encoding($title, 'ASCII')) {
+                throw new \InvalidArgumentException("Alternate Title must be ASCII: {$title}");
+            }
+
+            // Reject control characters (NUL..US and DEL). Allow space (0x20) through tilde (0x7E).
+            if (!empty($title) && !preg_match('/^[\x20-\x7E]+$/', $title)) {
+                throw new \InvalidArgumentException("Alternate Title must contain printable ASCII characters only: {$title}");
+            }
         }
     }
 }

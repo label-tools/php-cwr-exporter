@@ -101,18 +101,14 @@ describe('ALT (Alternate Title) Record', function () {
 
         });
 
-        it('alt title with special character', function () {
+        it('throws on non-ascii title when title type is not for national characters', function () {
             $record = new AltRecord(
                 alternateTitle: 'NADA MÁS',
                 titleType: TitleType::ALTERNATIVE_TITLE,
             );
 
-            $out = $record->setRecordPrefix(0,0)->toString();
-
-            expect(mb_strlen($out))->toBe(83);
-            expect(mb_substr($out, 19, 60))->toBePadded('NADA MÁS', 60);
-            expect(mb_substr($out, 79, 2))->toBe(TitleType::ALTERNATIVE_TITLE->value);
-        });
+            $record->setRecordPrefix(0,0)->toString();
+        })->throws(\InvalidArgumentException::class, "Alternate Title must be ASCII: NADA MÁS");
 
         it('accepts national characters in title', function () {
             $record = new AltRecord(
