@@ -2,6 +2,7 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V21;
 
+use InvalidArgumentException;
 use LabelTools\PhpCwrExporter\Contracts\VersionInterface;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\GrtRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\GrhRecord;
@@ -17,8 +18,16 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\NwrRecord;
 
 class Version implements VersionInterface
 {
-    protected int $transactionSequence = 0;
-    protected int $recordSequence = 0;
+    private const SUPPORTED_REVISIONS = ['7', '8'];
+
+    protected int $transactionSequence = 1;
+    protected int $recordSequence = 1;
+    private string $revision;
+
+    public function __construct(?string $revision = null)
+    {
+        $this->revision = $this->normalizeRevision($revision ?? '8');
+    }
 
     public function getVersionNumber(): string
     {
@@ -27,14 +36,15 @@ class Version implements VersionInterface
 
     public function getRevision(): string
     {
-        return '8';
+        return $this->revision;
     }
 
     public function renderHeader(array $options): array
     {
+        $this->applyRevisionOption($options);
         // Initialize first transaction
-        $this->transactionSequence = 0;
-        $this->recordSequence = 0;
+        $this->transactionSequence = 1;
+        $this->recordSequence = 1;
 
         return [
             // File header
@@ -60,10 +70,12 @@ class Version implements VersionInterface
      */
     public function renderDetailLines(array $works, array $options): \Generator
     {
+        $this->applyRevisionOption($options);
+
         foreach ($works as $work) {
             try {
                 // Reset record sequence for this transaction
-                $this->recordSequence = 0;
+                $this->recordSequence = 1;
 
                 // NWR work header
                 yield (new NwrRecord(
@@ -140,7 +152,7 @@ class Version implements VersionInterface
                         filler:                  '',
                         writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
                         personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
-                        usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : ''
+                        usaLicenseIndicator:     $usaLicenseIndicator ?? '',
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
 
@@ -207,6 +219,7 @@ class Version implements VersionInterface
 
     public function renderTrailer(array $options): array
     {
+        $this->applyRevisionOption($options);
         $groupCount       = $options['group_count']       ?? 1;
         $transactionCount = $options['transaction_count'] ?? 0;
         $detailCount      = $options['detail_count']      ?? 0;
@@ -221,5 +234,47 @@ class Version implements VersionInterface
         $trlLine = (new TrlRecord($groupCount, $transactionCount, $totalRecords))->toString();
 
         return [$grtLine, $trlLine];
+    }
+
+    private function applyRevisionOption(array $options): void
+    {
+        if (array_key_exists('revision', $options)) {
+            $this->revision = $this->normalizeRevision((string) $options['revision']);
+        }
+    }
+
+    private function normalizeRevision(string $revision): string
+    {
+        $normalized = trim($revision);
+
+        if ($normalized === '') {
+            throw new InvalidArgumentException('Revision value cannot be empty for CWR v2.1.');
+        }
+
+        if (!ctype_digit($normalized)) {
+            throw new InvalidArgumentException("Revision must be numeric for CWR v2.1. Given: {$revision}");
+        }
+
+        $normalized = ltrim($normalized, '0');
+        if ($normalized === '') {
+            $normalized = '0';
+        }
+
+        if (!in_array($normalized, self::SUPPORTED_REVISIONS, true)) {
+            $supported = implode(', ', self::SUPPORTED_REVISIONS);
+            throw new InvalidArgumentException("CWR v2.1 supports revisions {$supported}. Given: {$revision}");
+        }
+
+        return $normalized;
+    }
+
+    private function supportsUsaLicenseIndicator(): bool
+    {
+        return $this->revision !== '7';
+    }
+
+    private function supportsPriorityFlag(): bool
+    {
+        return $this->revision !== '7';
     }
 }
