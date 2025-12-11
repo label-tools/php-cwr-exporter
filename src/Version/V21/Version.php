@@ -20,8 +20,8 @@ class Version implements VersionInterface
 {
     private const SUPPORTED_REVISIONS = ['7', '8'];
 
-    protected int $transactionSequence = 1;
-    protected int $recordSequence = 1;
+    protected int $transactionSequence = 0;
+    protected int $recordSequence = 0;
     private string $revision;
 
     public function __construct(?string $revision = null)
@@ -43,8 +43,8 @@ class Version implements VersionInterface
     {
         $this->applyRevisionOption($options);
         // Initialize first transaction
-        $this->transactionSequence = 1;
-        $this->recordSequence = 1;
+        $this->transactionSequence = 0;
+        $this->recordSequence = 0;
 
         return [
             // File header
@@ -75,7 +75,7 @@ class Version implements VersionInterface
         foreach ($works as $work) {
             try {
                 // Reset record sequence for this transaction
-                $this->recordSequence = 1;
+                $this->recordSequence = 0;
 
                 // NWR work header
                 yield (new NwrRecord(
@@ -152,7 +152,7 @@ class Version implements VersionInterface
                         filler:                  '',
                         writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
                         personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
-                        usaLicenseIndicator:     $usaLicenseIndicator ?? '',
+                        usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : ''
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
 
@@ -207,12 +207,14 @@ class Version implements VersionInterface
                     }
                 }
 
-                $this->transactionSequence++;
             } catch (\Throwable $e) {
                 // Something went wrong with this work. You can log the error or handle it as needed.
                 // For example: error_log("Skipping work {$work->submitterWorkNumber}: " . $e->getMessage());
                 // The invalid work is skipped, and we continue to the next one.
                 yield null; // Yield null to signify a skipped work
+            } finally {
+                // Always advance the transaction sequence so prefixes do not repeat after a skipped/errored work
+                $this->transactionSequence++;
             }
         }
     }
@@ -266,15 +268,5 @@ class Version implements VersionInterface
         }
 
         return $normalized;
-    }
-
-    private function supportsUsaLicenseIndicator(): bool
-    {
-        return $this->revision !== '7';
-    }
-
-    private function supportsPriorityFlag(): bool
-    {
-        return $this->revision !== '7';
     }
 }
