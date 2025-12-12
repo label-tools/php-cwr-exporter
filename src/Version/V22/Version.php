@@ -68,13 +68,14 @@ class Version implements VersionInterface
     public function renderDetailLines(array $works, array $options): \Generator
     {
         foreach ($works as $work) {
+            $emittedRecords = false;
             try {
                 $workLines = [];
                 // Reset record sequence for this transaction
                 $this->recordSequence = 0;
 
                 // NWR work header
-                yield (new NwrRecord(
+                $line = (new NwrRecord(
                     workTitle:             $work->title,
                     submitterWorkNumber:   $work->submitterWorkNumber,
                     mwDistributionCategory: $work->distributionCategory,
@@ -88,11 +89,13 @@ class Version implements VersionInterface
                     textMusicRelationship: $work->text_music_relationship ?? ''
                 ))->setRecordPrefix($this->transactionSequence, $this->recordSequence)
                 ->toString();
+                $emittedRecords = true;
+                yield $line;
 
                 // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {
                     // SPU publisher record
-                    yield (new SpuRecord(
+                    $line = (new SpuRecord(
                         publisherSequence:           $pubIndex + 1,
                         interestedPartyNumber:       $pub->interestedPartyNumber,
                         publisherName:               $pub->publisherName,
@@ -108,10 +111,12 @@ class Version implements VersionInterface
                         srOwnershipShare:            $pub->srOwnershipShare
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
+                    $emittedRecords = true;
+                    yield $line;
 
                     // SPT territory records
                     foreach ($pub->territories ?? [] as $terrIndex => $terr) {
-                        yield (new SptRecord(
+                        $line = (new SptRecord(
                             interestedPartyNumber:        $pub->interestedPartyNumber,
                             prCollectionShare:            $terr['pr_collection_share'] ?? 0,
                             mrCollectionShare:            $terr['mr_collection_share'] ?? 0,
@@ -122,13 +127,15 @@ class Version implements VersionInterface
                             sequenceNumber:               $terrIndex + 1
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
+                        $emittedRecords = true;
+                        yield $line;
                     }
                 }
 
                 // SWR & SWT for each writer
                 foreach ($work->writers ?? [] as $writerIndex => $wr) {
                     // SWR writer record
-                    yield (new SwrRecord(
+                    $line = (new SwrRecord(
                         interestedPartyNumber:   $wr->interestedPartyNumber,
                         writerLastName:          $wr->writerLastName,
                         writerFirstName:         $wr->writerFirstName,
@@ -150,11 +157,13 @@ class Version implements VersionInterface
                         usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : ''
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
+                    $emittedRecords = true;
+                    yield $line;
 
                     // SWT territory records for the writer (sequence starts at 1 per writer)
                     $swtSeq = 0;
                     foreach ($wr->territories ?? [] as $terr) {
-                        yield (new SwtRecord(
+                        $line = (new SwtRecord(
                             interestedPartyNumber:       $wr->interestedPartyNumber,
                             tisNumericCode:              $terr['tis_code'],
                             inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
@@ -164,18 +173,22 @@ class Version implements VersionInterface
                             srCollectionShare:           $terr['sr_collection_share'] ?? 0,
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
+                        $emittedRecords = true;
+                        yield $line;
                     }
                 }
 
                 // ALT records for each alternate title
                 if (!empty($work->alternateTitles)) {
                     foreach ($work->alternateTitles as $alt) {
-                        yield (new AltRecord(
+                        $line = (new AltRecord(
                             alternateTitle: $alt['alternate_title'],
                             titleType:      $alt['title_type'],
                             languageCode:   $alt['language_code'] ?? null
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
+                        $emittedRecords = true;
+                        yield $line;
                     }
                 }
 
@@ -190,7 +203,7 @@ class Version implements VersionInterface
                         // Only create a PWR link if the writer is represented by a publisher in this work
                         if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
                             $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];
-                            yield (new PwrRecord(
+                            $line = (new PwrRecord(
                                 publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
                                 publisherName:                  $publisherData['def']->publisherName,
                                 submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
@@ -199,16 +212,21 @@ class Version implements VersionInterface
                                 publisherSequenceNumber:        $publisherData['seq'],
                             ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                               ->toString();
+                            $emittedRecords = true;
+                            yield $line;
                         }
                     }
                 }
 
-                $this->transactionSequence++;
             } catch (\Throwable $e) {
                 // Something went wrong with this work. You can log the error or handle it as needed.
                 // For example: error_log("Skipping work {$work->submitterWorkNumber}: " . $e->getMessage());
                 // The invalid work is skipped, and we continue to the next one.
                 yield null; // Yield null to signify a skipped work
+            } finally {
+                if ($emittedRecords) {
+                    $this->transactionSequence++;
+                }
             }
         }
     }

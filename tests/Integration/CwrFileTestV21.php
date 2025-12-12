@@ -358,6 +358,135 @@ it('builds a CWR 2.1 with some new works using works array', function () {
     expect(trim($field($swt1, 45, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
 });
 
+it('keeps transaction prefixes contiguous when a work is skipped', function () {
+    $works = [
+        [
+            'submitter_work_number' => '00000001',
+            'title' => 'VALID ONE',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'W000001',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000001',
+                'name' => 'Publishing Company',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 100,
+                'sr_ownership_share' => 100,
+            ]]
+        ],
+        [
+            // This work will be skipped because the ISWC is invalid, triggering a validation error.
+            'submitter_work_number' => '00000002',
+            'title' => 'SHOULD SKIP',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'iswc' => 'BADISWC',
+            'writers' => [[
+                'interested_party_number' => 'W000002',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000002',
+                'name' => 'Publishing Company',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 100,
+                'sr_ownership_share' => 100,
+            ]]
+        ],
+        [
+            'submitter_work_number' => '00000003',
+            'title' => 'VALID TWO',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'W000003',
+                'first_name' => 'Jake',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000003',
+                'name' => 'Publishing Company',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 100,
+                'sr_ownership_share' => 100,
+            ]]
+        ],
+    ];
+
+    $cwr = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01265713057')
+        ->senderName('Publishing Company')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works);
+
+    $payload = $cwr->export();
+    $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
+
+    $field = function (string $record, int $start, int $size): string {
+        $zeroBased = $start - 1;
+        return substr($record, $zeroBased, $size);
+    };
+
+    $detailLines = array_values(array_filter(
+        $lines,
+        fn($rec) => !in_array($field($rec, 1, 3), ['HDR', 'GRH', 'GRT', 'TRL'], true)
+    ));
+
+    // Only two NWR headers should remain; the bad work is skipped entirely.
+    $nwrTxSeqs = [];
+    $prevTxSeq = null;
+    $prevRecSeq = null;
+    foreach ($detailLines as $rec) {
+        $type = $field($rec, 1, 3);
+        $txSeq = (int) $field($rec, 4, 8);
+        $recSeq = (int) $field($rec, 12, 8);
+
+        if ($type === 'NWR') {
+            $nwrTxSeqs[] = $txSeq;
+            if ($prevTxSeq === null) {
+                expect($txSeq)->toBe(0);
+            } else {
+                expect($txSeq)->toBe($prevTxSeq + 1);
+            }
+            expect($recSeq)->toBe(0);
+            $prevTxSeq = $txSeq;
+            $prevRecSeq = 0;
+            continue;
+        }
+
+        // Detail records must keep the same TxSeq and increment RecSeq by 1.
+        expect($txSeq)->toBe($prevTxSeq);
+        expect($recSeq)->toBe($prevRecSeq + 1);
+        $prevRecSeq = $recSeq;
+    }
+
+    expect($nwrTxSeqs)->toBe([0, 1]);
+});
+
 it('builds a CWR 2.1 with some new works using addWork', function () {
     $works = [[
         'submitter_work_number' => '00000001',

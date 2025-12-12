@@ -18,16 +18,11 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\NwrRecord;
 
 class Version implements VersionInterface
 {
-    private const SUPPORTED_REVISIONS = ['7', '8'];
 
     protected int $transactionSequence = 0;
     protected int $recordSequence = 0;
     private string $revision;
 
-    public function __construct(?string $revision = null)
-    {
-        $this->revision = $this->normalizeRevision($revision ?? '8');
-    }
 
     public function getVersionNumber(): string
     {
@@ -36,12 +31,11 @@ class Version implements VersionInterface
 
     public function getRevision(): string
     {
-        return $this->revision;
+        return '8';
     }
 
     public function renderHeader(array $options): array
     {
-        $this->applyRevisionOption($options);
         // Initialize first transaction
         $this->transactionSequence = 0;
         $this->recordSequence = 0;
@@ -70,15 +64,15 @@ class Version implements VersionInterface
      */
     public function renderDetailLines(array $works, array $options): \Generator
     {
-        $this->applyRevisionOption($options);
 
         foreach ($works as $work) {
+            $emittedRecords = false;
             try {
                 // Reset record sequence for this transaction
                 $this->recordSequence = 0;
 
                 // NWR work header
-                yield (new NwrRecord(
+                $line = (new NwrRecord(
                     workTitle:             $work->title,
                     submitterWorkNumber:   $work->submitterWorkNumber,
                     mwDistributionCategory: $work->distributionCategory,
@@ -93,11 +87,13 @@ class Version implements VersionInterface
                     priorityFlag: $work->priority ?? false, //
                 ))->setRecordPrefix($this->transactionSequence, $this->recordSequence)
                 ->toString();
+                $emittedRecords = true;
+                yield $line;
 
                 // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {
                     // SPU publisher record
-                    yield (new SpuRecord(
+                    $line = (new SpuRecord(
                         publisherSequence:           $pubIndex + 1,
                         interestedPartyNumber:       $pub->interestedPartyNumber,
                         publisherName:               $pub->publisherName,
@@ -113,10 +109,12 @@ class Version implements VersionInterface
                         srOwnershipShare:            $pub->srOwnershipShare
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
+                    $emittedRecords = true;
+                    yield $line;
 
                     // SPT territory records
                     foreach ($pub->territories ?? [] as $terrIndex => $terr) {
-                        yield (new SptRecord(
+                        $line = (new SptRecord(
                             interestedPartyNumber:        $pub->interestedPartyNumber,
                             prCollectionShare:            $terr['pr_collection_share'] ?? 0,
                             mrCollectionShare:            $terr['mr_collection_share'] ?? 0,
@@ -127,13 +125,15 @@ class Version implements VersionInterface
                             sequenceNumber:               $terrIndex + 1
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
+                        $emittedRecords = true;
+                        yield $line;
                     }
                 }
 
                 // SWR & SWT for each writer
                 foreach ($work->writers ?? [] as $writerIndex => $wr) {
                     // SWR writer record
-                    yield (new SwrRecord(
+                    $line = (new SwrRecord(
                         interestedPartyNumber:   $wr->interestedPartyNumber,
                         writerLastName:          $wr->writerLastName,
                         writerFirstName:         $wr->writerFirstName,
@@ -152,14 +152,16 @@ class Version implements VersionInterface
                         filler:                  '',
                         writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
                         personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
-                        usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : ''
+                        usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : '',
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
+                    $emittedRecords = true;
+                    yield $line;
 
                     // SWT territory records for the writer (sequence starts at 1 per writer)
                     $swtSeq = 0;
                     foreach ($wr->territories ?? [] as $terr) {
-                        yield (new SwtRecord(
+                        $line = (new SwtRecord(
                             interestedPartyNumber:       $wr->interestedPartyNumber,
                             tisNumericCode:              $terr['tis_code'],
                             inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
@@ -169,18 +171,22 @@ class Version implements VersionInterface
                             srCollectionShare:           $terr['sr_collection_share'] ?? 0,
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
+                        $emittedRecords = true;
+                        yield $line;
                     }
                 }
 
                 // ALT records for each alternate title
                 if (!empty($work->alternateTitles)) {
                     foreach ($work->alternateTitles as $alt) {
-                        yield (new AltRecord(
+                        $line = (new AltRecord(
                             alternateTitle: $alt['alternate_title'],
                             titleType:      $alt['title_type'],
                             languageCode:   $alt['language_code'] ?? null
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
+                        $emittedRecords = true;
+                        yield $line;
                     }
                 }
 
@@ -195,7 +201,7 @@ class Version implements VersionInterface
                         // Only create a PWR link if the writer is represented by a publisher in this work
                         if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
                             $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];
-                            yield (new PwrRecord(
+                            $line = (new PwrRecord(
                                 publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
                                 publisherName:                  $publisherData['def']->publisherName,
                                 submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
@@ -203,6 +209,8 @@ class Version implements VersionInterface
                                 writerIpNumber:                 $wr->interestedPartyNumber,
                             ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                               ->toString();
+                            $emittedRecords = true;
+                            yield $line;
                         }
                     }
                 }
@@ -213,15 +221,16 @@ class Version implements VersionInterface
                 // The invalid work is skipped, and we continue to the next one.
                 yield null; // Yield null to signify a skipped work
             } finally {
-                // Always advance the transaction sequence so prefixes do not repeat after a skipped/errored work
-                $this->transactionSequence++;
+                // Advance the transaction sequence only when at least one record for this work was emitted.
+                if ($emittedRecords) {
+                    $this->transactionSequence++;
+                }
             }
         }
     }
 
     public function renderTrailer(array $options): array
     {
-        $this->applyRevisionOption($options);
         $groupCount       = $options['group_count']       ?? 1;
         $transactionCount = $options['transaction_count'] ?? 0;
         $detailCount      = $options['detail_count']      ?? 0;
@@ -236,37 +245,5 @@ class Version implements VersionInterface
         $trlLine = (new TrlRecord($groupCount, $transactionCount, $totalRecords))->toString();
 
         return [$grtLine, $trlLine];
-    }
-
-    private function applyRevisionOption(array $options): void
-    {
-        if (array_key_exists('revision', $options)) {
-            $this->revision = $this->normalizeRevision((string) $options['revision']);
-        }
-    }
-
-    private function normalizeRevision(string $revision): string
-    {
-        $normalized = trim($revision);
-
-        if ($normalized === '') {
-            throw new InvalidArgumentException('Revision value cannot be empty for CWR v2.1.');
-        }
-
-        if (!ctype_digit($normalized)) {
-            throw new InvalidArgumentException("Revision must be numeric for CWR v2.1. Given: {$revision}");
-        }
-
-        $normalized = ltrim($normalized, '0');
-        if ($normalized === '') {
-            $normalized = '0';
-        }
-
-        if (!in_array($normalized, self::SUPPORTED_REVISIONS, true)) {
-            $supported = implode(', ', self::SUPPORTED_REVISIONS);
-            throw new InvalidArgumentException("CWR v2.1 supports revisions {$supported}. Given: {$revision}");
-        }
-
-        return $normalized;
     }
 }
