@@ -69,6 +69,7 @@ class Version implements VersionInterface
         $validator = new TransactionValidator();
         foreach ($works as $work) {
             $emittedRecords = false;
+            $workLines = [];
             try {
                 // Reset record sequence for this transaction
                 $this->recordSequence = 0;
@@ -93,8 +94,7 @@ class Version implements VersionInterface
                     priorityFlag: $work->priority ?? false, //
                 ))->setRecordPrefix($this->transactionSequence, $this->recordSequence)
                 ->toString();
-                $emittedRecords = true;
-                yield $line;
+                $workLines[] = $line;
 
                 // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {
@@ -115,8 +115,7 @@ class Version implements VersionInterface
                         srOwnershipShare:            $pub->srOwnershipShare
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
-                    $emittedRecords = true;
-                    yield $line;
+                    $workLines[] = $line;
 
                     // SPT territory records
                     foreach ($pub->territories ?? [] as $terrIndex => $terr) {
@@ -131,8 +130,7 @@ class Version implements VersionInterface
                             sequenceNumber:               $terrIndex + 1
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
-                        $emittedRecords = true;
-                        yield $line;
+                        $workLines[] = $line;
                     }
                 }
 
@@ -163,8 +161,7 @@ class Version implements VersionInterface
                             usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : '',
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
-                        $emittedRecords = true;
-                        yield $line;
+                        $workLines[] = $line;
 
                         // SWT territory records for the writer (sequence starts at 1 per writer)
                         $swtSeq = 0;
@@ -179,8 +176,7 @@ class Version implements VersionInterface
                                 srCollectionShare:           $terr['sr_collection_share'] ?? 0,
                             ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                               ->toString();
-                            $emittedRecords = true;
-                            yield $line;
+                            $workLines[] = $line;
                         }
 
                         $publisherKey = $this->normalizePublisherKey($wr->publisherInterestedPartyNumber ?? null);
@@ -197,8 +193,7 @@ class Version implements VersionInterface
                             writerIpNumber:                 $wr->interestedPartyNumber,
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
-                        $emittedRecords = true;
-                        yield $line;
+                        $workLines[] = $line;
                     } else {
                         $line = (new OwrRecord(
                             interestedPartyNumber:   $wr->interestedPartyNumber,
@@ -222,8 +217,7 @@ class Version implements VersionInterface
                             usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : '',
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
-                        $emittedRecords = true;
-                        yield $line;
+                        $workLines[] = $line;
                     }
                 }
 
@@ -236,11 +230,14 @@ class Version implements VersionInterface
                             languageCode:   $alt['language_code'] ?? null
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
-                        $emittedRecords = true;
-                        yield $line;
+                        $workLines[] = $line;
                     }
                 }
 
+                $emittedRecords = !empty($workLines);
+                foreach ($workLines as $line) {
+                    yield $line;
+                }
             } catch (\Throwable $e) {
                 $this->skippedWorks[] = [
                     'work_number' => $work->submitterWorkNumber ?? null,

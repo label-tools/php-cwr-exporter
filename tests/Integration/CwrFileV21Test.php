@@ -700,6 +700,140 @@ it('reports skipped works with errors', function () {
     expect($skipped[0]['error'])->toContain('publisher_interested_party_number');
 });
 
+it('does not emit partially rendered works when a later record fails validation', function () {
+    $works = [
+        [
+            'submitter_work_number' => 'GOOD1',
+            'title' => 'GOOD ONE',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'WG001',
+                'first_name' => 'John',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'PG001',
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'PG001',
+                'name' => 'Good Pub 1',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 50,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]],
+            ]],
+        ],
+        [
+            'submitter_work_number' => 'BADMID',
+            'title' => 'FAILS MID RENDER',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'WBMID',
+                'first_name' => 'Bad',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'PBMID',
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'PBMID',
+                'name' => 'Bad Pub',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'territories' => [
+                    [
+                        'tis_code' => TisCode::WORLD->value,
+                        'pr_collection_share' => 25,
+                        'inclusion_exclusion_indicator' => 'I',
+                    ],
+                    [
+                        'tis_code' => TisCode::WORLD->value,
+                        'pr_collection_share' => 25,
+                        'inclusion_exclusion_indicator' => 'X', // invalid, triggers SPT validation
+                    ],
+                ],
+            ]],
+        ],
+        [
+            'submitter_work_number' => 'GOOD2',
+            'title' => 'GOOD TWO',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'WG002',
+                'first_name' => 'Jane',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'PG002',
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'PG002',
+                'name' => 'Good Pub 2',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 50,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]],
+            ]],
+        ],
+    ];
+
+    $cwr = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01265713057')
+        ->senderName('Publishing Company')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works);
+
+    $payload = $cwr->export();
+    $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
+
+    $field = function (string $record, int $start, int $size): string {
+        $zeroBased = $start - 1;
+        return substr($record, $zeroBased, $size);
+    };
+
+    $detailLines = array_values(array_filter(
+        $lines,
+        fn($rec) => !in_array($field($rec, 1, 3), ['HDR', 'GRH', 'GRT', 'TRL'], true)
+    ));
+    $detailTypes = array_map(fn($rec) => $field($rec, 1, 3), $detailLines);
+
+    $nwrSeqs = [];
+    foreach ($detailLines as $rec) {
+        if ($field($rec, 1, 3) === 'NWR') {
+            $nwrSeqs[] = (int) $field($rec, 4, 8);
+        }
+    }
+
+    expect($detailTypes)->not->toContain('BADMID');
+    expect($payload)->not->toContain('BADMID');
+    expect($nwrSeqs)->toBe([0, 1]);
+
+    $trl = end($lines);
+    expect($field($trl, 1, 3))->toBe('TRL');
+    expect((int) $field($trl, 9, 8))->toBe(2);
+
+    $skipped = $cwr->getSkippedWorks();
+    expect($skipped)->toHaveCount(1);
+    expect($skipped[0]['work_number'])->toBe('BADMID');
+    expect($skipped[0]['error'])->toContain('Inclusion/Exclusion Indicator');
+});
+
 it('builds a CWR 2.1 with some new works using addWork', function () {
     $works = [[
         'submitter_work_number' => '00000001',
