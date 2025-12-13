@@ -39,6 +39,7 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                     ]
                 ],
                 'writers' => [[
+                    'controlled' => true,
                     'interested_party_number' => 'W000001',
                     'first_name' => 'John',
                     'last_name' => 'Doe',
@@ -51,6 +52,21 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                         'pr_collection_share' => 12.5,
                         'mr_collection_share' => 25,
                         'sr_collection_share' => 30.12,
+                        'inclusion_exclusion_indicator' => 'I',
+                    ]]
+                    ], [
+                    'controlled' => false,
+                    'interested_party_number' => 'W000011',
+                    'first_name' => 'Jay',
+                    'last_name' => 'Doe',
+                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                    'ipi_name_number' => '12345678910',
+                    'pr_affiliation_society' => SocietyCode::BMI->value,
+                    'territories' => [[
+                        'tis_code' => TisCode::WORLD->value,
+                        'pr_collection_share' => 0,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
                         'inclusion_exclusion_indicator' => 'I',
                     ]]
                 ]],
@@ -71,8 +87,8 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
                         'pr_collection_share' => 50.0,
-                        'mr_collection_share' => 100.0,
-                        'sr_collection_share' => 100.0,
+                        'mr_collection_share' => 75.0,
+                        'sr_collection_share' => 69.88,
                     ]]
                 ]]
             ],
@@ -84,12 +100,14 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                 'version_type'=> VersionType::ORIGINAL_WORK,
                 'iswc' => 'T1234567890',
                 'writers' => [[
+                    'controlled' => true,
                     'interested_party_number' => 'W000001',
                     'first_name' => 'John',
                     'last_name' => 'Doe',
                     'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                     'ipi_name_number' => '123456789',
                     'pr_affiliation_society' => SocietyCode::BMI->value,
+                    'publisher_interested_party_number' => 'P000001',
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
@@ -121,6 +139,7 @@ it('builds a CWR 2.1 with some new works using works array', function () {
 
 
     $payload = $cwr->export();
+    var_export($payload);
 
     // Basic sanity
     expect($payload)->toBeString();
@@ -319,8 +338,29 @@ it('builds a CWR 2.1 with some new works using works array', function () {
     $tx2_slice = array_slice($lines, $txHeaderIndexes[1] + 1, $grtIndex - $txHeaderIndexes[1] - 1);
     $tx2_types = array_map(fn($r) => $field($r, 1, 3), $tx2_slice);
 
-    // Assert PWR record DOES NOT EXIST for Work 2, as the writer is not linked to a publisher
-    expect($tx2_types)->not->toContain('PWR');
+    // Assert PWR record EXISTS for Work 2, as the writer is linked to a publisher
+    expect($tx2_types)->toContain('PWR');
+
+    // Ensure every SWR in the file is followed by at least one PWR before the next SWR/NWR
+    foreach ($lines as $idx => $rec) {
+        if ($field($rec, 1, 3) !== 'SWR') {
+            continue;
+        }
+
+        $foundPwr = false;
+        for ($cursor = $idx + 1; $cursor < count($lines); $cursor++) {
+            $type = $field($lines[$cursor], 1, 3);
+            if ($type === 'PWR') {
+                $foundPwr = true;
+                break;
+            }
+            if (in_array($type, ['SWR', 'NWR'], true)) {
+                break;
+            }
+        }
+
+        expect($foundPwr)->toBeTrue();
+    }
 
     // --- SPT field-level spot checks ---
     $sptIndexes = [];
@@ -332,8 +372,8 @@ it('builds a CWR 2.1 with some new works using works array', function () {
     // Check first SPT record (from first work)
     $spt1 = $lines[$sptIndexes[0]];
     expect($field($spt1, 35, 5))->toBe('05000'); // PR Collection Share 50.00%
-    expect($field($spt1, 40, 5))->toBe('10000'); // MR Collection Share 100.00%
-    expect($field($spt1, 45, 5))->toBe('10000'); // SR Collection Share 100.00%
+    expect($field($spt1, 40, 5))->toBe('07500'); // MR Collection Share 75.00%
+    expect($field($spt1, 45, 5))->toBe('06988'); // SR Collection Share 69.88%
     expect(trim($field($spt1, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
 
     // Check second SPT record (from second work)
@@ -373,6 +413,7 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'P000001',
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000001',
@@ -399,6 +440,7 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'P000002',
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000002',
@@ -423,6 +465,7 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'P000003',
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000003',
@@ -487,6 +530,108 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
     expect($nwrTxSeqs)->toBe([0, 1]);
 });
 
+it('skips works where a controlled writer cannot produce a PWR record', function () {
+    $works = [
+        [
+            'submitter_work_number' => 'GOODPWR1',
+            'title' => 'VALID WITH PUBLISHER LINK',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'WVAL001',
+                'first_name' => 'Linked',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'PVAL001',
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'PVAL001',
+                'name' => 'Valid Publishing',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 100,
+                'sr_ownership_share' => 100,
+            ]]
+        ],
+        [
+            'submitter_work_number' => 'BADPWR',
+            'title' => 'MISSING PUBLISHER LINK',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'WORPHAN',
+                'first_name' => 'Orphaned',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                // intentionally missing publisher_interested_party_number to trigger validation
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000BAD',
+                'name' => 'Missing Link Pub',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 100,
+                'sr_ownership_share' => 100,
+            ]]
+        ],
+    ];
+
+    $cwr = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01265713057')
+        ->senderName('Publishing Company')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works);
+
+    $payload = $cwr->export();
+    $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
+
+    $field = function (string $record, int $start, int $size): string {
+        $zeroBased = $start - 1;
+        return substr($record, $zeroBased, $size);
+    };
+
+    $detailLines = array_values(array_filter(
+        $lines,
+        fn($rec) => !in_array($field($rec, 1, 3), ['HDR', 'GRH', 'GRT', 'TRL'], true)
+    ));
+    $detailTypes = array_map(fn($rec) => $field($rec, 1, 3), $detailLines);
+
+    $nwrCount = count(array_filter($detailTypes, fn($t) => $t === 'NWR'));
+    expect($nwrCount)->toBe(1); // the BADPWR work is skipped entirely
+    expect($payload)->not->toContain('BADPWR');
+
+    $swrIndexes = [];
+    foreach ($detailLines as $idx => $rec) {
+        if ($field($rec, 1, 3) === 'SWR') {
+            $swrIndexes[] = $idx;
+        }
+    }
+    expect($swrIndexes)->toHaveCount(1);
+
+    $swrIdx = $swrIndexes[0];
+    $foundPwr = false;
+    for ($i = $swrIdx + 1; $i < count($detailLines); $i++) {
+        $type = $field($detailLines[$i], 1, 3);
+        if ($type === 'PWR') {
+            $foundPwr = true;
+            break;
+        }
+        if ($type === 'NWR') {
+            break;
+        }
+    }
+    expect($foundPwr)->toBeTrue();
+});
+
 it('builds a CWR 2.1 with some new works using addWork', function () {
     $works = [[
         'submitter_work_number' => '00000001',
@@ -540,8 +685,8 @@ it('builds a CWR 2.1 with some new works using addWork', function () {
                 'tis_code' => TisCode::WORLD->value,
                 'inclusion_exclusion_indicator' => 'I',
                 'pr_collection_share' => 50.0,
-                'mr_collection_share' => 100.0,
-                'sr_collection_share' => 100.0,
+                'mr_collection_share' => 75.0,
+                'sr_collection_share' => 69.88,
             ]]
         ]]
     ], [
@@ -558,6 +703,7 @@ it('builds a CWR 2.1 with some new works using addWork', function () {
             'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
             'ipi_name_number' => '123456789',
             'pr_affiliation_society' => SocietyCode::BMI->value,
+            'publisher_interested_party_number' => 'P000001',
             'territories' => [[
                 'tis_code' => TisCode::WORLD->value,
                 'inclusion_exclusion_indicator' => 'I',
@@ -616,15 +762,16 @@ it('builds a CWR 2.1 file and writes it to a stream', function () {
             'writers' => [[
                 'interested_party_number' => 'W000001',
                 'first_name' => 'John',
-                'last_name' => 'Doe',
-                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                'ipi_name_number' => '123456789',
-                'pr_affiliation_society' => SocietyCode::BMI->value,
-            ]],
-            'publishers' => [[
-                'interested_party_number' => 'P000001',
-                'name' => 'Publishing Company',
-                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'last_name' => 'Doe',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'ipi_name_number' => '123456789',
+            'pr_affiliation_society' => SocietyCode::BMI->value,
+            'publisher_interested_party_number' => 'P000001',
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
                 'ipi_name_number' => '123456789',
                 'pr_ownership_share' => 50,
                 'mr_ownership_share' => 100,

@@ -16,6 +16,7 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SpuRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SwtRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\NwrRecord;
+use LabelTools\PhpCwrExporter\Validators\TransactionValidator;
 
 class Version implements VersionInterface
 {
@@ -63,11 +64,16 @@ class Version implements VersionInterface
     public function renderDetailLines(array $works, array $options): \Generator
     {
 
+        $validator = new TransactionValidator();
         foreach ($works as $work) {
             $emittedRecords = false;
             try {
                 // Reset record sequence for this transaction
                 $this->recordSequence = 0;
+
+                $publisherMap = $this->buildPublisherMap($work->publishers ?? []);
+                $validator->validate($work);
+                $this->assertPwrRequirementForControlledWriters($work, $publisherMap);
 
                 // NWR work header
                 $line = (new NwrRecord(
@@ -174,6 +180,23 @@ class Version implements VersionInterface
                             $emittedRecords = true;
                             yield $line;
                         }
+
+                        $publisherKey = $this->normalizePublisherKey($wr->publisherInterestedPartyNumber ?? null);
+                        $publisherData = $publisherMap[$publisherKey] ?? null;
+                        if ($publisherData === null) {
+                            throw new InvalidArgumentException("SWR writer {$wr->interestedPartyNumber} must be linked to a publisher to emit a PWR record.");
+                        }
+
+                        $line = (new PwrRecord(
+                            publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
+                            publisherName:                  $publisherData['def']->publisherName,
+                            submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
+                            societyAssignedAgreementNumber: (property_exists($publisherData['def'], 'societyAssignedAgreementNumber') ? (string) $publisherData['def']->societyAssignedAgreementNumber : ''),
+                            writerIpNumber:                 $wr->interestedPartyNumber,
+                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                          ->toString();
+                        $emittedRecords = true;
+                        yield $line;
                     } else {
                         $line = (new OwrRecord(
                             interestedPartyNumber:   $wr->interestedPartyNumber,
@@ -216,35 +239,6 @@ class Version implements VersionInterface
                     }
                 }
 
-                // PWR link: Link represented writers to their publishers
-                if (!empty($work->publishers)) {
-                    $publisherMap = [];
-                    foreach ($work->publishers as $pubIndex => $pub) {
-                        $publisherMap[$pub->interestedPartyNumber] = ['def' => $pub, 'seq' => $pubIndex + 1];
-                    }
-
-                    foreach ($work->writers ?? [] as $wr) {
-                        $isControlled = property_exists($wr, 'controlled') ? (bool) $wr->controlled : true;
-                        if (!$isControlled) {
-                            continue;
-                        }
-                        // Only create a PWR link if the writer is represented by a publisher in this work
-                        if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
-                            $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];
-                            $line = (new PwrRecord(
-                                publisherIpNumber:              $publisherData['def']->interestedPartyNumber,
-                                publisherName:                  $publisherData['def']->publisherName,
-                                submitterAgreementNumber:       $publisherData['def']->submitterAgreementNumber ?? '',
-                                societyAssignedAgreementNumber: (property_exists($publisherData['def'], 'societyAssignedAgreementNumber') ? (string) $publisherData['def']->societyAssignedAgreementNumber : ''),
-                                writerIpNumber:                 $wr->interestedPartyNumber,
-                            ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                              ->toString();
-                            $emittedRecords = true;
-                            yield $line;
-                        }
-                    }
-                }
-
             } catch (\Throwable $e) {
                 // Something went wrong with this work. You can log the error or handle it as needed.
                 // For example: error_log("Skipping work {$work->submitterWorkNumber}: " . $e->getMessage());
@@ -275,5 +269,51 @@ class Version implements VersionInterface
         $trlLine = (new TrlRecord($groupCount, $transactionCount, $totalRecords))->toString();
 
         return [$grtLine, $trlLine];
+    }
+
+    /**
+     * @param array $publishers
+     * @return array<string, array{def: object, seq: int}>
+     */
+    private function buildPublisherMap(array $publishers): array
+    {
+        $map = [];
+        foreach ($publishers as $index => $publisher) {
+            $map[$publisher->interestedPartyNumber] = ['def' => $publisher, 'seq' => $index + 1];
+        }
+
+        return $map;
+    }
+
+    /**
+     * Validates that each controlled writer (SWR) can emit the required PWR link.
+     */
+    private function assertPwrRequirementForControlledWriters(object $work, array $publisherMap): void
+    {
+        foreach ($work->writers ?? [] as $writer) {
+            if (!$this->isControlledWriter($writer)) {
+                continue;
+            }
+
+            $publisherKey = $this->normalizePublisherKey($writer->publisherInterestedPartyNumber ?? null);
+            if ($publisherKey === '') {
+                throw new InvalidArgumentException("SWR writer {$writer->interestedPartyNumber} must include publisher_interested_party_number so a PWR record can follow.");
+            }
+
+            if (!isset($publisherMap[$publisherKey])) {
+                $hint = empty($publisherMap) ? 'no publishers were provided for this work' : "publisher {$publisherKey} is not present for this work";
+                throw new InvalidArgumentException("SWR writer {$writer->interestedPartyNumber} references {$publisherKey}, but {$hint}; cannot create required PWR record.");
+            }
+        }
+    }
+
+    private function isControlledWriter(object $writer): bool
+    {
+        return property_exists($writer, 'controlled') ? (bool) $writer->controlled : true;
+    }
+
+    private function normalizePublisherKey(null|int|string $publisherIp): string
+    {
+        return trim((string) $publisherIp);
     }
 }
