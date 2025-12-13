@@ -631,6 +631,75 @@ it('skips works where a controlled writer cannot produce a PWR record', function
     expect($foundPwr)->toBeTrue();
 });
 
+it('reports skipped works with errors', function () {
+    $works = [
+        [
+            'submitter_work_number' => 'VALID1',
+            'title' => 'VALID',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'W000001',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'P000001',
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000001',
+                'name' => 'Publishing Company',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 100,
+                'sr_ownership_share' => 100,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 50.0,
+                ]],
+            ]],
+        ],
+        [
+            'submitter_work_number' => 'BAD1',
+            'title' => 'MISSING PUBLISHER LINK',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'WORPHAN',
+                'first_name' => 'Orphaned',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                // missing publisher_interested_party_number triggers skip
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P000BAD',
+                'name' => 'Missing Link Pub',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50, // satisfy ownership check so we reach PWR validation
+            ]],
+        ],
+    ];
+
+    $cwr = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01265713057')
+        ->senderName('Publishing Company')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works);
+
+    $payload = $cwr->export();
+    expect($payload)->not->toBeEmpty();
+
+    $skipped = $cwr->getSkippedWorks();
+    expect($skipped)->toHaveCount(1);
+    expect($skipped[0]['work_number'])->toBe('BAD1');
+    expect($skipped[0]['error'])->toContain('publisher_interested_party_number');
+});
+
 it('builds a CWR 2.1 with some new works using addWork', function () {
     $works = [[
         'submitter_work_number' => '00000001',

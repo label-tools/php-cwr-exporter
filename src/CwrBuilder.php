@@ -137,4 +137,9 @@ class CwrBuilder
     {
         return $this->works;
     }
+
+    public function getSkippedWorks(): array
+    {
+        return $this->exporter->getSkippedWorks();
+    }
 }

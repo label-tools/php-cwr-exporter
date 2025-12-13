@@ -22,6 +22,7 @@ class Version implements VersionInterface
 {
     protected int $transactionSequence = 0;
     protected int $recordSequence = 0;
+    protected array $skippedWorks = [];
 
     public function getVersionNumber(): string
     {
@@ -38,6 +39,7 @@ class Version implements VersionInterface
         // Initialize first transaction
         $this->transactionSequence = 0;
         $this->recordSequence = 0;
+        $this->skippedWorks = [];
 
         return [
             // File header
@@ -240,9 +242,11 @@ class Version implements VersionInterface
                 }
 
             } catch (\Throwable $e) {
-                // Something went wrong with this work. You can log the error or handle it as needed.
-                // For example: error_log("Skipping work {$work->submitterWorkNumber}: " . $e->getMessage());
-                // The invalid work is skipped, and we continue to the next one.
+                $this->skippedWorks[] = [
+                    'work_number' => $work->submitterWorkNumber ?? null,
+                    'error' => $e->getMessage(),
+                    'exception' => $e,
+                ];
                 yield null; // Yield null to signify a skipped work
             } finally {
                 // Advance the transaction sequence only when at least one record for this work was emitted.
@@ -315,5 +319,10 @@ class Version implements VersionInterface
     private function normalizePublisherKey(null|int|string $publisherIp): string
     {
         return trim((string) $publisherIp);
+    }
+
+    public function getSkippedWorks(): array
+    {
+        return $this->skippedWorks;
     }
 }

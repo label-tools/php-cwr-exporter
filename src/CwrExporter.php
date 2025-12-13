@@ -25,6 +25,13 @@ class CwrExporter
         return $this->version;
     }
 
+    public function getSkippedWorks(): array
+    {
+        return method_exists($this->version, 'getSkippedWorks')
+            ? $this->version->getSkippedWorks()
+            : [];
+    }
+
     public function export(array $works): string
     {
         $stream = fopen('php://memory', 'r+');
