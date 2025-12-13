@@ -9,6 +9,7 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Control\GrhRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\TrlRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\AltRecord;
+use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\OwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\PwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SptRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SpuRecord;
@@ -18,11 +19,8 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\NwrRecord;
 
 class Version implements VersionInterface
 {
-
     protected int $transactionSequence = 0;
     protected int $recordSequence = 0;
-    private string $revision;
-
 
     public function getVersionNumber(): string
     {
@@ -130,45 +128,73 @@ class Version implements VersionInterface
                     }
                 }
 
-                // SWR & SWT for each writer
+                // Writers: controlled => SWR/SWT; uncontrolled => OWR
                 foreach ($work->writers ?? [] as $writerIndex => $wr) {
-                    // SWR writer record
-                    $line = (new SwrRecord(
-                        interestedPartyNumber:   $wr->interestedPartyNumber,
-                        writerLastName:          $wr->writerLastName,
-                        writerFirstName:         $wr->writerFirstName,
-                        writerDesignationCode:   $wr->writerDesignationCode,
-                        taxId:                   '',
-                        writerIpiNameNumber:     $wr->ipiNameNumber ?? '',
-                        prAffiliationSociety:    $wr->prAffiliationSociety ?? null,
-                        prOwnershipShare:        property_exists($wr, 'prOwnershipShare') ? (int) $wr->prOwnershipShare : 0,
-                        mrAffiliationSociety:    property_exists($wr, 'mrAffiliationSociety') ? $wr->mrAffiliationSociety : null,
-                        mrOwnershipShare:        property_exists($wr, 'mrOwnershipShare') ? (int) $wr->mrOwnershipShare : 0,
-                        srAffiliationSociety:    property_exists($wr, 'srAffiliationSociety') ? $wr->srAffiliationSociety : null,
-                        srOwnershipShare:        property_exists($wr, 'srOwnershipShare') ? (int) $wr->srOwnershipShare : 0,
-                        reversionaryIndicator:   '',
-                        firstRecordingRefusalIndicator: '',
-                        workForHireIndicator:    '',
-                        filler:                  '',
-                        writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
-                        personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
-                        usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : '',
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                    $emittedRecords = true;
-                    yield $line;
+                    $isControlled = property_exists($wr, 'controlled') ? (bool) $wr->controlled : true;
 
-                    // SWT territory records for the writer (sequence starts at 1 per writer)
-                    $swtSeq = 0;
-                    foreach ($wr->territories ?? [] as $terr) {
-                        $line = (new SwtRecord(
-                            interestedPartyNumber:       $wr->interestedPartyNumber,
-                            tisNumericCode:              $terr['tis_code'],
-                            inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
-                            sequenceNumber:              ++$swtSeq,
-                            prCollectionShare:           $terr['pr_collection_share'] ?? 0,
-                            mrCollectionShare:           $terr['mr_collection_share'] ?? 0,
-                            srCollectionShare:           $terr['sr_collection_share'] ?? 0,
+                    if ($isControlled) {
+                        $line = (new SwrRecord(
+                            interestedPartyNumber:   $wr->interestedPartyNumber,
+                            writerLastName:          $wr->writerLastName,
+                            writerFirstName:         $wr->writerFirstName,
+                            writerDesignationCode:   $wr->writerDesignationCode,
+                            taxId:                   $wr->taxId ?? '',
+                            writerIpiNameNumber:     $wr->ipiNameNumber ?? '',
+                            prAffiliationSociety:    $wr->prAffiliationSociety ?? null,
+                            prOwnershipShare:        property_exists($wr, 'prOwnershipShare') ? (int) $wr->prOwnershipShare : 0,
+                            mrAffiliationSociety:    property_exists($wr, 'mrAffiliationSociety') ? $wr->mrAffiliationSociety : null,
+                            mrOwnershipShare:        property_exists($wr, 'mrOwnershipShare') ? (int) $wr->mrOwnershipShare : 0,
+                            srAffiliationSociety:    property_exists($wr, 'srAffiliationSociety') ? $wr->srAffiliationSociety : null,
+                            srOwnershipShare:        property_exists($wr, 'srOwnershipShare') ? (int) $wr->srOwnershipShare : 0,
+                            reversionaryIndicator:   property_exists($wr, 'reversionaryIndicator') ? (string) $wr->reversionaryIndicator : '',
+                            firstRecordingRefusalIndicator: property_exists($wr, 'firstRecordingRefusalIndicator') ? (string) $wr->firstRecordingRefusalIndicator : '',
+                            workForHireIndicator:    property_exists($wr, 'workForHireIndicator') ? (string) $wr->workForHireIndicator : '',
+                            filler:                  '',
+                            writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
+                            personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
+                            usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : '',
+                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                          ->toString();
+                        $emittedRecords = true;
+                        yield $line;
+
+                        // SWT territory records for the writer (sequence starts at 1 per writer)
+                        $swtSeq = 0;
+                        foreach ($wr->territories ?? [] as $terr) {
+                            $line = (new SwtRecord(
+                                interestedPartyNumber:       $wr->interestedPartyNumber,
+                                tisNumericCode:              $terr['tis_code'],
+                                inclusionExclusionIndicator: $terr['inclusion_exclusion_indicator'] ?? 'I',
+                                sequenceNumber:              ++$swtSeq,
+                                prCollectionShare:           $terr['pr_collection_share'] ?? 0,
+                                mrCollectionShare:           $terr['mr_collection_share'] ?? 0,
+                                srCollectionShare:           $terr['sr_collection_share'] ?? 0,
+                            ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                              ->toString();
+                            $emittedRecords = true;
+                            yield $line;
+                        }
+                    } else {
+                        $line = (new OwrRecord(
+                            interestedPartyNumber:   $wr->interestedPartyNumber,
+                            writerLastName:          $wr->writerLastName,
+                            writerFirstName:         $wr->writerFirstName,
+                            writerDesignationCode:   $wr->writerDesignationCode,
+                            taxId:                   $wr->taxId ?? '',
+                            writerIpiNameNumber:     $wr->ipiNameNumber ?? '',
+                            prAffiliationSociety:    $wr->prAffiliationSociety ?? null,
+                            prOwnershipShare:        property_exists($wr, 'prOwnershipShare') ? (int) $wr->prOwnershipShare : 0,
+                            mrAffiliationSociety:    property_exists($wr, 'mrAffiliationSociety') ? $wr->mrAffiliationSociety : null,
+                            mrOwnershipShare:        property_exists($wr, 'mrOwnershipShare') ? (int) $wr->mrOwnershipShare : 0,
+                            srAffiliationSociety:    property_exists($wr, 'srAffiliationSociety') ? $wr->srAffiliationSociety : null,
+                            srOwnershipShare:        property_exists($wr, 'srOwnershipShare') ? (int) $wr->srOwnershipShare : 0,
+                            reversionaryIndicator:   property_exists($wr, 'reversionaryIndicator') ? (string) $wr->reversionaryIndicator : '',
+                            firstRecordingRefusalIndicator: property_exists($wr, 'firstRecordingRefusalIndicator') ? (string) $wr->firstRecordingRefusalIndicator : '',
+                            workForHireIndicator:    property_exists($wr, 'workForHireIndicator') ? (string) $wr->workForHireIndicator : '',
+                            filler:                  '',
+                            writerIpiBaseNumber:     property_exists($wr, 'writerIpiBaseNumber') ? (string) $wr->writerIpiBaseNumber : '',
+                            personalNumber:          property_exists($wr, 'personalNumber') ? (string) $wr->personalNumber : '',
+                            usaLicenseIndicator:     property_exists($wr, 'usaLicenseIndicator') ? (string) $wr->usaLicenseIndicator : '',
                         ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                           ->toString();
                         $emittedRecords = true;
@@ -198,6 +224,10 @@ class Version implements VersionInterface
                     }
 
                     foreach ($work->writers ?? [] as $wr) {
+                        $isControlled = property_exists($wr, 'controlled') ? (bool) $wr->controlled : true;
+                        if (!$isControlled) {
+                            continue;
+                        }
                         // Only create a PWR link if the writer is represented by a publisher in this work
                         if ($wr->publisherInterestedPartyNumber && isset($publisherMap[$wr->publisherInterestedPartyNumber])) {
                             $publisherData = $publisherMap[$wr->publisherInterestedPartyNumber];

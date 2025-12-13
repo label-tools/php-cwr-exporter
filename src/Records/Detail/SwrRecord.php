@@ -304,13 +304,13 @@ class SwrRecord extends Record
     {
         parent::validateBeforeToString();
 
-        // If recordType = SWR, lastName and designationCode are required.
-        if (static::$recordType === 'SWR') {
+        // For SWR/OWR, lastName and designationCode are required.
+        if (in_array(static::$recordType, ['SWR', 'OWR'], true)) {
             if (empty($this->data[static::IDX_WRITER_LAST_NAME])) {
-                throw new \RuntimeException("SWR: Last Name is required.");
+                throw new \RuntimeException(static::$recordType . ": Last Name is required.");
             }
-            if (empty($this->data[static::IDX_WRITER_LAST_NAME])) {
-                throw new \RuntimeException("SWR:Designation Code are required.");
+            if (empty($this->data[static::IDX_WRITER_DESIGNATION_CODE])) {
+                throw new \RuntimeException(static::$recordType . ": Designation Code is required.");
             }
         }
         // If writerUnknownIndicator is non-blank, lastName must be blank (but for SWR it's always blank)

@@ -56,9 +56,7 @@ class WorkDefinition
             duration: $data['duration'] ?? null,
             recorded: $data['recorded'] ?? false,
             textMusicRelationship: $data['text_music_relationship'] ?? '',
-            writers: isset($data['writers']) && is_array($data['writers'])
-                ? array_map(fn($w) => WriterDefinition::fromArray($w), $data['writers'])
-                : [],
+            writers: static::buildWriters($data),
             publishers: isset($data['publishers']) && is_array($data['publishers'])
                 ? array_map(fn($pub) => PublisherDefinition::fromArray($pub), $data['publishers'])
                 : [],
@@ -88,4 +86,24 @@ class WorkDefinition
         return $enumValue;
     }
 
+    /**
+     * @return WriterDefinition[]
+     */
+    private static function buildWriters(array $data): array
+    {
+        $writers = isset($data['writers']) && is_array($data['writers'])
+            ? array_map(fn($w) => WriterDefinition::fromArray($w), $data['writers'])
+            : [];
+
+        // Backwards compatibility: merge any provided other_writers as uncontrolled writers
+        if (isset($data['other_writers']) && is_array($data['other_writers'])) {
+            $other = array_map(function ($w) {
+                $w['controlled'] = false;
+                return WriterDefinition::fromArray($w);
+            }, $data['other_writers']);
+            $writers = array_merge($writers, $other);
+        }
+
+        return $writers;
+    }
 }

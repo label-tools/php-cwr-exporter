@@ -2,9 +2,8 @@
 
 namespace LabelTools\PhpCwrExporter\Version\V22\Records\Detail;
 
-use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\OwrRecord as DetailOwrRecord;
-
-class OwrRecord extends DetailOwrRecord
+class OwrRecord extends SwrRecord
 {
+    protected static string $recordType = 'OWR';
 
 }

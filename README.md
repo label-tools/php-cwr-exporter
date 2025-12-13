@@ -103,10 +103,17 @@ The `works()` method accepts an array of work definitions. Each work is an assoc
 | `last_name`                         | `string`                  | Yes      | The writer's last name or full legal name.                               |
 | `first_name`                        | `string`                  | No       | The writer's first name.                                                 |
 | `designation_code`                  | `WriterDesignation` enum  | Yes      | The writer's role (e.g., `WriterDesignation::COMPOSER_AUTHOR`).          |
+| `controlled`                        | `bool`                    | No       | Defaults to `true`. Set `false` to emit an OWR (uncontrolled writer) instead of SWR/SWT. |
 | `publisher_interested_party_number` | `string`                  | No       | The IP number of the publisher representing this writer. **Required to create a PWR link.** |
 | `ipi_name_number`                   | `string`                  | No       | The writer's IPI Name Number.                                            |
 | `pr_affiliation_society`            | `SocietyCode` enum        | No       | The writer's Performing Rights society.                                  |
 | `territories`                       | `array`                   | No       | An array of writer territory definitions.                                |
+
+---
+
+### Other Writer Definition (OWR)
+
+If `controlled` is `false`, the writer is rendered as an `OWR` record (same layout as `SWR` but without SWT/PWR). The same fields as above apply.
 
 ---
 
