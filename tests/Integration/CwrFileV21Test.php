@@ -139,7 +139,6 @@ it('builds a CWR 2.1 with some new works using works array', function () {
 
 
     $payload = $cwr->export();
-    var_export($payload);
 
     // Basic sanity
     expect($payload)->toBeString();
