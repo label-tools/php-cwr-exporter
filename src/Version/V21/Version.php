@@ -11,6 +11,7 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Control\TrlRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\AltRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\OwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\PwrRecord;
+use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\RecRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SptRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SpuRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\OpuRecord;
@@ -96,6 +97,23 @@ class Version implements VersionInterface
                 ))->setRecordPrefix($this->transactionSequence, $this->recordSequence)
                 ->toString();
                 $workLines[] = $line;
+
+                foreach ($work->recordings ?? [] as $recording) {
+                    $line = (new RecRecord(
+                        firstReleaseDate:             $recording->firstReleaseDate,
+                        firstReleaseDuration:         $recording->firstReleaseDuration,
+                        firstAlbumTitle:              $recording->firstAlbumTitle,
+                        firstAlbumLabel:              $recording->firstAlbumLabel,
+                        firstReleaseCatalogNumber:    $recording->firstReleaseCatalogNumber,
+                        firstReleaseEan:              $recording->firstReleaseEan,
+                        firstReleaseIsrc:             $recording->firstReleaseIsrc,
+                        recordingFormat:              $recording->recordingFormat,
+                        recordingTechnique:           $recording->recordingTechnique,
+                        mediaType:                    $recording->mediaType
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                    $workLines[] = $line;
+                }
 
                 // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {

@@ -1050,3 +1050,63 @@ it('emits an OPU record for uncontrolled publishers', function () {
     expect($recordTypes)->toContain('OPU');
     expect($recordTypes)->not->toContain('SPU');
 });
+
+it('emits a REC record when recording detail is provided', function () {
+    $works = [[
+        'submitter_work_number' => 'WORKREC01',
+        'title' => 'REC SONG',
+        'title_type' => TitleType::ORIGINAL_TITLE,
+        'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+        'version_type'=> VersionType::ORIGINAL_WORK,
+        'recordings' => [[
+            'first_release_date' => '20240101',
+            'first_release_duration' => '000400',
+            'first_album_title' => 'ALBUM ONE',
+            'first_album_label' => 'LABEL INC',
+            'first_release_catalog_number' => 'CAT001',
+            'first_release_ean' => '0001234567890',
+            'first_release_isrc' => 'USRC17607839',
+            'recording_format' => 'A',
+            'recording_technique' => 'D',
+            'media_type' => 'AUD',
+        ]],
+        'writers' => [[
+            'interested_party_number' => 'WREC001',
+            'last_name' => 'Singer',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'publisher_interested_party_number' => 'P000001',
+            'territories' => [[
+                'tis_code' => TisCode::WORLD->value,
+                'inclusion_exclusion_indicator' => 'I',
+            ]]
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'pr_ownership_share' => 50,
+            'mr_ownership_share' => 50,
+            'sr_ownership_share' => 50,
+            'ipi_name_number' => '123456789',
+        ]]
+    ]];
+
+    $payload = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('00000000000')
+        ->senderName('Recording Co')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works)
+        ->export();
+
+    $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
+    $field = function (string $record, int $start, int $size): string {
+        $zeroBased = $start - 1;
+        return substr($record, $zeroBased, $size);
+    };
+
+    $recLines = array_filter($lines, fn($rec) => $field($rec, 1, 3) === 'REC');
+    expect($recLines)->not->toBeEmpty();
+    $firstRec = array_values($recLines)[0];
+    expect($field($firstRec, 20, 8))->toBe('20240101');
+});

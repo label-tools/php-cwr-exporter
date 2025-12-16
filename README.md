@@ -82,6 +82,7 @@ The `works()` method accepts an array of work definitions. Each work is an assoc
 | `alternate_titles`        | `array`                                   | No       | An array of alternate title definitions.                                 |
 | `writers`                 | `array`                                   | Yes      | An array of writer definitions.                                          |
 | `publishers`              | `array`                                   | Yes      | An array of publisher definitions.                                       |
+| `recordings`              | `array`                                   | No       | Optional array of recording definitions.                                 |
 
 ---
 
@@ -147,6 +148,24 @@ If `controlled` is `false`, the writer is rendered as an `OWR` record (same layo
 | `sr_affiliation_society`     | `SocietyCode` enum   | No       | The publisher's Synchronization Rights society.                          |
 | `sr_ownership_share`         | `float`              | No       | The publisher's Synchronization Rights ownership share.                  |
 | `territories`                | `array`              | No       | An array of publisher territory definitions.                             |
+
+---
+
+### Recording Definition
+
+| Key                          | Type                 | Required | Description                                                              |
+|------------------------------|----------------------|----------|--------------------------------------------------------------------------|
+| `first_release_date`         | `string` (YYYYMMDD)  | No       | Date the work was first released publicly.                                |
+| `first_release_duration`     | `string` (HHMMSS)    | No       | Duration of the first release (HHMMSS).                                  |
+| `first_album_title`          | `string`             | No       | Album title where the work first appeared.                               |
+| `first_album_label`          | `string`             | No       | Label that released the first album.                                     |
+| `first_release_catalog_number` | `string`           | No       | Internal catalog number for the first release.                           |
+| `first_release_ean`          | `string`             | No       | EAN-13 code for the release.                                             |
+| `first_release_isrc`         | `string`             | No       | ISRC for the recording of the work.                                      |
+| `recording_format`           | `string`             | No       | “A” for audio or “V” for video.                                          |
+| `recording_technique`        | `string`             | No       | “A” Analogue, “D” Digital, “U” Unknown.                                  |
+| `media_type`                 | `string` (3)         | No       | BIEM/CISAC media type code.                                              |
+|                              |                      |          | Each recording definition must populate at least one of the optional fields. |
 
 ---
 

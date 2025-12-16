@@ -2,6 +2,7 @@
 namespace LabelTools\PhpCwrExporter\Definitions;
 
 use BackedEnum;
+use LabelTools\PhpCwrExporter\Definitions\RecordingDefinition;
 use LabelTools\PhpCwrExporter\Enums\{
     TitleType,
     LanguageCode,
@@ -25,6 +26,7 @@ class WorkDefinition
         public readonly ?string $duration = null,
         public readonly bool $recorded = false,
         public readonly string $textMusicRelationship = '',
+        public readonly array $recordings = [],
         public readonly array $writers = [],
         public readonly array $publishers = [],
         public readonly array $alternateTitles = []
@@ -56,6 +58,9 @@ class WorkDefinition
             duration: $data['duration'] ?? null,
             recorded: $data['recorded'] ?? false,
             textMusicRelationship: $data['text_music_relationship'] ?? '',
+            recordings: isset($data['recordings']) && is_array($data['recordings'])
+                ? array_map(fn($recording) => RecordingDefinition::fromArray($recording), $data['recordings'])
+                : [],
             writers: static::buildWriters($data),
             publishers: isset($data['publishers']) && is_array($data['publishers'])
                 ? array_map(fn($pub) => PublisherDefinition::fromArray($pub), $data['publishers'])
