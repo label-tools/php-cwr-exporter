@@ -134,9 +134,10 @@ If `controlled` is `false`, the writer is rendered as an `OWR` record (same layo
 | Key                          | Type                 | Required | Description                                                              |
 |------------------------------|----------------------|----------|--------------------------------------------------------------------------|
 | `interested_party_number`    | `string`             | Yes      | The publisher's IPI or internal ID.                                      |
-| `name`                       | `string`             | Yes      | The publisher's name.                                                    |
-| `type`                       | `PublisherType` enum | Yes      | The publisher's role (e.g., `PublisherType::ORIGINAL_PUBLISHER`).        |
-| `ipi_name_number`            | `string`             | Yes      | The publisher's IPI Name Number.                                         |
+| `name`                       | `string`             | No       | Required for controlled publishers; leave blank when `controlled` is `false` (emits an `OPU`). |
+| `type`                       | `PublisherType` enum | No       | Required for controlled publishers; optional for `OPU` records.          |
+| `controlled`                 | `bool`               | No       | Defaults to `true`. Set `false` to emit an `OPU` (Other Publisher) record instead of `SPU`. |
+| `ipi_name_number`            | `string`             | No       | Required for controlled publishers; optional for `OPU` records.         |
 | `tax_id`                     | `string`             | No       | The publisher's tax identification number.                               |
 | `submitter_agreement_number` | `string`             | No       | Your agreement number with the publisher.                                |
 | `pr_affiliation_society`     | `SocietyCode` enum   | No       | The publisher's Performing Rights society.                               |

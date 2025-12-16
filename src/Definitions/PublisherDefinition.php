@@ -7,8 +7,8 @@ class PublisherDefinition
 {
     public function __construct(
         public readonly string $interestedPartyNumber,
-        public readonly string $publisherName,
-        public readonly PublisherType|string $publisherType,
+        public readonly ?string $publisherName,
+        public readonly PublisherType|string|null $publisherType,
         public readonly string $publisherIpiName,
         public readonly ?string $taxId = null,
         public readonly ?string $submitterAgreementNumber = null,
@@ -20,22 +20,65 @@ class PublisherDefinition
         public readonly int $mrCollectionShare = 0,
         public readonly ?string $srAffiliationSociety = null,
         public readonly int $srOwnershipShare = 0,
+        public readonly bool $controlled = true,
         public readonly int $srCollectionShare = 0,
         public readonly array $territories = []
     ) {
-
-        if ($this->publisherName === '') {
-            throw new \InvalidArgumentException('publisherName is required.');
+        if ($this->controlled) {
+            $errors = [];
+            if (empty($this->publisherName)) {
+                $errors[] = 'publisherName';
+            }
+            if (empty($this->publisherType)) {
+                $errors[] = 'publisherType';
+            }
+            if (empty($this->publisherIpiName)) {
+                $errors[] = 'publisherIpiName';
+            }
+            if ($errors) {
+                throw new \InvalidArgumentException('For controlled publishers, the following fields are required: ' . implode(', ', $errors));
+            }
         }
     }
 
     public static function fromArray(array $data): self
     {
+        $controlled = static::normalizeBool($data['controlled'] ?? true);
+        $name = $data['name'] ?? '';
+        $publisherTypeRaw = $data['type'] ?? null;
+        $ipiName = $data['ipi_name_number'] ?? '';
+
+        if ($controlled) {
+            $errors = [];
+            if (empty($name)) {
+                $errors[] = 'name';
+            }
+            if (empty($publisherTypeRaw)) {
+                $errors[] = 'type';
+            }
+            if (empty($ipiName)) {
+                $errors[] = 'ipi_name_number';
+            }
+            if ($errors) {
+                throw new \InvalidArgumentException('For controlled publishers, the following fields are required: ' . implode(', ', $errors));
+            }
+        }
+
+        $publisherType = match(true) {
+            $publisherTypeRaw instanceof PublisherType => $publisherTypeRaw,
+            !empty($publisherTypeRaw) => PublisherType::from($publisherTypeRaw),
+            default => null,
+        };
+
+        if(empty($data['interested_party_number'])) {
+            throw new \InvalidArgumentException('interested_party_number missing');
+        }
+
         return new self(
-            interestedPartyNumber: $data['interested_party_number'] ?? throw new \InvalidArgumentException('interested_party_number missing'),
-            publisherName: $data['name'] ?? throw new \InvalidArgumentException('name missing'),
-            publisherType: PublisherType::from($data['type']),
-            publisherIpiName: $data['ipi_name_number'] ?? throw new \InvalidArgumentException('ipi_name_number missing'),
+            interestedPartyNumber: $data['interested_party_number'],
+            publisherName: $name,
+            publisherType: $publisherType,
+            publisherIpiName: $ipiName,
             taxId: $data['tax_id'] ?? null,
             submitterAgreementNumber: $data['submitter_agreement_number'] ?? null,
             prAffiliationSociety: $data['pr_affiliation_society'] ?? null,
@@ -46,8 +89,18 @@ class PublisherDefinition
             mrCollectionShare: $data['mr_collection_share'] ?? 0,
             srAffiliationSociety: $data['sr_affiliation_society'] ?? null,
             srOwnershipShare: $data['sr_ownership_share'] ?? 0,
+            controlled: $controlled,
             srCollectionShare: $data['sr_collection_share'] ?? 0,
             territories: $data['territories'] ?? []
         );
+    }
+
+    private static function normalizeBool(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        $value = strtoupper((string)$value);
+        return in_array($value, ['1', 'Y', 'YES', 'TRUE'], true);
     }
 }

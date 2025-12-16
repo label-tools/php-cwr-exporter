@@ -8,11 +8,11 @@ class OpuRecord extends SpuRecord
 {
     protected static string $recordType = 'OPU';
 
-     public function __construct(
+    public function __construct(
         int $publisherSequence,
         ?string $interestedPartyNumber = '',
         ?string $publisherName = '',
-        ?string $publisherType = '',
+        null|PublisherType|string $publisherType = '',
         ?string $taxId = '',
         ?string $publisherIpiName = '',
         ?string $submitterAgreementNumber = '',

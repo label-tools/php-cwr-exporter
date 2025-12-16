@@ -13,6 +13,7 @@ use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\OwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\PwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SptRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SpuRecord;
+use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\OpuRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\SwtRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\NwrRecord;
@@ -98,8 +99,10 @@ class Version implements VersionInterface
 
                 // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {
-                    // SPU publisher record
-                    $line = (new SpuRecord(
+                    $isControlledPublisher = property_exists($pub, 'controlled') ? (bool) $pub->controlled : true;
+                    $publisherRecordClass = $isControlledPublisher ? SpuRecord::class : OpuRecord::class;
+
+                    $line = (new $publisherRecordClass(
                         publisherSequence:           $pubIndex + 1,
                         interestedPartyNumber:       $pub->interestedPartyNumber,
                         publisherName:               $pub->publisherName,

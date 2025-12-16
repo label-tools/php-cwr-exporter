@@ -934,3 +934,53 @@ it('builds a CWR 2.2 file and writes it to a stream', function () {
     expect($payload)->toBeString();
     expect($payload)->not->toBeEmpty();
 });
+
+it('emits an OPU record for uncontrolled publishers', function () {
+    $works = [[
+        'submitter_work_number' => 'WORK00098',
+        'title' => 'OPU PUBLISHER SONG',
+        'title_type' => TitleType::ORIGINAL_TITLE,
+        'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+        'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'interested_party_number' => 'WOPU002',
+                'last_name' => 'Composer',
+                'first_name' => 'Other',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'publisher_interested_party_number' => 'P000001',
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 25,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]]
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Other Publishing Co',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'pr_ownership_share' => 30,
+            'controlled' => false,
+        ]]
+    ]];
+
+    $payload = CwrBuilder::v22()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('00000000000')
+        ->senderName('Testing Co')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works)
+        ->export();
+
+    $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
+    $field = function (string $record, int $start, int $size): string {
+        $zeroBased = $start - 1;
+        return substr($record, $zeroBased, $size);
+    };
+
+    $detailRecords = array_filter($lines, fn($rec) => !in_array($field($rec, 1, 3), ['HDR', 'GRH', 'GRT', 'TRL'], true));
+    $recordTypes = array_map(fn($rec) => $field($rec, 1, 3), $detailRecords);
+
+    expect($recordTypes)->toContain('OPU');
+    expect($recordTypes)->not->toContain('SPU');
+});
