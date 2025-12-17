@@ -104,34 +104,6 @@ class Version implements VersionInterface
                 ->toString();
                 $workLines[] = $line;
 
-                foreach ($work->recordings ?? [] as $recording) {
-                    $line = (new RecRecord(
-                        firstReleaseDate:             $recording->firstReleaseDate,
-                        firstReleaseDuration:         $recording->firstReleaseDuration,
-                        firstAlbumTitle:              $recording->firstAlbumTitle,
-                        firstAlbumLabel:              $recording->firstAlbumLabel,
-                        firstReleaseCatalogNumber:    $recording->firstReleaseCatalogNumber,
-                        firstReleaseEan:              $recording->firstReleaseEan,
-                        firstReleaseIsrc:             $recording->firstReleaseIsrc,
-                        recordingFormat:              $recording->recordingFormat,
-                        recordingTechnique:           $recording->recordingTechnique,
-                        mediaType:                    $recording->mediaType
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                    $workLines[] = $line;
-
-                }
-                foreach ($work->performingArtists as $artist) {
-                    $line = (new PerRecord(
-                        $artist->lastName,
-                        $artist->firstName ?? '',
-                        $artist->ipiNameNumber ?? '',
-                        $artist->ipiBaseNumber ?? ''
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                    $workLines[] = $line;
-                }
-
                 // SPU & SPT for each publisher
                 foreach ($work->publishers as $pubIndex => $pub) {
                     $isControlledPublisher = property_exists($pub, 'controlled') ? (bool) $pub->controlled : true;
@@ -271,6 +243,35 @@ class Version implements VersionInterface
                           ->toString();
                         $workLines[] = $line;
                     }
+                }
+
+                foreach ($work->performingArtists as $artist) {
+                    $line = (new PerRecord(
+                        $artist->lastName,
+                        $artist->firstName ?? '',
+                        $artist->ipiNameNumber ?? '',
+                        $artist->ipiBaseNumber ?? ''
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                    $workLines[] = $line;
+                }
+
+                foreach ($work->recordings ?? [] as $recording) {
+                    $line = (new RecRecord(
+                        firstReleaseDate:             $recording->firstReleaseDate,
+                        firstReleaseDuration:         $recording->firstReleaseDuration,
+                        firstAlbumTitle:              $recording->firstAlbumTitle,
+                        firstAlbumLabel:              $recording->firstAlbumLabel,
+                        firstReleaseCatalogNumber:    $recording->firstReleaseCatalogNumber,
+                        firstReleaseEan:              $recording->firstReleaseEan,
+                        firstReleaseIsrc:             $recording->firstReleaseIsrc,
+                        recordingFormat:              $recording->recordingFormat,
+                        recordingTechnique:           $recording->recordingTechnique,
+                        mediaType:                    $recording->mediaType
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                    $workLines[] = $line;
+
                 }
 
                 $emittedRecords = !empty($workLines);

@@ -142,10 +142,10 @@ describe('SWR (Writer) Record', function () {
                 writerFirstName: 'John',
                 writerDesignationCode: WriterDesignation::COMPOSER,
                 prAffiliationSociety:  SocietyCode::ASCAP,
-                prOwnershipShare: 100.01, // >100.00
+                prOwnershipShare: 110, // >100.00
 
             );
-        })->throws(InvalidArgumentException::class, 'PR Ownership Share must be between 0 and 50. Given: 100.01');
+        })->throws(InvalidArgumentException::class, 'PR Ownership Share must be between 0 and 100. Given: 110');
 
         it('throws when MR Ownership Share out of range', function () {
             new SwrRecord(

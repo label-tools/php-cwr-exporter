@@ -300,6 +300,13 @@ class SwrRecord extends Record
         return $this;
     }
 
+    public function setPrOwnershipShare(null|int|float $share): self
+    {
+        $fieldName = 'PR Ownership Share';
+        $share = $this->normalizeShare($share, 100, $fieldName);
+        return $this->setNumeric(static::getIdxFromString('IDX_PR_OWNERSHIP_SHARE'), $share, $fieldName);
+    }
+
     protected function validateBeforeToString(): void
     {
         parent::validateBeforeToString();

@@ -49,27 +49,12 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                     'publisher_interested_party_number' => 'P000001', //use for linking to publisher
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
-                        'pr_collection_share' => 12.5,
-                        'mr_collection_share' => 25,
-                        'sr_collection_share' => 30.12,
-                        'inclusion_exclusion_indicator' => 'I',
-                    ]]
-                    ], [
-                    'controlled' => false,
-                    'interested_party_number' => 'W000011',
-                    'first_name' => 'Jay',
-                    'last_name' => 'Doe',
-                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                    'ipi_name_number' => '12345678910',
-                    'pr_affiliation_society' => SocietyCode::BMI->value,
-                    'territories' => [[
-                        'tis_code' => TisCode::WORLD->value,
-                        'pr_collection_share' => 0,
+                        'pr_collection_share' => 50,
                         'mr_collection_share' => 0,
                         'sr_collection_share' => 0,
                         'inclusion_exclusion_indicator' => 'I',
                     ]]
-                ]],
+                    ]],
                 'publishers' => [[
                     'interested_party_number' => 'P000001',
                     'name' => 'Publishing Company',
@@ -86,9 +71,9 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
-                        'pr_collection_share' => 50.0,
-                        'mr_collection_share' => 75.0,
-                        'sr_collection_share' => 69.88,
+                        'pr_collection_share' => 50,
+                        'mr_collection_share' => 100,
+                        'sr_collection_share' => 100,
                     ]]
                 ]]
             ],
@@ -371,8 +356,8 @@ it('builds a CWR 2.1 with some new works using works array', function () {
     // Check first SPT record (from first work)
     $spt1 = $lines[$sptIndexes[0]];
     expect($field($spt1, 35, 5))->toBe('05000'); // PR Collection Share 50.00%
-    expect($field($spt1, 40, 5))->toBe('07500'); // MR Collection Share 75.00%
-    expect($field($spt1, 45, 5))->toBe('06988'); // SR Collection Share 69.88%
+    expect($field($spt1, 40, 5))->toBe('10000'); // MR Collection Share 75.00%
+    expect($field($spt1, 45, 5))->toBe('10000'); // SR Collection Share 69.88%
     expect(trim($field($spt1, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
 
     // Check second SPT record (from second work)
@@ -391,9 +376,9 @@ it('builds a CWR 2.1 with some new works using works array', function () {
 
     // Check first SWT record (from first work)
     $swt1 = $lines[$swtIndexes[0]];
-    expect($field($swt1, 29, 5))->toBe('01250'); // PR Collection Share 12.50%
-    expect($field($swt1, 34, 5))->toBe('02500'); // MR Collection Share 25.00%
-    expect($field($swt1, 39, 5))->toBe('03012'); // SR Collection Share 30.12%
+    expect($field($swt1, 29, 5))->toBe('05000'); // PR Collection Share 12.50%
+    expect($field($swt1, 34, 5))->toBe('00000'); // MR Collection Share 25.00%
+    expect($field($swt1, 39, 5))->toBe('00000'); // SR Collection Share 30.12%
     expect(trim($field($swt1, 45, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
 });
 

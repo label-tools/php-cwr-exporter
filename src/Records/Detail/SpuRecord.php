@@ -133,6 +133,13 @@ class SpuRecord extends Record
         return $this->setEnumValue(static::IDX_PR_AFFILIATION_SOCIETY, SocietyCode::class, $soc, 'PR Affiliation Society', isRequired:false);
     }
 
+    public function setPrOwnershipShare(null|int|float $share): self
+    {
+        $fieldName = 'PR Ownership Share';
+        $share = $this->normalizeShare($share, 50, $fieldName);
+        return $this->setNumeric(static::getIdxFromString('IDX_PR_OWNERSHIP_SHARE'), $share, $fieldName);
+    }
+
     public function setMrSociety(int|string|null $soc): self
     {
         return $this->setEnumValue(static::IDX_MR_AFFILIATION_SOCIETY, SocietyCode::class, $soc, 'MR Affiliation Society', isRequired:false);
