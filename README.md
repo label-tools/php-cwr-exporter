@@ -165,7 +165,19 @@ If `controlled` is `false`, the writer is rendered as an `OWR` record (same layo
 | `recording_format`           | `string`             | No       | “A” for audio or “V” for video.                                          |
 | `recording_technique`        | `string`             | No       | “A” Analogue, “D” Digital, “U” Unknown.                                  |
 | `media_type`                 | `string` (3)         | No       | BIEM/CISAC media type code.                                              |
+| `performing_artists`         | `array`              | No       | List of performing artist definitions; each entry becomes a `PER` record. |
 |                              |                      |          | Each recording definition must populate at least one of the optional fields. |
+
+---
+
+### Performing Artist Definition
+
+| Key                      | Type     | Required | Description                                              |
+|--------------------------|----------|----------|----------------------------------------------------------|
+| `last_name`              | `string` | Yes      | Artist's last name (or single name) (creates a `PER`).   |
+| `first_name`             | `string` | No       | Artist's first name.                                     |
+| `ipi_name_number`        | `string` | No       | 11-digit IPI Name Number.                                |
+| `ipi_base_number`        | `string` | No       | IPI Base Number (1–13 alphanumeric characters).         |
 
 ---
 

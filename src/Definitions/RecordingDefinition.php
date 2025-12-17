@@ -1,6 +1,9 @@
 <?php
 namespace LabelTools\PhpCwrExporter\Definitions;
 
+use InvalidArgumentException;
+use LabelTools\PhpCwrExporter\Definitions\PerformingArtistDefinition;
+
 class RecordingDefinition
 {
     public function __construct(
@@ -14,11 +17,31 @@ class RecordingDefinition
         public readonly ?string $recordingFormat = null,
         public readonly ?string $recordingTechnique = null,
         public readonly ?string $mediaType = null,
+        public readonly array $performingArtists = [],
     ) {
+        if ($this->performingArtists === [] &&
+            $this->firstReleaseDate === null &&
+            $this->firstReleaseDuration === null &&
+            $this->firstAlbumTitle === null &&
+            $this->firstAlbumLabel === null &&
+            $this->firstReleaseCatalogNumber === null &&
+            $this->firstReleaseEan === null &&
+            $this->firstReleaseIsrc === null &&
+            $this->recordingFormat === null &&
+            $this->recordingTechnique === null &&
+            $this->mediaType === null
+        ) {
+            throw new InvalidArgumentException('RecordingDefinition must contain at least one field.');
+        }
     }
 
     public static function fromArray(array $data): self
     {
+        $performers = [];
+        foreach ($data['performing_artists'] ?? [] as $artist) {
+            $performers[] = PerformingArtistDefinition::fromArray($artist);
+        }
+
         return new self(
             firstReleaseDate: $data['first_release_date'] ?? null,
             firstReleaseDuration: $data['first_release_duration'] ?? null,
@@ -30,6 +53,7 @@ class RecordingDefinition
             recordingFormat: $data['recording_format'] ?? null,
             recordingTechnique: $data['recording_technique'] ?? null,
             mediaType: $data['media_type'] ?? null,
+            performingArtists: $performers,
         );
     }
 }

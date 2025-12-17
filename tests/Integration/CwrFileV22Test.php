@@ -1003,6 +1003,12 @@ it('emits a REC record when recording detail is provided', function () {
             'recording_format' => 'A',
             'recording_technique' => 'D',
             'media_type' => 'AUD',
+            'performing_artists' => [[
+                'last_name' => 'Singer',
+                'first_name' => 'Lead',
+                'ipi_name_number' => '12345678901',
+                'ipi_base_number' => 'PG12345678902',
+            ]],
         ]],
         'writers' => [[
             'interested_party_number' => 'WREC002',
@@ -1044,4 +1050,8 @@ it('emits a REC record when recording detail is provided', function () {
     expect($recLines)->not->toBeEmpty();
     $firstRec = array_values($recLines)[0];
     expect($field($firstRec, 20, 8))->toBe('20240201');
+    $perLines = array_filter($lines, fn($rec) => $field($rec, 1, 3) === 'PER');
+    expect($perLines)->not->toBeEmpty();
+    $firstPer = array_values($perLines)[0];
+    expect(trim($field($firstPer, 20, 45)))->toBe('SINGER');
 });

@@ -12,6 +12,7 @@ use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\AltRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\OwrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\PwrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\RecRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\PerRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\SptRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\SpuRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\OpuRecord;
@@ -118,6 +119,17 @@ class Version implements VersionInterface
                     ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
                       ->toString();
                     $workLines[] = $line;
+
+                    foreach ($recording->performingArtists ?? [] as $artist) {
+                        $line = (new PerRecord(
+                            $artist->lastName,
+                            $artist->firstName ?? '',
+                            $artist->ipiNameNumber ?? '',
+                            $artist->ipiBaseNumber ?? ''
+                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                          ->toString();
+                        $workLines[] = $line;
+                    }
                 }
 
                 // SPU & SPT for each publisher
