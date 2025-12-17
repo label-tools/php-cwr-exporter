@@ -1003,12 +1003,12 @@ it('emits a REC record when recording detail is provided', function () {
             'recording_format' => 'A',
             'recording_technique' => 'D',
             'media_type' => 'AUD',
-            'performing_artists' => [[
-                'last_name' => 'Singer',
-                'first_name' => 'Lead',
-                'ipi_name_number' => '12345678901',
-                'ipi_base_number' => 'PG12345678902',
-            ]],
+        ]],
+        'performing_artists' => [[
+            'last_name' => 'Singer',
+            'first_name' => 'Lead',
+            'ipi_name_number' => '12345678901',
+            'ipi_base_number' => 'PG12345678902',
         ]],
         'writers' => [[
             'interested_party_number' => 'WREC002',

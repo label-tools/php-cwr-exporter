@@ -120,16 +120,16 @@ class Version implements VersionInterface
                       ->toString();
                     $workLines[] = $line;
 
-                    foreach ($recording->performingArtists ?? [] as $artist) {
-                        $line = (new PerRecord(
-                            $artist->lastName,
-                            $artist->firstName ?? '',
-                            $artist->ipiNameNumber ?? '',
-                            $artist->ipiBaseNumber ?? ''
-                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                          ->toString();
-                        $workLines[] = $line;
-                    }
+                }
+                foreach ($work->performingArtists as $artist) {
+                    $line = (new PerRecord(
+                        $artist->lastName,
+                        $artist->firstName ?? '',
+                        $artist->ipiNameNumber ?? '',
+                        $artist->ipiBaseNumber ?? ''
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                    $workLines[] = $line;
                 }
 
                 // SPU & SPT for each publisher

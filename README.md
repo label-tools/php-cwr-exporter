@@ -83,6 +83,7 @@ The `works()` method accepts an array of work definitions. Each work is an assoc
 | `writers`                 | `array`                                   | Yes      | An array of writer definitions.                                          |
 | `publishers`              | `array`                                   | Yes      | An array of publisher definitions.                                       |
 | `recordings`              | `array`                                   | No       | Optional array of recording definitions.                                 |
+| `performing_artists`      | `array`                                   | No       | Optional array of unique performing artist definitions; each entry emits a `PER` record capturing writers who perform the work. |
 
 ---
 
@@ -165,7 +166,6 @@ If `controlled` is `false`, the writer is rendered as an `OWR` record (same layo
 | `recording_format`           | `string`             | No       | “A” for audio or “V” for video.                                          |
 | `recording_technique`        | `string`             | No       | “A” Analogue, “D” Digital, “U” Unknown.                                  |
 | `media_type`                 | `string` (3)         | No       | BIEM/CISAC media type code.                                              |
-| `performing_artists`         | `array`              | No       | List of performing artist definitions; each entry becomes a `PER` record. |
 |                              |                      |          | Each recording definition must populate at least one of the optional fields. |
 
 ---

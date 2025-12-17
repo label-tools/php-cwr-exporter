@@ -2,7 +2,6 @@
 namespace LabelTools\PhpCwrExporter\Definitions;
 
 use InvalidArgumentException;
-use LabelTools\PhpCwrExporter\Definitions\PerformingArtistDefinition;
 
 class RecordingDefinition
 {
@@ -17,9 +16,8 @@ class RecordingDefinition
         public readonly ?string $recordingFormat = null,
         public readonly ?string $recordingTechnique = null,
         public readonly ?string $mediaType = null,
-        public readonly array $performingArtists = [],
     ) {
-        if ($this->performingArtists === [] &&
+        if (
             $this->firstReleaseDate === null &&
             $this->firstReleaseDuration === null &&
             $this->firstAlbumTitle === null &&
@@ -37,11 +35,6 @@ class RecordingDefinition
 
     public static function fromArray(array $data): self
     {
-        $performers = [];
-        foreach ($data['performing_artists'] ?? [] as $artist) {
-            $performers[] = PerformingArtistDefinition::fromArray($artist);
-        }
-
         return new self(
             firstReleaseDate: $data['first_release_date'] ?? null,
             firstReleaseDuration: $data['first_release_duration'] ?? null,
@@ -53,7 +46,6 @@ class RecordingDefinition
             recordingFormat: $data['recording_format'] ?? null,
             recordingTechnique: $data['recording_technique'] ?? null,
             mediaType: $data['media_type'] ?? null,
-            performingArtists: $performers,
         );
     }
 }
