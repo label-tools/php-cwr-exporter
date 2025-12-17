@@ -12,6 +12,153 @@ use LabelTools\PhpCwrExporter\Enums\TransactionType;
 use LabelTools\PhpCwrExporter\Enums\VersionType;
 use LabelTools\PhpCwrExporter\Enums\WriterDesignation;
 
+if (!function_exists('assertCwrRule18DetailOrderV21')) {
+    /**
+     * @param string[] $lines
+     */
+    function assertCwrRule18DetailOrderV21(array $lines): void
+    {
+        $orderGroups = [
+            ['NWR', 'REV', 'ISW', 'EXC'],
+            ['SPU'],
+            ['NPN'],
+            ['SPT'],
+            ['OPU'],
+            ['NPN'],
+            ['SWR'],
+            ['NWN'],
+            ['SWT'],
+            ['PWR'],
+            ['OWR'],
+            ['NWN'],
+            ['ALT'],
+            ['NAT'],
+            ['EWT'],
+            ['NET'],
+            ['NOW'],
+            ['VER'],
+            ['NVT'],
+            ['NOW'],
+            ['PER'],
+            ['NPR'],
+            ['REC'],
+            ['ORN'],
+            ['INS'],
+            ['IND'],
+            ['COM'],
+            ['NCT'],
+            ['NOW'],
+            ['ARI'],
+        ];
+
+        static $recordStages = null;
+        if ($recordStages === null) {
+            $recordStages = [];
+            foreach ($orderGroups as $stage => $codes) {
+                $stageNumber = $stage + 1;
+                foreach ($codes as $code) {
+                    $recordStages[$code][] = $stageNumber;
+                }
+            }
+        }
+
+        $startTypes = ['NWR', 'REV', 'ISW', 'EXC'];
+        $currentStage = 0;
+        $checked = false;
+
+        foreach ($lines as $line) {
+            $type = substr($line, 0, 3);
+            if ($type === '' || in_array($type, ['HDR', 'GRH', 'GRT', 'TRL'], true)) {
+                continue;
+            }
+
+            if (in_array($type, $startTypes, true)) {
+                $currentStage = 0;
+            }
+
+            $stages = $recordStages[$type] ?? null;
+            if ($stages === null) {
+                continue;
+            }
+
+            $matchedStage = null;
+            foreach ($stages as $stage) {
+                if ($stage >= $currentStage) {
+                    $matchedStage = $stage;
+                    break;
+                }
+            }
+
+            expect($matchedStage)->not->toBeNull();
+            $currentStage = $matchedStage;
+            $checked = true;
+        }
+
+        expect($checked)->toBeTrue();
+    }
+}
+
+it('renders detail records in correct order defined by spec for v21', function () {
+    $cwr = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01234567890')
+        ->senderName('Order Validator')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works([
+            [
+                'submitter_work_number' => 'ORDERTEST1',
+                'title' => 'Rule 18 Order',
+                'title_type' => TitleType::ORIGINAL_TITLE,
+                'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+                'version_type'=> VersionType::ORIGINAL_WORK,
+                'writers' => [[
+                    'controlled' => true,
+                    'interested_party_number' => 'W000001',
+                    'last_name' => 'Writer',
+                    'first_name' => 'Order',
+                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                    'publisher_interested_party_number' => 'P000001',
+                    'territories' => [[
+                        'tis_code' => TisCode::WORLD->value,
+                        'inclusion_exclusion_indicator' => 'I',
+                    ]]
+                ]],
+                'publishers' => [[
+                    'interested_party_number' => 'P000001',
+                    'name' => 'Order Pub',
+                    'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                    'ipi_name_number' => '123456789',
+                    'pr_ownership_share' => 50,
+                    'mr_ownership_share' => 50,
+                    'sr_ownership_share' => 50,
+                    'territories' => [[
+                        'tis_code' => TisCode::WORLD->value,
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 50,
+                        'mr_collection_share' => 50,
+                        'sr_collection_share' => 50,
+                    ]]
+                ]],
+                'alternate_titles' => [[
+                    'alternate_title' => 'Alternate Order',
+                    'title_type' => TitleType::ALTERNATIVE_TITLE,
+                ]],
+                'performing_artists' => [[
+                    'last_name' => 'Performer',
+                ]],
+                'recordings' => [[
+                    'first_release_date' => '20240101',
+                    'first_release_duration' => '000200',
+                ]],
+            ],
+        ]);
+
+    $payload = $cwr->export();
+    $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
+
+    assertCwrRule18DetailOrderV21($lines);
+});
+
 it('builds a CWR 2.1 with some new works using works array', function () {
     $cwr = CwrBuilder::v21()
         ->senderType(SenderType::PUBLISHER)

@@ -26,7 +26,6 @@ class Version implements VersionInterface
     protected int $transactionSequence = 0;
     protected int $recordSequence = 0;
     protected array $skippedWorks = [];
-
     public function getVersionNumber(): string
     {
         return '2.1';
@@ -99,36 +98,8 @@ class Version implements VersionInterface
                 ->toString();
                 $workLines[] = $line;
 
-                foreach ($work->recordings ?? [] as $recording) {
-                    $line = (new RecRecord(
-                        firstReleaseDate:             $recording->firstReleaseDate,
-                        firstReleaseDuration:         $recording->firstReleaseDuration,
-                        firstAlbumTitle:              $recording->firstAlbumTitle,
-                        firstAlbumLabel:              $recording->firstAlbumLabel,
-                        firstReleaseCatalogNumber:    $recording->firstReleaseCatalogNumber,
-                        firstReleaseEan:              $recording->firstReleaseEan,
-                        firstReleaseIsrc:             $recording->firstReleaseIsrc,
-                        recordingFormat:              $recording->recordingFormat,
-                        recordingTechnique:           $recording->recordingTechnique,
-                        mediaType:                    $recording->mediaType
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                    $workLines[] = $line;
-
-                }
-                foreach ($work->performingArtists as $artist) {
-                    $line = (new PerRecord(
-                        $artist->lastName,
-                        $artist->firstName ?? '',
-                        $artist->ipiNameNumber ?? '',
-                        $artist->ipiBaseNumber ?? ''
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
-                    $workLines[] = $line;
-                }
-
-                // SPU & SPT for each publisher
-                foreach ($work->publishers as $pubIndex => $pub) {
+                // SPU & SPT for each publisher (Rule 18 order)
+                foreach ($work->publishers ?? [] as $pubIndex => $pub) {
                     $isControlledPublisher = property_exists($pub, 'controlled') ? (bool) $pub->controlled : true;
                     $publisherRecordClass = $isControlledPublisher ? SpuRecord::class : OpuRecord::class;
 
@@ -255,16 +226,42 @@ class Version implements VersionInterface
                 }
 
                 // ALT records for each alternate title
-                if (!empty($work->alternateTitles)) {
-                    foreach ($work->alternateTitles as $alt) {
-                        $line = (new AltRecord(
-                            alternateTitle: $alt['alternate_title'],
-                            titleType:      $alt['title_type'],
-                            languageCode:   $alt['language_code'] ?? null
-                        ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                          ->toString();
-                        $workLines[] = $line;
-                    }
+                foreach ($work->alternateTitles ?? [] as $alt) {
+                    $line = (new AltRecord(
+                        alternateTitle: $alt['alternate_title'],
+                        titleType:      $alt['title_type'],
+                        languageCode:   $alt['language_code'] ?? null
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                    $workLines[] = $line;
+                }
+
+                foreach ($work->performingArtists ?? [] as $artist) {
+                    $line = (new PerRecord(
+                        $artist->lastName,
+                        $artist->firstName ?? '',
+                        $artist->ipiNameNumber ?? '',
+                        $artist->ipiBaseNumber ?? ''
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                    $workLines[] = $line;
+                }
+
+                foreach ($work->recordings ?? [] as $recording) {
+                    $line = (new RecRecord(
+                        firstReleaseDate:             $recording->firstReleaseDate,
+                        firstReleaseDuration:         $recording->firstReleaseDuration,
+                        firstAlbumTitle:              $recording->firstAlbumTitle,
+                        firstAlbumLabel:              $recording->firstAlbumLabel,
+                        firstReleaseCatalogNumber:    $recording->firstReleaseCatalogNumber,
+                        firstReleaseEan:              $recording->firstReleaseEan,
+                        firstReleaseIsrc:             $recording->firstReleaseIsrc,
+                        recordingFormat:              $recording->recordingFormat,
+                        recordingTechnique:           $recording->recordingTechnique,
+                        mediaType:                    $recording->mediaType
+                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                      ->toString();
+                    $workLines[] = $line;
                 }
 
                 $emittedRecords = !empty($workLines);
