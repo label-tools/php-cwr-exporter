@@ -17,11 +17,11 @@ class OpuRecord extends SpuRecord
         ?string $publisherIpiName = '',
         ?string $submitterAgreementNumber = '',
         ?string $prAffiliationSociety = '',
-        ?int $prOwnershipShare = 0,
+        int|float|null $prOwnershipShare = 0,
         ?string $mrAffiliationSociety = '',
-        ?int $mrOwnershipShare = 0,
+        int|float|null $mrOwnershipShare = 0,
         ?string $srAffiliationSociety = '',
-        ?int $srOwnershipShare = 0,
+        int|float|null $srOwnershipShare = 0,
         null|bool|string $specialAgreementsIndicator = null,
         null|bool|string $firstRecordingRefusalIndicator = null
     ) {

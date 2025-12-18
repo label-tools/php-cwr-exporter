@@ -20,13 +20,13 @@ class SwrRecord extends \LabelTools\PhpCwrExporter\Records\Detail\SwrRecord
         string $writerIpiNameNumber = '',
 
         int|SocietyCode|null $prAffiliationSociety = null,
-        int $prOwnershipShare = 0,
+        int|float $prOwnershipShare = 0,
 
         int|SocietyCode|null $mrAffiliationSociety = null,
-        int $mrOwnershipShare = 0,
+        int|float $mrOwnershipShare = 0,
 
         int|SocietyCode|null $srAffiliationSociety = null,
-        int $srOwnershipShare = 0,
+        int|float $srOwnershipShare = 0,
 
         //Society/Region Specific Fields
         string $reversionaryIndicator = '',

@@ -13,15 +13,15 @@ class PublisherDefinition
         public readonly ?string $taxId = null,
         public readonly ?string $submitterAgreementNumber = null,
         public readonly ?string $prAffiliationSociety = null,
-        public readonly int $prOwnershipShare = 0,
-        public readonly int $prCollectionShare = 0,
+        public readonly int|float $prOwnershipShare = 0,
+        public readonly int|float $prCollectionShare = 0,
         public readonly ?string $mrAffiliationSociety = null,
-        public readonly int $mrOwnershipShare = 0,
-        public readonly int $mrCollectionShare = 0,
+        public readonly int|float $mrOwnershipShare = 0,
+        public readonly int|float $mrCollectionShare = 0,
         public readonly ?string $srAffiliationSociety = null,
-        public readonly int $srOwnershipShare = 0,
+        public readonly int|float $srOwnershipShare = 0,
         public readonly bool $controlled = true,
-        public readonly int $srCollectionShare = 0,
+        public readonly int|float $srCollectionShare = 0,
         public readonly array $territories = []
     ) {
         if ($this->controlled) {
