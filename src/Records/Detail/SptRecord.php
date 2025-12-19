@@ -48,7 +48,8 @@ class SptRecord extends Record
          ?string $sharesChange = null,
     ) {
         parent::__construct();
-        $this->setInterestedPartyNumber($interestedPartyNumber)
+        $isRequired = trim((string) $interestedPartyNumber) !== '';
+        $this->setInterestedPartyNumber($interestedPartyNumber, $isRequired)
              ->setConstant()
              ->setPrCollectionShare($prCollectionShare)
              ->setMrCollectionShare($mrCollectionShare)

@@ -63,8 +63,8 @@ describe('SPT (Publisher Territory) Record', function () {
         $record->toString();
     })->throws(\LogicException::class, 'The record prefix for');
 
-    it('throws when Interested Party Number is empty', function () {
-        new SptRecord(
+    it('allows an empty Interested Party Number when optional', function () {
+        $record = new SptRecord(
             interestedPartyNumber: '',
             prCollectionShare: 0,
             mrCollectionShare: 0,
@@ -73,7 +73,10 @@ describe('SPT (Publisher Territory) Record', function () {
             tisNumericCode: 840,
             sharesChange: ''
         );
-    })->throws(InvalidArgumentException::class, 'Interested Party Number must be non-empty and at most 9 characters.');
+
+        $out = $record->setRecordPrefix(0, 0)->toString();
+        expect(substr($out, 19, 9))->toBe(str_repeat(' ', 9));
+    });
 
     it('throws when Interested Party Number is longer than 9 characters', function () {
         new SptRecord(

@@ -109,7 +109,7 @@ class Version implements VersionInterface
                     $isControlledPublisher = property_exists($pub, 'controlled') ? (bool) $pub->controlled : true;
                     $publisherRecordClass = $isControlledPublisher ? SpuRecord::class : OpuRecord::class;
 
-                    $line = (new $publisherRecordClass(
+                    $publisherRecord = (new $publisherRecordClass(
                         publisherSequence:           $pubIndex + 1,
                         interestedPartyNumber:       $pub->interestedPartyNumber,
                         publisherName:               $pub->publisherName,
@@ -123,8 +123,12 @@ class Version implements VersionInterface
                         mrOwnershipShare:            $pub->mrOwnershipShare,
                         srAffiliationSociety:        $pub->srAffiliationSociety,
                         srOwnershipShare:            $pub->srOwnershipShare
-                    ))->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
-                      ->toString();
+                    ));
+
+                    $publisherRecord->setPublisherUnknownIndicator($pub->publisherUnknownIndicator ?? null);
+
+                    $line = $publisherRecord->setRecordPrefix($this->transactionSequence, ++$this->recordSequence)
+                                            ->toString();
                     $workLines[] = $line;
 
                     // SPT territory records
@@ -319,7 +323,9 @@ class Version implements VersionInterface
     {
         $map = [];
         foreach ($publishers as $index => $publisher) {
-            $map[$publisher->interestedPartyNumber] = ['def' => $publisher, 'seq' => $index + 1];
+            if (!empty($publisher->interestedPartyNumber)) {
+                $map[$publisher->interestedPartyNumber] = ['def' => $publisher, 'seq' => $index + 1];
+            }
         }
 
         return $map;

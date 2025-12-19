@@ -22,7 +22,8 @@ class PublisherDefinition
         public readonly int|float $srOwnershipShare = 0,
         public readonly bool $controlled = true,
         public readonly int|float $srCollectionShare = 0,
-        public readonly array $territories = []
+        public readonly array $territories = [],
+        public readonly bool $publisherUnknownIndicator = false,
     ) {
         if ($this->controlled) {
             $errors = [];
@@ -70,12 +71,13 @@ class PublisherDefinition
             default => null,
         };
 
-        if(empty($data['interested_party_number'])) {
+        $interestedPartyNumber = $data['interested_party_number'] ?? '';
+        if ($controlled && $interestedPartyNumber === '') {
             throw new \InvalidArgumentException('interested_party_number missing');
         }
 
         return new self(
-            interestedPartyNumber: $data['interested_party_number'],
+            interestedPartyNumber: (string) $interestedPartyNumber,
             publisherName: $name,
             publisherType: $publisherType,
             publisherIpiName: $ipiName,
@@ -91,7 +93,8 @@ class PublisherDefinition
             srOwnershipShare: $data['sr_ownership_share'] ?? 0,
             controlled: $controlled,
             srCollectionShare: $data['sr_collection_share'] ?? 0,
-            territories: $data['territories'] ?? []
+            territories: $data['territories'] ?? [],
+            publisherUnknownIndicator: static::normalizeBool($data['publisher_unknown_indicator'] ?? false),
         );
     }
 

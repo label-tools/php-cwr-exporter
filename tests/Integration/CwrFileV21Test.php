@@ -1342,6 +1342,120 @@ it('emits an OPU record for uncontrolled publishers', function () {
     expect($recordTypes)->not->toContain('SPU');
 });
 
+it('emits an OPU with unknown publisher indicator while keeping PWR linked to the controlled publisher', function () {
+    $works = [[
+        'submitter_work_number' => 'UNKOPU01',
+        'title' => 'UNKNOWN PUBLISHER MIX',
+        'title_type' => TitleType::ORIGINAL_TITLE,
+        'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+        'version_type'=> VersionType::ORIGINAL_WORK,
+        'writers' => [
+            [
+                'interested_party_number' => 'WCTRL001',
+                'first_name' => 'Controlled',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'publisher_interested_party_number' => 'PCON001',
+                'pr_ownership_share' => 25,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 25,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]],
+            ],
+            [
+                'controlled' => false,
+                'interested_party_number' => 'WUNCTRL1',
+                'first_name' => 'Uncontrolled',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 25,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 25,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]],
+            ],
+        ],
+        'publishers' => [
+            [
+                'interested_party_number' => 'PCON001',
+                'name' => 'CONTROLLED PUBLISHING',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 25,
+                'mr_ownership_share' => 50,
+                'sr_ownership_share' => 50,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 25,
+                    'mr_collection_share' => 50,
+                    'sr_collection_share' => 50,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]],
+            ],
+            [
+                'controlled' => false,
+                'publisher_unknown_indicator' => true,
+                'pr_ownership_share' => 25,
+                'mr_ownership_share' => 50,
+                'sr_ownership_share' => 50,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 25,
+                    'mr_collection_share' => 50,
+                    'sr_collection_share' => 50,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]],
+            ],
+        ],
+    ]];
+
+    $payload = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('00000000000')
+        ->senderName('Testing Co')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works($works)
+        ->export();
+
+    $lines = preg_split("/(\\r\\n|\\n|\\r)/", trim($payload));
+    $field = function (string $record, int $start, int $size): string {
+        $zeroBased = $start - 1;
+        return substr($record, $zeroBased, $size);
+    };
+
+    $detailRecords = array_values(array_filter($lines, fn($rec) => !in_array($field($rec, 1, 3), ['HDR', 'GRH', 'GRT', 'TRL'], true)));
+    $recordTypes = array_map(fn($rec) => $field($rec, 1, 3), $detailRecords);
+
+    expect($recordTypes)->toContain('SPU');
+    expect($recordTypes)->toContain('OPU');
+    expect($recordTypes)->toContain('SWR');
+    expect($recordTypes)->toContain('OWR');
+    expect($recordTypes)->toContain('PWR');
+
+    $opu = array_values(array_filter($detailRecords, fn($rec) => $field($rec, 1, 3) === 'OPU'))[0];
+    expect(trim($field($opu, 31, 45)))->toBe('');
+    expect($field($opu, 76, 1))->toBe('Y');
+    expect($field($opu, 116, 5))->toBe('02500');
+    expect($field($opu, 124, 5))->toBe('05000');
+    expect($field($opu, 132, 5))->toBe('05000');
+
+    $pwr = array_values(array_filter($detailRecords, fn($rec) => $field($rec, 1, 3) === 'PWR'))[0];
+    expect(trim($field($pwr, 20, 9)))->toBe('PCON001');
+    expect(trim($field($pwr, 29, 45)))->toBe('CONTROLLED PUBLISHING');
+});
+
 it('emits a REC record when recording detail is provided', function () {
     $works = [[
         'submitter_work_number' => 'WORKREC01',

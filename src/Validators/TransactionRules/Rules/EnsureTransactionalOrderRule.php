@@ -14,7 +14,7 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
     private const RECORD_ORDER = [
         'NWR' => 1,
         'SPU' => 2,
-        'SPT' => 3,
+        'SPT' => 4,
         'OPU' => 4,
         'SWR' => 5,
         'SWT' => 6,

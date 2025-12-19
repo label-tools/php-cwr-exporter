@@ -56,7 +56,7 @@ class SpuRecord extends Record
         int $publisherSequence, //mandatory
         string $interestedPartyNumber, //mandatory for SPU
         string $publisherName,  //mandatory for SPU
-        PublisherType|string $publisherType, //mandatory for SPU
+        PublisherType|string|null $publisherType, //mandatory for SPU
         ?string $taxId = '',
         ?string $publisherIpiName = '', //If the record is of type SPU and followed by an SPT (and hence represents the file submitter), then the IPI Name Number is mandatory.
         ?string $submitterAgreementNumber = '',
@@ -71,7 +71,7 @@ class SpuRecord extends Record
     ) {
         parent::__construct();
 
-        $this->data[static::IDX_PUBLISHER_UNKNOWN_IND] = ' '; // must be blank for SPU records
+        $this->setPublisherUnknownIndicator(null); // must be blank for SPU records
 
         $this->setPublisherSequence($publisherSequence)
              ->setInterestedPartyNumber($interestedPartyNumber)
@@ -107,9 +107,33 @@ class SpuRecord extends Record
         return $this->setAlphaNumeric(static::IDX_PUBLISHER_NAME, $name, $fieldName);
     }
 
-    public function setPublisherType(PublisherType|string $type): self
+    public function setPublisherType(PublisherType|string|null $type): self
     {
         return $this->setEnumValue(static::IDX_PUBLISHER_TYPE, PublisherType::class, $type, 'Publisher Type');
+    }
+
+    public function setPublisherUnknownIndicator(null|bool|string $flag): self
+    {
+        $value = ' ';
+        if (!is_null($flag)) {
+            if (is_bool($flag)) {
+                $flag = $flag ? 'Y' : '';
+            }
+            $flag = strtoupper((string) $flag);
+
+            if ($flag === 'Y' && static::$recordType === 'SPU') {
+                throw new \InvalidArgumentException('Publisher Unknown Indicator must be blank for SPU records.');
+            }
+
+            if ($flag !== '' && $flag !== 'Y') {
+                throw new \InvalidArgumentException('Publisher Unknown Indicator must be blank or "Y".');
+            }
+
+            $value = $flag === '' ? ' ' : $flag;
+        }
+
+        $this->data[static::IDX_PUBLISHER_UNKNOWN_IND] = $value;
+        return $this;
     }
 
     public function setTaxId(?string $taxId): self
