@@ -118,6 +118,9 @@ it('renders detail records in the correct Rule 18 order for v22', function () {
                     'last_name' => 'Writer',
                     'first_name' => 'Order',
                     'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                    'pr_ownership_share' => 50,
+                    'mr_ownership_share' => 50,
+                    'sr_ownership_share' => 50,
                     'publisher_interested_party_number' => 'P000001',
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
@@ -189,16 +192,17 @@ it('builds a CWR 2.2 with some new works using works array', function () {
                 ],
                 'writers' => [[
                     'interested_party_number' => 'W000001',
-                    'first_name' => 'John',
-                    'last_name' => 'Doe',
-                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                    'ipi_name_number' => '123456789',
-                    'pr_affiliation_society' => SocietyCode::BMI->value,
-                    'publisher_interested_party_number' => 'P000001', //use for linking to publisher
-                    'territories' => [[
-                        'tis_code' => TisCode::WORLD->value,
-                        'pr_collection_share' => 12.5,
-                        'mr_collection_share' => 25,
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
+                'publisher_interested_party_number' => 'P000001', //use for linking to publisher
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'pr_collection_share' => 12.5,
+                    'mr_collection_share' => 25,
                         'sr_collection_share' => 30.12,
                         'inclusion_exclusion_indicator' => 'I',
                     ]]
@@ -234,16 +238,17 @@ it('builds a CWR 2.2 with some new works using works array', function () {
                 'iswc' => 'T1234567890',
                 'writers' => [[
                     'interested_party_number' => 'W000001',
-                    'first_name' => 'John',
-                    'last_name' => 'Doe',
-                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                    'ipi_name_number' => '123456789',
-                    'pr_affiliation_society' => SocietyCode::BMI->value,
-                    'publisher_interested_party_number' => 'P000001',
-                    'territories' => [[
-                        'tis_code' => TisCode::WORLD->value,
-                        'inclusion_exclusion_indicator' => 'I',
-                    ]]
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
+                'publisher_interested_party_number' => 'P000001',
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]]
                 ]],
                 'publishers' => [[
                     'interested_party_number' => 'P000001',
@@ -532,6 +537,9 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
                 'publisher_interested_party_number' => 'P000001',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000001',
@@ -568,6 +576,9 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'pr_ownership_share' => 50,
                 'mr_ownership_share' => 100,
                 'sr_ownership_share' => 100,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]]
         ],
         [
@@ -584,6 +595,9 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
                 'publisher_interested_party_number' => 'P000003',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000003',
@@ -662,6 +676,9 @@ it('skips works where a controlled writer cannot produce a PWR record', function
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
                 'publisher_interested_party_number' => 'PVAL001',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]],
             'publishers' => [[
                 'interested_party_number' => 'PVAL001',
@@ -686,6 +703,9 @@ it('skips works where a controlled writer cannot produce a PWR record', function
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
                 // intentionally missing publisher_interested_party_number to trigger validation
             ]],
             'publishers' => [[
@@ -775,6 +795,7 @@ it('builds a CWR 2.2 with some new works using addWork', function () {
             'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
             'ipi_name_number' => '123456789',
             'pr_affiliation_society' => SocietyCode::BMI->value,
+            'pr_ownership_share' => 50,
             'publisher_interested_party_number' => 'P000001', //use for linking to publisher
             'territories' => [[
                 'tis_code' => TisCode::WORLD->value,
@@ -819,6 +840,7 @@ it('builds a CWR 2.2 with some new works using addWork', function () {
             'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
             'ipi_name_number' => '123456789',
             'pr_affiliation_society' => SocietyCode::BMI->value,
+            'pr_ownership_share' => 50,
             'publisher_interested_party_number' => 'P000001',
             'territories' => [[
                 'tis_code' => TisCode::WORLD->value,
@@ -988,6 +1010,7 @@ it('builds a CWR 2.2 file and writes it to a stream', function () {
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
                 'publisher_interested_party_number' => 'P000001', //use for linking to publisher
                 'territories' => [[
                     'tis_code' => TisCode::WORLD->value,
@@ -1030,14 +1053,15 @@ it('builds a CWR 2.2 file and writes it to a stream', function () {
                 'interested_party_number' => 'W000001',
                 'first_name' => 'John',
                 'last_name' => 'Doe',
-            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-            'ipi_name_number' => '123456789',
-            'pr_affiliation_society' => SocietyCode::BMI->value,
-            'publisher_interested_party_number' => 'P000001',
-            'territories' => [[
-                'tis_code' => TisCode::WORLD->value,
-                'inclusion_exclusion_indicator' => 'I',
-            ]]
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'ipi_name_number' => '123456789',
+                'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
+                'publisher_interested_party_number' => 'P000001',
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]]
         ]],
             'publishers' => [[
                 'interested_party_number' => 'P000001',
@@ -1095,6 +1119,7 @@ it('emits an OPU record for uncontrolled publishers', function () {
                 'last_name' => 'Composer',
                 'first_name' => 'Other',
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_ownership_share' => 70,
                 'publisher_interested_party_number' => 'P000001',
                 'territories' => [[
                     'tis_code' => TisCode::WORLD->value,
@@ -1159,14 +1184,17 @@ it('emits a REC record when recording detail is provided', function () {
             'ipi_base_number' => 'PG12345678902',
         ]],
         'writers' => [[
-            'interested_party_number' => 'WREC002',
-            'last_name' => 'Singer',
-            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-            'publisher_interested_party_number' => 'P000001',
-            'territories' => [[
-                'tis_code' => TisCode::WORLD->value,
-                'inclusion_exclusion_indicator' => 'I',
-            ]]
+                'interested_party_number' => 'WREC002',
+                'last_name' => 'Singer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 50,
+                'sr_ownership_share' => 50,
+                'publisher_interested_party_number' => 'P000001',
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]]
         ]],
         'publishers' => [[
             'interested_party_number' => 'P000001',

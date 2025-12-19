@@ -98,6 +98,132 @@ if (!function_exists('assertCwrRule18DetailOrderV21')) {
     }
 }
 
+
+it('real test 2.1', function () {
+    $cwr = CwrBuilder::v21()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01265713057')
+        ->senderName('Publishing Company')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works([
+    [
+        'submitter_work_number' => '0000000071',
+        'title' => 'OKOA',
+        'title_type' => TitleType::ORIGINAL_TITLE,
+        'language' => null,
+        'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+        'version_type' => VersionType::ORIGINAL_WORK,
+        'iswc' => 'T3307522670',
+        'duration' => null,
+        'copyright_date' => null,
+        'copyright_number' => null,
+        'recorded' => true,
+        'text_music_relationship' => '',
+        'performing_artists' => [
+            [
+                'last_name' => 'Ben & Vincent',
+                'first_name' => null,
+                'ipi_name_number' => null,
+                'ipi_base_number' => null,
+            ],
+            [
+                'last_name' => 'Xique-Xique',
+                'first_name' => null,
+                'ipi_name_number' => null,
+                'ipi_base_number' => null,
+            ],
+        ],
+        'alternate_titles' => [],
+        'writers' => [
+            [
+                'interested_party_number' => 'W000008',
+                'first_name' => 'BENDAD',
+                'last_name' => 'THOMAS',
+                'designation_code' => 'C',
+                'ipi_name_number' => '01278333828',
+                'pr_affiliation_society' => 10,
+                'pr_ownership_share' => 0,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [
+                    [
+                        'tis_code' => 2136,
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 50.0,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
+                    ],
+                ],
+                'controlled' => true,
+                'publisher_interested_party_number' => 'P000001',
+            ],
+        ],
+        'publishers' => [
+            [
+                'interested_party_number' => 'P000001',
+                'name' => 'WAYU PUBLISHING (ASCAP)',
+                'type' => 'E',
+                'ipi_name_number' => '01265713057',
+                'pr_affiliation_society' => 10,
+                'pr_ownership_share' => 50.0,
+                'mr_affiliation_society' => null,
+                'mr_ownership_share' => 100.0,
+                'sr_affiliation_society' => null,
+                'sr_ownership_share' => 100.0,
+                'territories' => [
+                    [
+                        'tis_code' => 2136,
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 50.0,
+                        'mr_collection_share' => 100.0,
+                        'sr_collection_share' => 100.0,
+                    ],
+                ],
+            ],
+        ],
+        'recordings' => [
+            [
+                'first_release_date' => '20230122',
+                'first_release_duration' => '000352',
+                'first_album_title' => 'Okoa',
+                'first_album_label' => null,
+                'first_release_catalog_number' => null,
+                'first_release_ean' => null,
+                'first_release_isrc' => 'US83Z2225646',
+                'recording_format' => 'A',
+                'recording_technique' => 'D',
+                'media_type' => null,
+            ],
+            [
+                'first_release_date' => '20220814',
+                'first_release_duration' => '000518',
+                'first_album_title' => 'Okoa (Xique-Xique Remix) - Single',
+                'first_album_label' => null,
+                'first_release_catalog_number' => null,
+                'first_release_ean' => null,
+                'first_release_isrc' => 'US83Z2225648',
+                'recording_format' => 'A',
+                'recording_technique' => 'D',
+                'media_type' => null,
+            ],
+        ],
+    ],
+]);
+
+
+    $payload = $cwr->export();
+
+    $skipped = $cwr->getSkippedWorks();
+
+    expect($skipped)->toHaveCount(1);
+    expect($skipped[0]['work_number'])->toBe('0000000071');
+    expect($skipped[0]['error'])->toContain('100');
+
+    expect($payload)->toBeString();
+    expect($payload)->not->toBeEmpty();
+    expect($payload)->not->toContain('OKOA');
+});
+
 it('renders detail records in correct order defined by spec for v21', function () {
     $cwr = CwrBuilder::v21()
         ->senderType(SenderType::PUBLISHER)
@@ -118,6 +244,9 @@ it('renders detail records in correct order defined by spec for v21', function (
                     'first_name' => 'Order',
                     'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                     'publisher_interested_party_number' => 'P000001',
+                    'pr_ownership_share' => 50,
+                    'mr_ownership_share' => 0,
+                    'sr_ownership_share' => 0,
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
@@ -129,14 +258,14 @@ it('renders detail records in correct order defined by spec for v21', function (
                     'type' => PublisherType::ORIGINAL_PUBLISHER->value,
                     'ipi_name_number' => '123456789',
                     'pr_ownership_share' => 50,
-                    'mr_ownership_share' => 50,
-                    'sr_ownership_share' => 50,
+                    'mr_ownership_share' => 100,
+                    'sr_ownership_share' => 100,
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
                         'pr_collection_share' => 50,
-                        'mr_collection_share' => 50,
-                        'sr_collection_share' => 50,
+                        'mr_collection_share' => 100,
+                        'sr_collection_share' => 100,
                     ]]
                 ]],
                 'alternate_titles' => [[
@@ -155,7 +284,6 @@ it('renders detail records in correct order defined by spec for v21', function (
 
     $payload = $cwr->export();
     $lines = preg_split("/(\r\n|\n|\r)/", trim($payload));
-
     assertCwrRule18DetailOrderV21($lines);
 });
 
@@ -194,6 +322,11 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                     'ipi_name_number' => '123456789',
                     'pr_affiliation_society' => SocietyCode::BMI->value,
                     'publisher_interested_party_number' => 'P000001', //use for linking to publisher
+                    'pr_ownership_share' => 50,
+                    'mr_affiliation_society' => null,
+                    'mr_ownership_share' => 0,
+                    'sr_affiliation_society' => null,
+                    'sr_ownership_share' => 0,
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'pr_collection_share' => 50,
@@ -240,6 +373,11 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                     'ipi_name_number' => '123456789',
                     'pr_affiliation_society' => SocietyCode::BMI->value,
                     'publisher_interested_party_number' => 'P000001',
+                    'pr_ownership_share' => 50,
+                    'mr_affiliation_society' => null,
+                    'mr_ownership_share' => 0,
+                    'sr_affiliation_society' => null,
+                    'sr_ownership_share' => 0,
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
@@ -261,9 +399,9 @@ it('builds a CWR 2.1 with some new works using works array', function () {
                     'territories' => [[
                         'tis_code' => TisCode::WORLD->value,
                         'inclusion_exclusion_indicator' => 'I',
-                        'pr_collection_share' => 25.3,
-                        'mr_collection_share' => 33.33,
-                        'sr_collection_share' => 100.0,
+                        'pr_collection_share' => 50,
+                        'mr_collection_share' => 100,
+                        'sr_collection_share' => 100,
                     ]]
                 ]]
             ],
@@ -509,9 +647,9 @@ it('builds a CWR 2.1 with some new works using works array', function () {
 
     // Check second SPT record (from second work)
     $spt2 = $lines[$sptIndexes[1]];
-    expect($field($spt2, 35, 5))->toBe('02530'); // PR Collection Share 25.30%
-    expect($field($spt2, 40, 5))->toBe('03333'); // MR Collection Share 33.33%
-    expect($field($spt2, 45, 5))->toBe('10000'); // SR Collection Share 100.00%
+    expect($field($spt2, 35, 5))->toBe('05000');
+    expect($field($spt2, 40, 5))->toBe('10000');
+    expect($field($spt2, 45, 5))->toBe('10000');
     expect(trim($field($spt2, 51, 4)))->toBe((string)TisCode::WORLD->value); // TIS Code
 
     // --- SWT field-level spot checks ---
@@ -545,6 +683,9 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
                 'publisher_interested_party_number' => 'P000001',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000001',
@@ -572,6 +713,9 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
                 'publisher_interested_party_number' => 'P000002',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000002',
@@ -597,6 +741,9 @@ it('keeps transaction prefixes contiguous when a work is skipped', function () {
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
                 'publisher_interested_party_number' => 'P000003',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]],
             'publishers' => [[
                 'interested_party_number' => 'P000003',
@@ -677,6 +824,9 @@ it('skips works where a controlled writer cannot produce a PWR record', function
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
                 'publisher_interested_party_number' => 'PVAL001',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
             ]],
             'publishers' => [[
                 'interested_party_number' => 'PVAL001',
@@ -701,6 +851,9 @@ it('skips works where a controlled writer cannot produce a PWR record', function
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'ipi_name_number' => '123456789',
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
                 // intentionally missing publisher_interested_party_number to trigger validation
             ]],
             'publishers' => [[
@@ -777,6 +930,7 @@ it('reports skipped works with errors', function () {
                 'last_name' => 'Doe',
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
                 'publisher_interested_party_number' => 'P000001',
             ]],
             'publishers' => [[
@@ -804,6 +958,7 @@ it('reports skipped works with errors', function () {
                 'first_name' => 'Orphaned',
                 'last_name' => 'Writer',
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_ownership_share' => 50,
                 // missing publisher_interested_party_number triggers skip
             ]],
             'publishers' => [[
@@ -846,6 +1001,7 @@ it('does not emit partially rendered works when a later record fails validation'
                 'last_name' => 'Writer',
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
                 'publisher_interested_party_number' => 'PG001',
             ]],
             'publishers' => [[
@@ -873,6 +1029,7 @@ it('does not emit partially rendered works when a later record fails validation'
                 'last_name' => 'Writer',
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
                 'publisher_interested_party_number' => 'PBMID',
             ]],
             'publishers' => [[
@@ -907,6 +1064,7 @@ it('does not emit partially rendered works when a later record fails validation'
                 'last_name' => 'Writer',
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
                 'pr_affiliation_society' => SocietyCode::BMI->value,
+                'pr_ownership_share' => 50,
                 'publisher_interested_party_number' => 'PG002',
             ]],
             'publishers' => [[
@@ -1145,6 +1303,7 @@ it('emits an OPU record for uncontrolled publishers', function () {
                 'last_name' => 'Writer',
                 'first_name' => 'Uncontrolled',
                 'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_ownership_share' => 70,
                 'publisher_interested_party_number' => 'P000001',
                 'territories' => [[
                     'tis_code' => TisCode::WORLD->value,
@@ -1209,14 +1368,17 @@ it('emits a REC record when recording detail is provided', function () {
             'ipi_base_number' => 'PG12345678901',
         ]],
         'writers' => [[
-            'interested_party_number' => 'WREC001',
-            'last_name' => 'Singer',
-            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-            'publisher_interested_party_number' => 'P000001',
-            'territories' => [[
-                'tis_code' => TisCode::WORLD->value,
-                'inclusion_exclusion_indicator' => 'I',
-            ]]
+                'interested_party_number' => 'WREC001',
+                'last_name' => 'Singer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 50,
+                'sr_ownership_share' => 50,
+                'publisher_interested_party_number' => 'P000001',
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                ]]
         ]],
         'publishers' => [[
             'interested_party_number' => 'P000001',

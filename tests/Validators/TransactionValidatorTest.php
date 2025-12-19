@@ -75,7 +75,7 @@ describe('TransactionValidator', function () {
         ]);
 
         expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'Total writer PR ownership share');
+            ->toThrow(InvalidArgumentException::class, 'Total combined PR ownership share must be 0% or 100%');
     });
 
     it('fails when collection shares exceed 100% for a territory', function () {
@@ -256,7 +256,7 @@ describe('TransactionValidator', function () {
         ]);
 
         expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'Total writer PR ownership share');
+            ->toThrow(InvalidArgumentException::class, 'Total combined PR ownership share must be 0% or 100%');
     });
 
 });
