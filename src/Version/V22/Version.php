@@ -148,8 +148,9 @@ class Version implements VersionInterface
                     }
                 }
 
-                // Writers: controlled => SWR/SWT; uncontrolled => OWR
-                foreach ($work->writers ?? [] as $writerIndex => $wr) {
+                // Writers: controlled => SWR/SWT; uncontrolled => OWR.
+                // Controlled writers must be emitted before uncontrolled ones to satisfy Rule 18.
+                foreach ($this->orderWritersControlledFirst($work->writers ?? []) as $writerIndex => $wr) {
                     $isControlled = property_exists($wr, 'controlled') ? (bool) $wr->controlled : true;
 
                     if ($isControlled) {
@@ -356,6 +357,25 @@ class Version implements VersionInterface
     private function isControlledWriter(object $writer): bool
     {
         return property_exists($writer, 'controlled') ? (bool) $writer->controlled : true;
+    }
+
+    /**
+     * Ensures controlled writers (SWR) are emitted before uncontrolled writers (OWR).
+     */
+    private function orderWritersControlledFirst(array $writers): array
+    {
+        $controlled = [];
+        $uncontrolled = [];
+
+        foreach ($writers as $writer) {
+            if ($this->isControlledWriter($writer)) {
+                $controlled[] = $writer;
+            } else {
+                $uncontrolled[] = $writer;
+            }
+        }
+
+        return array_merge($controlled, $uncontrolled);
     }
 
     private function normalizePublisherKey(null|int|string $publisherIp): string

@@ -30,6 +30,7 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
         $sequence = $this->buildRecordSequence($work);
 
         $lastPosition = 0;
+        $lastRecord = null;
         foreach ($sequence as $record) {
             $position = self::RECORD_ORDER[$record] ?? null;
 
@@ -38,10 +39,12 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
             }
 
             if ($position < $lastPosition) {
-                throw new InvalidArgumentException('CWR transactional records must follow the fixed ordering defined in Rule 18.');
+                $previous = $lastRecord ?? 'previous record';
+                throw new InvalidArgumentException(sprintf('Record %s cannot follow %s per CWR ordering rules.', $record, $previous));
             }
 
             $lastPosition = $position;
+            $lastRecord = $record;
         }
     }
 
@@ -61,7 +64,7 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
             }
         }
 
-        foreach ($work->writers as $writer) {
+        foreach ($this->orderWritersControlledFirst($work->writers) as $writer) {
             if ($this->isControlledWriter($writer)) {
                 $sequence[] = 'SWR';
                 foreach ($writer->territories as $territory) {
@@ -86,5 +89,27 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
         }
 
         return $sequence;
+    }
+
+    /**
+     * Ensures controlled writers (SWR) precede uncontrolled writers (OWR).
+     *
+     * @param array $writers
+     * @return array
+     */
+    private function orderWritersControlledFirst(array $writers): array
+    {
+        $controlled = [];
+        $uncontrolled = [];
+
+        foreach ($writers as $writer) {
+            if ($this->isControlledWriter($writer)) {
+                $controlled[] = $writer;
+            } else {
+                $uncontrolled[] = $writer;
+            }
+        }
+
+        return array_merge($controlled, $uncontrolled);
     }
 }

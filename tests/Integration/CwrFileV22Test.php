@@ -1232,3 +1232,75 @@ it('emits a REC record when recording detail is provided', function () {
     $firstPer = array_values($perLines)[0];
     expect(trim($field($firstPer, 20, 45)))->toBe('SINGER');
 });
+
+it('emits SWR records before OWR records even when provided out of order for v22', function () {
+    $payload = CwrBuilder::v22()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('00000000002')
+        ->senderName('Writer Order Check')
+        ->software('LabelTools CWR Exporter', '1.0.0')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
+        ->works([[
+            'submitter_work_number' => 'ORDER-OWR-FIRST',
+            'title' => 'Writer Order',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type'=> VersionType::ORIGINAL_WORK,
+            'writers' => [
+                [
+                    'controlled' => false,
+                    'interested_party_number' => 'W-OWR1',
+                    'last_name' => 'Other',
+                    'first_name' => 'Otto',
+                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                ],
+                [
+                    'controlled' => true,
+                    'interested_party_number' => 'W-SWR1',
+                    'last_name' => 'Writer',
+                    'first_name' => 'Controlled',
+                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                    'publisher_interested_party_number' => 'P-CTRL',
+                    'pr_ownership_share' => 50,
+                    'mr_ownership_share' => 0,
+                    'sr_ownership_share' => 0,
+                    'territories' => [
+                        [
+                            'tis_code' => TisCode::WORLD->value,
+                            'inclusion_exclusion_indicator' => 'I',
+                        ],
+                    ],
+                ],
+            ],
+            'publishers' => [[
+                'interested_party_number' => 'P-CTRL',
+                'name' => 'Control Pub',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [
+                    [
+                        'tis_code' => TisCode::WORLD->value,
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 50,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
+                    ],
+                ],
+            ]],
+        ]])
+        ->export();
+
+    $lines = array_values(array_filter(preg_split("/(\r\n|\n|\r)/", trim($payload))));
+    $types = array_map(fn($line) => substr($line, 0, 3), $lines);
+
+    $swrIndex = array_search('SWR', $types, true);
+    $owrIndex = array_search('OWR', $types, true);
+
+    expect($swrIndex)->not->toBeFalse();
+    expect($owrIndex)->not->toBeFalse();
+    expect($swrIndex)->toBeLessThan($owrIndex);
+    assertCwrRule18DetailOrderV22($lines);
+});
