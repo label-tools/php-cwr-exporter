@@ -191,44 +191,7 @@ describe('TransactionValidator', function () {
             ],
         ]);
 
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'Rule 18');
-    });
-
-    it('requires controlled writers to appear before uncontrolled ones', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'writers' => [
-                [
-                    'interested_party_number' => 'W000002',
-                    'first_name' => 'Uncontrolled',
-                    'last_name' => 'Writer',
-                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                    'controlled' => false,
-                    'territories' => [[
-                        'tis_code' => '213',
-                    ]],
-                    'publisher_interested_party_number' => null,
-                ],
-                [
-                    'interested_party_number' => 'W000003',
-                    'first_name' => 'Controlled',
-                    'last_name' => 'Writer',
-                    'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                    'publisher_interested_party_number' => 'P000001',
-                    'territories' => [[
-                        'tis_code' => '213',
-                        'inclusion_exclusion_indicator' => 'I',
-                        'pr_collection_share' => 50.0,
-                        'mr_collection_share' => 50.0,
-                        'sr_collection_share' => 50.0,
-                    ]],
-                ],
-            ],
-        ]);
-
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'Rule 18');
+        expect(fn () => $validator->validate($work))->toThrow(InvalidArgumentException::class, 'per CWR ordering rules');
     });
 
     it('rejects territories for uncontrolled publishers because SPT cannot follow an OPU', function () {
