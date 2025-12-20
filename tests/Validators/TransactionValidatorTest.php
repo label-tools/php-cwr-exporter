@@ -167,7 +167,7 @@ describe('TransactionValidator', function () {
                     'name' => '',
                     'type' => null,
                     'ipi_name_number' => '',
-                    'territories' => [],
+                    'territories' => null,
                     'pr_ownership_share' => 0,
                     'mr_ownership_share' => 0,
                     'sr_ownership_share' => 0,
@@ -229,6 +229,31 @@ describe('TransactionValidator', function () {
 
         expect(fn () => $validator->validate($work))
             ->toThrow(InvalidArgumentException::class, 'Rule 18');
+    });
+
+    it('rejects territories for uncontrolled publishers because SPT cannot follow an OPU', function () {
+        $validator = new TransactionValidator();
+        $work = makeWork([
+            'publishers' => [[
+                'interested_party_number' => 'P-OPU',
+                'name' => '',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 50,
+                'sr_ownership_share' => 50,
+                'controlled' => false,
+                'territories' => [[
+                    'tis_code' => '213',
+                    'pr_collection_share' => 10,
+                    'mr_collection_share' => 10,
+                    'sr_collection_share' => 10,
+                ]],
+            ]],
+        ]);
+
+        expect(fn () => $validator->validate($work))
+            ->toThrow(InvalidArgumentException::class, 'SPT records cannot be used with OPU records');
     });
 
     it('requires combined ownership totals to be 0% or exactly 100%', function () {

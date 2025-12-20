@@ -1156,6 +1156,7 @@ it('emits an OPU record for uncontrolled publishers', function () {
 
     expect($recordTypes)->toContain('OPU');
     expect($recordTypes)->not->toContain('SPU');
+    expect($recordTypes)->not->toContain('SPT');
 });
 
 it('emits a REC record when recording detail is provided', function () {

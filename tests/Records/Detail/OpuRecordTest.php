@@ -20,10 +20,10 @@ describe('OPU (Other Publisher) Record', function () {
             expect(substr($str, 21, 9))->toBe(str_pad('', 9, ' '));
             // Publisher Name (45 A)
             expect(substr($str, 30, 45))->toBe(str_pad('', 45, ' '));
-            // Publisher Unknown Indicator (must be blank)
-            expect(substr($str, 75, 1))->toBe(' ');
+            // Publisher Unknown Indicator defaults to N
+            expect(substr($str, 75, 1))->toBe('N');
             // Publisher Type (2 L)
-            expect(substr($str, 76, 2))->toBe(str_pad('', 2, ' '));
+            expect(substr($str, 76, 2))->toBe(str_pad('E', 2, ' '));
             // Tax ID # (9 A defaults blank)
             expect(substr($str, 78, 9))->toBe(str_repeat(' ', 9));
             // Publisher IPI Name # (11 L)
@@ -56,9 +56,13 @@ describe('OPU (Other Publisher) Record', function () {
             new OpuRecord(0, 'IP', 'Pub', 'E', '', 'IPI');
         })->throws(InvalidArgumentException::class);
 
-        it('throws when Publisher Type is invalid', function () {
-            (new OpuRecord(1, 'IP', 'Pub', 'XX', '', 'IPI'))->setRecordPrefix(0, 0)->toString();
-        })->throws(InvalidArgumentException::class);
+        it('defaults Publisher Type to E when invalid', function () {
+            $str = (new OpuRecord(1, 'IP', 'Pub', 'XX', '', 'IPI'))
+                ->setRecordPrefix(0, 0)
+                ->toString();
+
+            expect(substr($str, 76, 2))->toBe(str_pad('E', 2, ' '));
+        });
 
         it('throws when PR Ownership Share is out of range', function () {
             (new OpuRecord(1, 'IP', 'Pub', 'E', '', 'IPI'))
@@ -88,6 +92,19 @@ describe('OPU (Other Publisher) Record', function () {
         it('throws when SR Affiliation Society is invalid', function () {
             (new OpuRecord(1, 'IP', 'Pub', 'E', '', 'IPI'))
                 ->setSrSociety('999');
+        })->throws(InvalidArgumentException::class);
+
+        it('requires Publisher Name to be blank when Unknown Indicator is Y', function () {
+            (new OpuRecord(1, 'IP', 'NotAllowed', 'E', '', 'IPI'))
+                ->setPublisherUnknownIndicator(true);
+        })->throws(InvalidArgumentException::class);
+
+        it('only allows Special Agreements Indicator to be L or blank', function () {
+            $record = new OpuRecord(1, 'IP', 'Pub', 'E', '', 'IPI');
+            $record->setSpecialAgreementsIndicator('L');
+            $record->setSpecialAgreementsIndicator(null); // blank allowed
+
+            $record->setSpecialAgreementsIndicator('Y');
         })->throws(InvalidArgumentException::class);
     });
 });

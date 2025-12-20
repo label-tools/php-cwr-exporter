@@ -14,6 +14,10 @@ class EnsureOriginalPublisherUniquenessRule extends AbstractTransactionRule
         $publishers = $work->publishers ?? [];
         $originalCount = 0;
         foreach ($publishers as $publisher) {
+            if (property_exists($publisher, 'controlled') && $publisher->controlled === false) {
+                continue;
+            }
+
             $type = $publisher->publisherType instanceof PublisherType
                 ? $publisher->publisherType->value
                 : (string) $publisher->publisherType;

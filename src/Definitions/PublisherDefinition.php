@@ -65,11 +65,22 @@ class PublisherDefinition
             }
         }
 
-        $publisherType = match(true) {
-            $publisherTypeRaw instanceof PublisherType => $publisherTypeRaw,
-            !empty($publisherTypeRaw) => PublisherType::from($publisherTypeRaw),
-            default => null,
-        };
+        $publisherType = null;
+        if ($publisherTypeRaw instanceof PublisherType) {
+            $publisherType = $publisherTypeRaw;
+        } elseif (!empty($publisherTypeRaw)) {
+            try {
+                $publisherType = PublisherType::from($publisherTypeRaw);
+            } catch (\ValueError $e) {
+                if ($controlled) {
+                    throw $e;
+                }
+            }
+        }
+
+        if (!$controlled && $publisherType === null) {
+            $publisherType = PublisherType::ORIGINAL_PUBLISHER;
+        }
 
         $interestedPartyNumber = $data['interested_party_number'] ?? '';
         if ($controlled && $interestedPartyNumber === '') {

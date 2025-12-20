@@ -1340,6 +1340,7 @@ it('emits an OPU record for uncontrolled publishers', function () {
 
     expect($recordTypes)->toContain('OPU');
     expect($recordTypes)->not->toContain('SPU');
+    expect($recordTypes)->not->toContain('SPT');
 });
 
 it('emits an OPU with unknown publisher indicator while keeping PWR linked to the controlled publisher', function () {
@@ -1378,13 +1379,6 @@ it('emits an OPU with unknown publisher indicator while keeping PWR linked to th
                 'pr_ownership_share' => 25,
                 'mr_ownership_share' => 0,
                 'sr_ownership_share' => 0,
-                'territories' => [[
-                    'tis_code' => TisCode::WORLD->value,
-                    'pr_collection_share' => 25,
-                    'mr_collection_share' => 0,
-                    'sr_collection_share' => 0,
-                    'inclusion_exclusion_indicator' => 'I',
-                ]],
             ],
         ],
         'publishers' => [
@@ -1410,24 +1404,17 @@ it('emits an OPU with unknown publisher indicator while keeping PWR linked to th
                 'pr_ownership_share' => 25,
                 'mr_ownership_share' => 50,
                 'sr_ownership_share' => 50,
-                'territories' => [[
-                    'tis_code' => TisCode::WORLD->value,
-                    'pr_collection_share' => 25,
-                    'mr_collection_share' => 50,
-                    'sr_collection_share' => 50,
-                    'inclusion_exclusion_indicator' => 'I',
-                ]],
             ],
         ],
     ]];
 
-    $payload = CwrBuilder::v21()
+    $cwr = CwrBuilder::v21()
         ->senderType(SenderType::PUBLISHER)
         ->senderId('00000000000')
         ->senderName('Testing Co')
         ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
-        ->works($works)
-        ->export();
+        ->works($works);
+    $payload = $cwr->export();
 
     $lines = preg_split("/(\\r\\n|\\n|\\r)/", trim($payload));
     $field = function (string $record, int $start, int $size): string {
@@ -1443,6 +1430,9 @@ it('emits an OPU with unknown publisher indicator while keeping PWR linked to th
     expect($recordTypes)->toContain('SWR');
     expect($recordTypes)->toContain('OWR');
     expect($recordTypes)->toContain('PWR');
+    $sptRecords = array_values(array_filter($detailRecords, fn($rec) => $field($rec, 1, 3) === 'SPT'));
+    expect($sptRecords)->toHaveCount(1);
+    expect(trim($field($sptRecords[0], 20, 9)))->toBe('PCON001');
 
     $opu = array_values(array_filter($detailRecords, fn($rec) => $field($rec, 1, 3) === 'OPU'))[0];
     expect(trim($field($opu, 31, 45)))->toBe('');
