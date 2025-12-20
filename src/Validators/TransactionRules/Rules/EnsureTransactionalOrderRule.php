@@ -47,6 +47,17 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
 
     public function validate(WorkDefinition $work): void
     {
+        foreach ($work->writers ?? [] as $writer) {
+            if (! $this->isControlledWriter($writer) && $this->writerHasPublisherLink($writer)) {
+                $writerId = $writer->interestedPartyNumber ?? '(unknown writer)';
+
+                throw new InvalidArgumentException(sprintf(
+                    'PWR cannot be emitted for uncontrolled writer %s.',
+                    $writerId
+                ));
+            }
+        }
+
         $sequence = $this->buildRecordSequence($work);
 
         $lastPosition = 0;
@@ -187,5 +198,18 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
         }
 
         return array_merge($controlled, $uncontrolled);
+    }
+
+    private function writerHasPublisherLink(object $writer): bool
+    {
+        if (property_exists($writer, 'publisherInterestedPartyNumber')) {
+            return !empty($writer->publisherInterestedPartyNumber);
+        }
+
+        if (property_exists($writer, 'publisher_interested_party_number')) {
+            return !empty($writer->publisher_interested_party_number);
+        }
+
+        return false;
     }
 }

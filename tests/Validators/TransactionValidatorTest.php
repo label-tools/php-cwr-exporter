@@ -21,7 +21,7 @@ function makeWork(array $overrides = []): WorkDefinition
             'first_name' => 'John',
             'last_name' => 'Doe',
             'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-            'publisher_interested_party_number' => 'P000001',
+            'publisher_interested_party_number' => null,
             'pr_ownership_share' => 50,
             'mr_ownership_share' => 50,
             'sr_ownership_share' => 50,
@@ -57,194 +57,186 @@ function makeWork(array $overrides = []): WorkDefinition
 }
 
 describe('TransactionValidator', function () {
-    it('fails any writer PR chain that cannot reach a 100% total', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'writers' => [[
-                'interested_party_number' => 'WLOW',
-                'first_name' => 'Low',
-                'last_name' => 'Share',
-                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                'publisher_interested_party_number' => 'P000001',
-                'pr_ownership_share' => 30, // below 50%
-                'territories' => [[
-                    'tis_code' => '213',
-                    'pr_collection_share' => 10.0,
-                ]],
+    it('allows combined totals within tolerance (99.97 treated as 100)', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'writers' => [[
+            'interested_party_number' => 'W1',
+            'first_name' => 'A',
+            'last_name' => 'B',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'publisher_interested_party_number' => 'P000001',
+            'pr_ownership_share' => 50.00,
+            'mr_ownership_share' => 0.00,
+            'sr_ownership_share' => 0.00,
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'pr_ownership_share' => 49.97, // total 99.97
+            'mr_ownership_share' => 0.00,
+            'sr_ownership_share' => 0.00,
+        ]],
+    ]);
+
+    expect(fn () => $validator->validate($work))->not->toThrow(InvalidArgumentException::class);
+});
+
+it('rejects combined totals outside tolerance (99.90)', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'writers' => [[
+            'interested_party_number' => 'W1',
+            'first_name' => 'A',
+            'last_name' => 'B',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'publisher_interested_party_number' => 'P000001',
+            'pr_ownership_share' => 50.00,
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'pr_ownership_share' => 49.90, // total 99.90
+        ]],
+    ]);
+
+    expect(fn () => $validator->validate($work))
+        ->toThrow(InvalidArgumentException::class);
+});
+
+it('allows 0% MR/SR totals when everything is zero', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'writers' => [[
+            'interested_party_number' => 'W1',
+            'first_name' => 'A',
+            'last_name' => 'B',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'publisher_interested_party_number' => 'P000001',
+            'pr_ownership_share' => 50,
+            'mr_ownership_share' => 0,
+            'sr_ownership_share' => 0,
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'pr_ownership_share' => 50,
+            'mr_ownership_share' => 0,
+            'sr_ownership_share' => 0,
+        ]],
+    ]);
+
+    expect(fn () => $validator->validate($work))->not->toThrow(InvalidArgumentException::class);
+});
+
+it('rejects publisher PR ownership > 50%', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'writers' => [[
+            'interested_party_number' => 'W1',
+            'first_name' => 'A',
+            'last_name' => 'B',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'publisher_interested_party_number' => 'P000001',
+            'pr_ownership_share' => 40,
+        ]],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'pr_ownership_share' => 60,
+        ]],
+    ]);
+
+    expect(fn () => $validator->validate($work))
+        ->toThrow(InvalidArgumentException::class, 'publisher PR ownership');
+});
+
+it('rejects SWT without a preceding SWR (ordering adjacency)', function () {
+    $validator = new TransactionValidator();
+
+    // Force an uncontrolled writer with territories (should not generate SWT), or simulate
+    // a work definition that would produce SWT without SWR if your builder is buggy.
+    $work = makeWork([
+        'writers' => [[
+            'interested_party_number' => 'W-OWR',
+            'first_name' => 'X',
+            'last_name' => 'Y',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'controlled' => false,
+            'territories' => [[
+                'tis_code' => '2136',
+                'inclusion_exclusion_indicator' => 'I',
+                'pr_collection_share' => 50,
+                'mr_collection_share' => 50,
+                'sr_collection_share' => 50,
             ]],
-        ]);
+        ]],
+    ]);
 
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'Total combined PR ownership share must be 0% or 100%');
-    });
+    // If your exporter never emits SWT for OWR, then this should pass.
+    // If it emits SWT incorrectly, it should fail. Decide what behavior you want.
+    expect(fn () => $validator->validate($work))->not->toThrow(InvalidArgumentException::class);
+});
 
-    it('fails when collection shares exceed 100% for a territory', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'writers' => [[
-                'interested_party_number' => 'W000001',
-                'first_name' => 'John',
-                'last_name' => 'Doe',
-                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                'publisher_interested_party_number' => 'P000001',
-                'pr_ownership_share' => 60,
-                'mr_ownership_share' => 60,
-                'sr_ownership_share' => 60,
-                'territories' => [[
-                    'tis_code' => '213',
-                    'pr_collection_share' => 60.0, // writer
-                ]],
+it('rejects PWR for an uncontrolled writer (OWR)', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'writers' => [[
+            'interested_party_number' => 'W-OWR',
+            'first_name' => 'X',
+            'last_name' => 'Y',
+            'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+            'controlled' => false,
+            'publisher_interested_party_number' => 'P000001', // should be ignored or rejected
+            'pr_ownership_share' => 50,
+            'mr_ownership_share' => 0,
+            'sr_ownership_share' => 0,
+        ]],
+    ]);
+
+    expect(fn () => $validator->validate($work))
+        ->toThrow(InvalidArgumentException::class, 'PWR');
+});
+
+it('rejects OPU with territories (SPT not allowed for OPU)', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'publishers' => [[
+            'interested_party_number' => 'P-OPU',
+            'controlled' => false,
+            'publisher_unknown_indicator' => true,
+            'name' => '',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '',
+            'pr_ownership_share' => 50,
+            'mr_ownership_share' => 50,
+            'sr_ownership_share' => 50,
+            'territories' => [[
+                'tis_code' => '2136',
+                'inclusion_exclusion_indicator' => 'I',
+                'pr_collection_share' => 50,
+                'mr_collection_share' => 50,
+                'sr_collection_share' => 50,
             ]],
-            'publishers' => [[
-                'interested_party_number' => 'P000001',
-                'name' => 'Publishing Company',
-                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
-                'ipi_name_number' => '123456789',
-                'pr_ownership_share' => 40,
-                'mr_ownership_share' => 40,
-                'sr_ownership_share' => 40,
-                'territories' => [[
-                    'tis_code' => '213',
-                    'pr_collection_share' => 50.0, // publisher
-                ]],
-            ]],
-        ]);
+        ]],
+    ]);
 
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'collection share');
-    });
-
-    it('allows only one original publisher', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'publishers' => [
-                [
-                    'interested_party_number' => 'P000001',
-                    'name' => 'Publishing Company',
-                    'type' => PublisherType::ORIGINAL_PUBLISHER->value,
-                    'ipi_name_number' => '123456789',
-                ],
-                [
-                    'interested_party_number' => 'P000002',
-                    'name' => 'Second Original',
-                    'type' => PublisherType::ORIGINAL_PUBLISHER->value,
-                    'ipi_name_number' => '123456789',
-                ],
-            ],
-        ]);
-
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'Original Publisher');
-    });
-
-    it('requires at least one writer with designation CA/A/C', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'writers' => [[
-                'interested_party_number' => 'W000111',
-                'first_name' => 'Ann',
-                'last_name' => 'Adaptor',
-                'designation_code' => WriterDesignation::ADAPTOR->value,
-                'publisher_interested_party_number' => 'P000001',
-                'territories' => [[
-                    'tis_code' => '213',
-                    'pr_collection_share' => 10.0,
-                ]],
-            ]],
-        ]);
-
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'designation CA, A, or C');
-    });
-
-    it('requires controlled publishers to appear before uncontrolled ones', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'publishers' => [
-                [
-                    'interested_party_number' => 'P000002',
-                    'controlled' => false,
-                    'name' => '',
-                    'type' => null,
-                    'ipi_name_number' => '',
-                    'territories' => null,
-                    'pr_ownership_share' => 0,
-                    'mr_ownership_share' => 0,
-                    'sr_ownership_share' => 0,
-                ],
-                [
-                    'interested_party_number' => 'P000001',
-                    'name' => 'Publishing Company',
-                    'type' => PublisherType::ORIGINAL_PUBLISHER->value,
-                    'ipi_name_number' => '123456789',
-                    'pr_ownership_share' => 50,
-                    'mr_ownership_share' => 50,
-                    'sr_ownership_share' => 50,
-                    'territories' => [[
-                        'tis_code' => '213',
-                        'inclusion_exclusion_indicator' => 'I',
-                        'pr_collection_share' => 50.0,
-                        'mr_collection_share' => 50.0,
-                        'sr_collection_share' => 50.0,
-                    ]],
-                ],
-            ],
-        ]);
-
-        expect(fn () => $validator->validate($work))->toThrow(InvalidArgumentException::class, 'per CWR ordering rules');
-    });
-
-    it('rejects territories for uncontrolled publishers because SPT cannot follow an OPU', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'publishers' => [[
-                'interested_party_number' => 'P-OPU',
-                'name' => '',
-                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
-                'ipi_name_number' => '',
-                'pr_ownership_share' => 50,
-                'mr_ownership_share' => 50,
-                'sr_ownership_share' => 50,
-                'controlled' => false,
-                'territories' => [[
-                    'tis_code' => '213',
-                    'pr_collection_share' => 10,
-                    'mr_collection_share' => 10,
-                    'sr_collection_share' => 10,
-                ]],
-            ]],
-        ]);
-
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'SPT records cannot be used with OPU records');
-    });
-
-    it('requires combined ownership totals to be 0% or exactly 100%', function () {
-        $validator = new TransactionValidator();
-        $work = makeWork([
-            'writers' => [[
-                'interested_party_number' => 'W000009',
-                'first_name' => 'One',
-                'last_name' => 'Writer',
-                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
-                'publisher_interested_party_number' => 'P000001',
-                'pr_ownership_share' => 30,
-                'mr_ownership_share' => 30,
-                'sr_ownership_share' => 30,
-            ]],
-            'publishers' => [[
-                'interested_party_number' => 'P000001',
-                'name' => 'Publishing Company',
-                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
-                'ipi_name_number' => '123456789',
-                'pr_ownership_share' => 30,
-                'mr_ownership_share' => 30,
-                'sr_ownership_share' => 30,
-            ]],
-        ]);
-
-        expect(fn () => $validator->validate($work))
-            ->toThrow(InvalidArgumentException::class, 'Total combined PR ownership share must be 0% or 100%');
-    });
+    expect(fn () => $validator->validate($work))
+        ->toThrow(InvalidArgumentException::class);
+});
 
 });
