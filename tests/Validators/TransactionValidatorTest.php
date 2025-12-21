@@ -239,4 +239,131 @@ it('rejects OPU with territories (SPT not allowed for OPU)', function () {
         ->toThrow(InvalidArgumentException::class);
 });
 
+it('rejects SWR that interrupts an open SWT block for a prior writer', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'writers' => [
+            [
+                'interested_party_number' => 'W-A',
+                'first_name' => 'Alpha',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'publisher_interested_party_number' => null,
+                'pr_ownership_share' => 45,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [
+                    [
+                        'tis_code' => '213',
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 0,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
+                    ],
+                    [
+                        'tis_code' => '214',
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 0,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
+                    ],
+                ],
+            ],
+            [
+                'interested_party_number' => 'W-B',
+                'first_name' => 'Beta',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'publisher_interested_party_number' => 'P000001',
+                'pr_ownership_share' => 45,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [
+                    [
+                        'tis_code' => '213',
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 0,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
+                    ],
+                ],
+            ],
+        ],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'pr_ownership_share' => 10,
+            'mr_ownership_share' => 0,
+            'sr_ownership_share' => 0,
+            'territories' => [],
+        ]],
+    ]);
+
+    expect(fn () => $validator->validate($work))
+        ->toThrow(InvalidArgumentException::class, 'SWT block');
+});
+
+it('allows sequential writer blocks when SWT chain is closed by PWR', function () {
+    $validator = new TransactionValidator();
+
+    $work = makeWork([
+        'writers' => [
+            [
+                'interested_party_number' => 'W-A',
+                'first_name' => 'Alpha',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'publisher_interested_party_number' => 'P000001',
+                'pr_ownership_share' => 45,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [
+                    [
+                        'tis_code' => '213',
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 0,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
+                    ],
+                ],
+            ],
+            [
+                'interested_party_number' => 'W-B',
+                'first_name' => 'Beta',
+                'last_name' => 'Writer',
+                'designation_code' => WriterDesignation::COMPOSER_AUTHOR->value,
+                'publisher_interested_party_number' => 'P000001',
+                'pr_ownership_share' => 45,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [
+                    [
+                        'tis_code' => '214',
+                        'inclusion_exclusion_indicator' => 'I',
+                        'pr_collection_share' => 0,
+                        'mr_collection_share' => 0,
+                        'sr_collection_share' => 0,
+                    ],
+                ],
+            ],
+        ],
+        'publishers' => [[
+            'interested_party_number' => 'P000001',
+            'name' => 'Publishing Company',
+            'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+            'ipi_name_number' => '123456789',
+            'pr_ownership_share' => 10,
+            'mr_ownership_share' => 0,
+            'sr_ownership_share' => 0,
+            'territories' => [],
+        ]],
+    ]);
+
+    expect(fn () => $validator->validate($work))
+        ->not->toThrow(InvalidArgumentException::class);
+});
+
 });

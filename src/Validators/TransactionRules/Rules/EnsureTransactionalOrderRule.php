@@ -21,14 +21,14 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
         'OPU' => 4,
 
         'SWR' => 5,
-        'SWT' => 6,
-        'PWR' => 7,
+        'SWT' => 5,
+        'PWR' => 5,
 
-        'OWR' => 8,
+        'OWR' => 6,
 
-        'ALT' => 9,
-        'PER' => 10,
-        'REC' => 11,
+        'ALT' => 7,
+        'PER' => 8,
+        'REC' => 9,
     ];
 
     /**
@@ -62,8 +62,46 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
 
         $lastPosition = 0;
         $lastRecord = null;
+        $openSwtWriter = null;
 
-        foreach ($sequence as $record) {
+        foreach ($sequence as $entry) {
+            $record = is_array($entry) ? ($entry['code'] ?? null) : $entry;
+            $writerId = is_array($entry) ? ($entry['writer'] ?? null) : null;
+
+            if ($record === null) {
+                continue;
+            }
+
+            // Track SWT blocks: they must be closed by PWR for the same writer before a new SWR appears.
+            if ($record === 'SWT') {
+                if ($openSwtWriter !== null && $writerId !== $openSwtWriter) {
+                    throw new InvalidArgumentException(sprintf(
+                        'SWT block for writer %s is still open; cannot emit SWT for %s.',
+                        $openSwtWriter,
+                        $writerId ?? '(unknown writer)'
+                    ));
+                }
+                $openSwtWriter = $openSwtWriter ?? $writerId ?? '(unknown writer)';
+            } elseif ($record === 'PWR') {
+                if ($openSwtWriter !== null) {
+                    if ($writerId === $openSwtWriter) {
+                        $openSwtWriter = null;
+                    } else {
+                        throw new InvalidArgumentException(sprintf(
+                            'PWR for %s cannot close the open SWT block for writer %s.',
+                            $writerId ?? '(unknown writer)',
+                            $openSwtWriter
+                        ));
+                    }
+                }
+            } elseif ($openSwtWriter !== null) {
+                throw new InvalidArgumentException(sprintf(
+                    'Record %s cannot interrupt an open SWT block for writer %s.',
+                    $record,
+                    $openSwtWriter
+                ));
+            }
+
             $position = self::RECORD_ORDER[$record] ?? null;
             if ($position === null) {
                 // Unknown record types are ignored by this validator.
@@ -96,6 +134,13 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
             $lastPosition = $position;
             $lastRecord = $record;
         }
+
+        if ($openSwtWriter !== null) {
+            throw new InvalidArgumentException(sprintf(
+                'SWT block for writer %s was not closed by a PWR record.',
+                $openSwtWriter
+            ));
+        }
     }
 
     /**
@@ -106,11 +151,13 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
      * - Emit SWR blocks first, then OWR.
      * - Emit PWR only when the controlled writer has a linked publisher.
      *
-     * @return string[]
+     * @return array<int, array{code: string, writer?: string}>
      */
     private function buildRecordSequence(WorkDefinition $work): array
     {
-        $sequence = ['NWR'];
+        $sequence = [
+            ['code' => 'NWR'],
+        ];
 
         // Publishers: controlled first (SPU + SPT), then uncontrolled (OPU).
         $controlledPublishers = [];
@@ -125,11 +172,11 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
         }
 
         foreach ($controlledPublishers as $publisher) {
-            $sequence[] = 'SPU';
+            $sequence[] = ['code' => 'SPU'];
 
             // SPU may have 0+ SPT records. If you require at least one, enforce it here.
             foreach ($publisher->territories as $territory) {
-                $sequence[] = 'SPT';
+                $sequence[] = ['code' => 'SPT'];
             }
         }
 
@@ -142,37 +189,38 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
                 ));
             }
 
-            $sequence[] = 'OPU';
+            $sequence[] = ['code' => 'OPU'];
         }
 
         // Writers: controlled first, then uncontrolled.
         foreach ($this->orderWritersControlledFirst($work->writers) as $writer) {
             if ($this->isControlledWriter($writer)) {
-                $sequence[] = 'SWR';
+                $writerId = $this->writerId($writer);
+                $sequence[] = ['code' => 'SWR', 'writer' => $writerId];
 
                 foreach ($writer->territories as $territory) {
-                    $sequence[] = 'SWT';
+                    $sequence[] = ['code' => 'SWT', 'writer' => $writerId];
                 }
 
                 // Only emit PWR if there is a linked publisher reference.
-                if (! empty($writer->publisher_interested_party_number)) {
-                    $sequence[] = 'PWR';
+                if ($this->writerHasPublisherLink($writer)) {
+                    $sequence[] = ['code' => 'PWR', 'writer' => $writerId];
                 }
             } else {
-                $sequence[] = 'OWR';
+                $sequence[] = ['code' => 'OWR'];
             }
         }
 
         foreach ($work->alternateTitles as $alt) {
-            $sequence[] = 'ALT';
+            $sequence[] = ['code' => 'ALT'];
         }
 
         foreach ($work->performingArtists as $artist) {
-            $sequence[] = 'PER';
+            $sequence[] = ['code' => 'PER'];
         }
 
         foreach ($work->recordings as $recording) {
-            $sequence[] = 'REC';
+            $sequence[] = ['code' => 'REC'];
         }
 
         return $sequence;
@@ -198,6 +246,19 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
         }
 
         return array_merge($controlled, $uncontrolled);
+    }
+
+    private function writerId(object $writer): string
+    {
+        if (property_exists($writer, 'interestedPartyNumber')) {
+            return (string) $writer->interestedPartyNumber;
+        }
+
+        if (property_exists($writer, 'interested_party_number')) {
+            return (string) $writer->interested_party_number;
+        }
+
+        return '(unknown writer)';
     }
 
     private function writerHasPublisherLink(object $writer): bool
