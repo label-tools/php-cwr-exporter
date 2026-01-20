@@ -21,6 +21,11 @@ class NwrRecord extends Record
     use HasLanguageCode;
 
     protected static string $recordType = 'NWR'; // A{3}
+    protected const FIELD_MAP = [
+        'work_title' => [20, 60],
+        'submitter_work_number' => [82, 14],
+        'iswc' => [96, 11],
+    ];
     protected string $stringFormat =
         "%-19s" .  // Record Prefix (19 A)
         "%-60s" .  // Work Title (60 A)
@@ -129,6 +134,11 @@ class NwrRecord extends Record
              ->setExceptionalClause($exceptionalClause)
              ->setOpusNumber($opusNumber ?? '')
              ->setCatalogueNumber($catalogueNumber ?? '');
+    }
+
+    public static function parseLine(string $line): array
+    {
+        return static::parseFixedWidth($line, static::FIELD_MAP);
     }
 
     protected function validateBeforeToString(): void

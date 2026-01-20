@@ -11,6 +11,10 @@ class GrhRecord extends Record
     use HasGroupId;
 
     protected static string $recordType = 'GRH'; // Always "GRH" *A{3}
+    protected const FIELD_MAP = [
+        'transaction_type' => [4, 3],
+        'group_id' => [7, 5],
+    ];
     protected string $stringFormat = "%-3s%-3s%05d";
 
     protected const IDX_TRANSACTION_TYPE= 2;
@@ -31,4 +35,8 @@ class GrhRecord extends Record
         return $this->setEnumValue(static::IDX_TRANSACTION_TYPE, TransactionType::class, $transactionType);
     }
 
+    public static function parseLine(string $line): array
+    {
+        return static::parseFixedWidth($line, static::FIELD_MAP);
+    }
 }

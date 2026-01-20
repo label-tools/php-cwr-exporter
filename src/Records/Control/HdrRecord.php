@@ -11,6 +11,16 @@ class HdrRecord extends Record
     protected static string $recordType = 'HDR'; // Always "HDR" - * A {3}
     protected static string $ediVersion = '01.10'; // Fixed version number for this standard * A {5}
 
+    protected const BASE_FIELD_MAP = [
+        'sender_type' => [4, 2],
+        'sender_id' => [6, 9],
+        'sender_name' => [15, 45],
+        'edi_version' => [60, 5],
+        'creation_date' => [65, 8],
+        'creation_time' => [73, 6],
+        'transmission_date' => [79, 8],
+    ];
+
     // Format: RecordType(3) + SenderType(2) + SenderID(9) + SenderName(45) + EdiVersion(5) + CreationDate(8) + CreationTime(6) + TransmissionDate(8)
     protected string $stringFormat = "%-3s%-2s%-9s%-45s%-5s%-8s%-6s%-8s";
 
@@ -129,5 +139,10 @@ class HdrRecord extends Record
     {
 
         return strlen($senderId) > 9 && strlen($senderId) <= 11 && $senderType->isRegular();
+    }
+
+    protected static function parseBaseLine(string $line): array
+    {
+        return static::parseFixedWidth($line, static::BASE_FIELD_MAP);
     }
 }

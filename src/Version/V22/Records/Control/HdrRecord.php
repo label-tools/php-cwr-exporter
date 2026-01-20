@@ -10,6 +10,12 @@ class HdrRecord extends V21HdrRecord
     protected const IDX_REVISION = 11;
     protected const IDX_SW_PACKAGE = 12;
     protected const IDX_SW_PACKAGE_VERSION = 13;
+    private const FIELD_MAP = [
+        'version' => [102, 3],
+        'revision' => [105, 3],
+        'software_package' => [108, 30],
+        'software_package_version' => [138, 30],
+    ];
 
     public function __construct(
         string $senderType,
@@ -64,5 +70,12 @@ class HdrRecord extends V21HdrRecord
             throw new \InvalidArgumentException("Software Package Version must be at most 30 characters long.");
         }
         return $this->setAlphaNumeric(static::IDX_SW_PACKAGE_VERSION, $softwarePackageVersion, 'Software Package Version');
+    }
+
+    public static function parseLine(string $line): array
+    {
+        $data = parent::parseLine($line);
+        $data += static::parseFixedWidth($line, static::FIELD_MAP);
+        return $data;
     }
 }

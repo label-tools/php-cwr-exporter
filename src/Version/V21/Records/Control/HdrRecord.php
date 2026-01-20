@@ -9,6 +9,9 @@ class HdrRecord extends BaseHdrRecord
     public ?string $characterSet; // optional L {15}
 
     protected const IDX_CHARACTER_SET = 9;
+    private const FIELD_MAP = [
+        'character_set' => [87, 15],
+    ];
 
     public function __construct(
         string $senderType,
@@ -44,5 +47,12 @@ class HdrRecord extends BaseHdrRecord
         if (!in_array($characterSet, $validCharacterSets, true)) {
             throw new \InvalidArgumentException("Character Set must be one of 'ASCII', 'UTF-8', 'ISO-8859-1'.");
         }
+    }
+
+    public static function parseLine(string $line): array
+    {
+        $data = parent::parseBaseLine($line);
+        $data += static::parseFixedWidth($line, static::FIELD_MAP);
+        return $data;
     }
 }

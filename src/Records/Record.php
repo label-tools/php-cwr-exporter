@@ -27,6 +27,34 @@ abstract class Record
 
     protected const IDX_RECORD_TYPE = 1;
 
+    protected static function sliceField(string $line, int $start, int $length): string
+    {
+        return rtrim(substr($line, $start - 1, $length));
+    }
+
+    protected static function parseFixedWidth(string $line, array $fieldMap): array
+    {
+        $data = [];
+        foreach ($fieldMap as $key => [$start, $length]) {
+            $data[$key] = static::sliceField($line, $start, $length);
+        }
+
+        return $data;
+    }
+
+    public static function parseRecordPrefix(string $line): array
+    {
+        if (strlen($line) < 19) {
+            throw new \InvalidArgumentException('Record prefix is incomplete.');
+        }
+
+        return [
+            'record_type' => substr($line, 0, 3),
+            'transaction_sequence' => (int) trim(substr($line, 3, 8)),
+            'record_sequence' => (int) trim(substr($line, 11, 8)),
+        ];
+    }
+
     public function __construct()
     {
         if (empty(static::$recordType)) {

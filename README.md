@@ -1,6 +1,6 @@
-# PHP CWR Exporter
+# PHP CWR
 
-A PHP library for generating Common Works Registration (CWR) files from simple PHP arrays.
+A PHP library for generating Common Works Registration (CWR) files from simple PHP arrays as well as parsing Acknowledment files.
 
 This library simplifies the process of creating CWR files by abstracting the complex, fixed-width format into a structured, easy-to-use builder pattern. It supports **CWR v2.2** and **CWR v2.1 (revision 8)**.
 
@@ -58,6 +58,60 @@ $payload = $cwr->export();
 
 file_put_contents('CWR_EXPORT.V21', $payload);
 ```
+
+## Acknowledgment (ACK) Parsing
+
+Use the ACK parser to read society acknowledgment files (ACK)
+
+```php
+use LabelTools\PhpCwrExporter\Acknowledgements\AckParser;
+
+$payload = file_get_contents('CWR_ACK.V21');
+
+$result = AckParser::auto()->parse($payload, [
+    // Optional: lets the parser derive sender/receiver codes from the filename.
+    'filename' => 'CW240001ABC_DEF.V21',
+    // Optional: include raw record payloads (defaults to false).
+    'include_payload' => true,
+]);
+
+$data = $result->toArray();
+```
+
+### ACK Output Structure
+
+```
+file:
+  sender: { type, id, name, code? }
+  receiver: { code? } | null
+  creation_date
+  creation_time
+  version
+
+groups[]:
+  group_id
+  acknowledgements[]:
+    correlation:
+      creation_date
+      creation_time
+      original_group_id
+      original_transaction_sequence
+      original_transaction_type
+    work:
+      submitter_creation_number
+      recipient_creation_number
+      creation_title
+      transaction_type
+      submitter_work_number
+      iswc
+    status:
+      transaction_status
+      processing_date
+    messages[]
+    payload
+```
+
+Errors during parsing raise `AckParseException` with a stable `getErrorCode()` value for tests and downstream handling.
 
 ## Data Structure
 
