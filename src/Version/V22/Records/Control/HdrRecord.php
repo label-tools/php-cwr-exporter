@@ -75,7 +75,7 @@ class HdrRecord extends V21HdrRecord
     public static function parseLine(string $line): array
     {
         $data = parent::parseLine($line);
-        $data += static::parseFixedWidth($line, static::FIELD_MAP);
+        $data += static::parseFixedWidth($line, self::FIELD_MAP);
         return $data;
     }
 }

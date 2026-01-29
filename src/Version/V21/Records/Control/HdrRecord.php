@@ -52,7 +52,7 @@ class HdrRecord extends BaseHdrRecord
     public static function parseLine(string $line): array
     {
         $data = parent::parseBaseLine($line);
-        $data += static::parseFixedWidth($line, static::FIELD_MAP);
+        $data += static::parseFixedWidth($line, self::FIELD_MAP);
         return $data;
     }
 }
