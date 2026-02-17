@@ -122,6 +122,50 @@ describe('AckParser', function () {
             ->and(count($data['groups'][0]['acknowledgements'][0]['messages']))->toBe(1);
     });
 
+    it('accepts MSG records after transaction header and detail records', function () {
+        $hdr = (new HdrRecord(
+            senderType: SenderType::SOCIETY->value,
+            senderId: '123456789',
+            senderName: 'TEST SOCIETY',
+            creationDate: '20240102',
+            creationTime: '120000',
+            transmissionDate: '20240102',
+            characterSet: 'ASCII'
+        ))->toString();
+        $grh = (new GrhRecord(TransactionType::ACKNOWLEDGMENT->value, 1))->toString();
+        $ack = buildAckRecord([
+            'creation_date' => '20240101',
+            'creation_time' => '101500',
+            'original_group_id' => 1,
+            'original_transaction_sequence' => 0,
+            'original_transaction_type' => 'NWR',
+            'creation_title' => 'TEST WORK',
+            'submitter_creation_number' => 'WORK0000000001',
+            'recipient_creation_number' => 'SOC0000000001',
+            'processing_date' => '20240102',
+            'transaction_status' => 'RA',
+        ], 0, 0);
+        $nwr = buildNwrRecord('TEST WORK', 'WORK0000000001', 0, 1);
+        $msg = buildMsgRecord([
+            'message_type' => 'F',
+            'original_record_sequence' => 6,
+            'record_type' => 'OWR',
+            'message_level' => 'F',
+            'validation_number' => '009',
+            'message_text' => 'Writer IPI Name entered not found in the IPI database',
+        ], 0, 2);
+        $grt = (new GrtRecord(1, 1, 3))->toString();
+        $trl = (new TrlRecord(1, 1, 5))->toString();
+        $payload = implode("\r\n", [$hdr, $grh, $ack, $nwr, $msg, $grt, $trl]) . "\r\n";
+
+        $parser = AckParser::v21();
+        $result = $parser->parse($payload);
+        $data = $result->toArray();
+
+        expect(count($data['groups'][0]['acknowledgements'][0]['messages']))->toBe(1)
+            ->and($data['groups'][0]['acknowledgements'][0]['messages'][0]['record_type'])->toBe('OWR');
+    });
+
     it('rejects ACK records when record sequences do not continue', function () {
         $payload = buildAckPayload();
         $lines = explode("\r\n", trim($payload));

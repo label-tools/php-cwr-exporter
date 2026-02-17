@@ -234,9 +234,6 @@ final class AckParser
                     if ($currentAck === null) {
                         throw new AckParseException('ACK_MSG_OUT_OF_SEQUENCE', 'MSG record encountered without ACK transaction.', ['line' => $lineNumber]);
                     }
-                    if ($currentAck['transaction'] !== null) {
-                        throw new AckParseException('ACK_MSG_AFTER_TRANSACTION', 'MSG records must precede the transaction header.', ['line' => $lineNumber]);
-                    }
 
                     $prefix = $this->parseRecordPrefix($line, $lineNumber);
                     $this->assertContinuation($currentAck, $prefix, $lineNumber, 'MSG');
