@@ -51,32 +51,40 @@ class CwrExporter
      */
     public function exportToStream(array $works, $stream): void
     {
-        $this->options['group_count'] = 1; // single group per file
-        $this->options['transaction_count'] = 0; // will be updated as records are emitted
-        $this->options['header_count'] = 2; // file header + group header
-
-        // Retrieve pre-formatted lines from the version implementation
         $headerLines = $this->version->renderHeader($this->options);
+        $headerCount = count($headerLines);
+
         foreach ($headerLines as $line) {
             fwrite($stream, $line . "\r\n");
         }
 
-        $detailLines = $this->version->renderDetailLines($works, $this->options);
-        $detailCount = 0;
+        $bodyLines = $this->version->renderDetailLines($works, $this->options);
+        $bodyCount = 0;
         $transactionCount = 0;
-        $transactionType = $this->options['transaction_type'] ?? 'NWR';
-        foreach ($detailLines as $line) {
-            if ($line) { // renderDetailLines can yield null for skipped works
-                fwrite($stream, $line . "\r\n");
-                $detailCount++;
-                if (strncmp($line, $transactionType, 3) === 0) {
-                    $transactionCount++;
-                }
+        $groupCount = 0;
+
+        foreach ($bodyLines as $line) {
+            if ($line === null) {
+                continue;
+            }
+
+            fwrite($stream, $line . "\r\n");
+            $bodyCount++;
+
+            $recordType = substr($line, 0, 3);
+            if (in_array($recordType, ['NWR', 'REV'], true)) {
+                $transactionCount++;
+            }
+            if ($recordType === 'GRH') {
+                $groupCount++;
             }
         }
 
-        $this->options['detail_count'] = $detailCount;
+        $this->options['header_count'] = $headerCount;
+        $this->options['body_count'] = $bodyCount;
+        $this->options['group_count'] = $groupCount;
         $this->options['transaction_count'] = $transactionCount;
+        $this->options['record_count'] = $headerCount + $bodyCount + 1;
 
         $trailerLines = $this->version->renderTrailer($this->options);
         foreach ($trailerLines as $line) {
