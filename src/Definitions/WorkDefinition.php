@@ -8,6 +8,7 @@ use LabelTools\PhpCwrExporter\Enums\{
     TitleType,
     LanguageCode,
     MusicalWorkDistributionCategory,
+    TransactionType,
     VersionType
 };
 
@@ -31,7 +32,8 @@ class WorkDefinition
         public readonly array $performingArtists = [],
         public readonly array $writers = [],
         public readonly array $publishers = [],
-        public readonly array $alternateTitles = []
+        public readonly array $alternateTitles = [],
+        public readonly null|TransactionType|string $transactionType = null
 
     ) {
         // field‐level sanity checks:
@@ -73,6 +75,7 @@ class WorkDefinition
             alternateTitles: isset($data['alternate_titles']) && is_array($data['alternate_titles'])
                 ? $data['alternate_titles']
                 : [],
+            transactionType: static::getEnumValue($data, TransactionType::class, 'transaction_type', isRequired: false),
         );
     }
 

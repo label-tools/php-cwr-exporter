@@ -14,6 +14,25 @@ composer require labeltools/php-cwr-exporter
 
 The `CwrBuilder` provides a fluent interface to construct your CWR file. You start by selecting the CWR version, defining the sender and transaction details, then provide an array of works to be registered.
 
+`transaction()` currently supports:
+- `TransactionType::NEW_WORK_REGISTRATION`
+- `TransactionType::REVISED_REGISTRATION`
+
+Use `TransactionType::REVISED_REGISTRATION` when you need to emit a `REV` group and `REV` transaction records. Per the CWR spec, revised registrations must include the full work payload, not only changed fields.
+
+The builder-level `transaction()` call acts as the default transaction type for works in the export. If you need a mixed file with separate `NWR` and `REV` groups, set `transaction_type` per work and the exporter will emit one `GRH/GRT` group per transaction type:
+
+```text
+HDR
+GRH (NWR)
+  NWR + detail records
+GRT
+GRH (REV)
+  REV + detail records
+GRT
+TRL
+```
+
 ### CWR v2.2 Example
 
 ```php
@@ -57,6 +76,54 @@ $cwr = CwrBuilder::v21()
 $payload = $cwr->export();
 
 file_put_contents('CWR_EXPORT.V21', $payload);
+```
+
+### Revised Registration Example
+
+```php
+use LabelTools\PhpCwrExporter\Enums\TransactionType;
+
+$payload = CwrBuilder::v21()
+    ->senderType(SenderType::PUBLISHER)
+    ->senderId('SENDER_ID')
+    ->senderName('My Publishing Company')
+    ->transaction(TransactionType::REVISED_REGISTRATION)
+    ->works([
+        // full work payload, same structure as NWR
+    ])
+    ->export();
+```
+
+### Mixed NWR + REV Example
+
+```php
+use LabelTools\PhpCwrExporter\Enums\TransactionType;
+
+$payload = CwrBuilder::v21()
+    ->senderType(SenderType::PUBLISHER)
+    ->senderId('SENDER_ID')
+    ->senderName('My Publishing Company')
+    ->transaction(TransactionType::NEW_WORK_REGISTRATION) // default for works without transaction_type
+    ->works([
+        [
+            'submitter_work_number' => 'WORK001',
+            'title' => 'New Work',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type' => VersionType::ORIGINAL_WORK,
+            // ... publishers, writers, etc.
+        ],
+        [
+            'submitter_work_number' => 'WORK002',
+            'title' => 'Revised Work',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type' => VersionType::ORIGINAL_WORK,
+            'transaction_type' => TransactionType::REVISED_REGISTRATION,
+            // ... full work payload, same structure as NWR
+        ],
+    ])
+    ->export();
 ```
 
 ## Acknowledgment (ACK) Parsing
@@ -138,6 +205,7 @@ The `works()` method accepts an array of work definitions. Each work is an assoc
 | `publishers`              | `array`                                   | Yes      | An array of publisher definitions.                                       |
 | `recordings`              | `array`                                   | No       | Optional array of recording definitions.                                 |
 | `performing_artists`      | `array`                                   | No       | Optional array of unique performing artist definitions; each entry emits a `PER` record capturing writers who perform the work. |
+| `transaction_type`        | `TransactionType` enum                    | No       | Optional per-work override. Use `TransactionType::REVISED_REGISTRATION` to place the work in a `REV` group. If omitted, the builder-level `transaction()` default is used. |
 
 ---
 

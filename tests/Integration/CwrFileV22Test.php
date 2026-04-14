@@ -1304,3 +1304,222 @@ it('emits SWR records before OWR records even when provided out of order for v22
     expect($swrIndex)->toBeLessThan($owrIndex);
     assertCwrRule18DetailOrderV22($lines);
 });
+
+it('renders REV transactions when revised registration is selected for v22', function () {
+    $payload = CwrBuilder::v22()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01234567890')
+        ->senderName('Revision Publisher')
+        ->software('Revision App', '1.0')
+        ->transaction(TransactionType::REVISED_REGISTRATION)
+        ->works([[
+            'submitter_work_number' => 'REVTEST22',
+            'title' => 'Revision Example',
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type' => VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'controlled' => true,
+                'interested_party_number' => 'WREV022',
+                'last_name' => 'Writer',
+                'first_name' => 'Revision',
+                'designation_code' => WriterDesignation::COMPOSER->value,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'publisher_interested_party_number' => 'PREV022',
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 50,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                ]],
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'PREV022',
+                'name' => 'Revision Publisher',
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 50,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                ]],
+            ]],
+        ]])
+        ->export();
+
+    $lines = array_values(array_filter(preg_split("/(\r\n|\n|\r)/", trim($payload))));
+
+    expect(substr($lines[1], 3, 3))->toBe('REV')
+        ->and(substr($lines[2], 0, 3))->toBe('REV');
+});
+
+it('renders separate NWR and REV groups in the same v22 file', function () {
+    $makeWork = function (string $suffix, null|string $transactionType = null): array {
+        $work = [
+            'submitter_work_number' => 'WORK' . $suffix,
+            'title' => 'Work ' . $suffix,
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type' => VersionType::ORIGINAL_WORK,
+            'writers' => [[
+                'controlled' => true,
+                'interested_party_number' => 'W' . str_pad($suffix, 6, '0', STR_PAD_LEFT),
+                'last_name' => 'Writer',
+                'first_name' => $suffix,
+                'designation_code' => WriterDesignation::COMPOSER->value,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'publisher_interested_party_number' => 'P' . str_pad($suffix, 6, '0', STR_PAD_LEFT),
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 50,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                ]],
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P' . str_pad($suffix, 6, '0', STR_PAD_LEFT),
+                'name' => 'Publisher ' . $suffix,
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 50,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                ]],
+            ]],
+        ];
+
+        if ($transactionType !== null) {
+            $work['transaction_type'] = $transactionType;
+        }
+
+        return $work;
+    };
+
+    $payload = CwrBuilder::v22()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01234567890')
+        ->senderName('Grouped Publisher')
+        ->software('Grouped App', '1.0')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION)
+        ->works([
+            $makeWork('22A'),
+            $makeWork('22B', TransactionType::REVISED_REGISTRATION->value),
+        ])
+        ->export();
+
+    $lines = array_values(array_filter(preg_split("/(\r\n|\n|\r)/", trim($payload))));
+    $types = array_map(fn($line) => substr($line, 0, 3), $lines);
+
+    expect($types)->toBe([
+        'HDR', 'GRH', 'NWR', 'SPU', 'SPT', 'SWR', 'SWT', 'PWR', 'GRT',
+        'GRH', 'REV', 'SPU', 'SPT', 'SWR', 'SWT', 'PWR', 'GRT', 'TRL',
+    ]);
+
+    expect(substr($lines[1], 3, 3))->toBe('NWR')
+        ->and(substr($lines[2], 3, 8))->toBe('00000000')
+        ->and(substr($lines[9], 3, 3))->toBe('REV')
+        ->and(substr($lines[10], 3, 8))->toBe('00000000')
+        ->and(substr($lines[1], 6, 5))->toBe('00001')
+        ->and(substr($lines[9], 6, 5))->toBe('00002');
+});
+
+it('groups interleaved v22 NWR and REV works into one group per transaction type', function () {
+    $makeWork = function (string $suffix, string $transactionType): array {
+        return [
+            'submitter_work_number' => 'MIX' . $suffix,
+            'title' => 'Mixed ' . $suffix,
+            'title_type' => TitleType::ORIGINAL_TITLE,
+            'distribution_category' => MusicalWorkDistributionCategory::POPULAR,
+            'version_type' => VersionType::ORIGINAL_WORK,
+            'transaction_type' => $transactionType,
+            'writers' => [[
+                'controlled' => true,
+                'interested_party_number' => 'W' . str_pad($suffix, 6, '0', STR_PAD_LEFT),
+                'last_name' => 'Writer',
+                'first_name' => $suffix,
+                'designation_code' => WriterDesignation::COMPOSER->value,
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'publisher_interested_party_number' => 'P' . str_pad($suffix, 6, '0', STR_PAD_LEFT),
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 50,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                ]],
+            ]],
+            'publishers' => [[
+                'interested_party_number' => 'P' . str_pad($suffix, 6, '0', STR_PAD_LEFT),
+                'name' => 'Publisher ' . $suffix,
+                'type' => PublisherType::ORIGINAL_PUBLISHER->value,
+                'ipi_name_number' => '123456789',
+                'pr_ownership_share' => 50,
+                'mr_ownership_share' => 0,
+                'sr_ownership_share' => 0,
+                'territories' => [[
+                    'tis_code' => TisCode::WORLD->value,
+                    'inclusion_exclusion_indicator' => 'I',
+                    'pr_collection_share' => 50,
+                    'mr_collection_share' => 0,
+                    'sr_collection_share' => 0,
+                ]],
+            ]],
+        ];
+    };
+
+    $payload = CwrBuilder::v22()
+        ->senderType(SenderType::PUBLISHER)
+        ->senderId('01234567890')
+        ->senderName('Grouped Publisher')
+        ->software('Grouped App', '1.0')
+        ->transaction(TransactionType::NEW_WORK_REGISTRATION)
+        ->works([
+            $makeWork('41A', TransactionType::NEW_WORK_REGISTRATION->value),
+            $makeWork('41B', TransactionType::REVISED_REGISTRATION->value),
+            $makeWork('41C', TransactionType::NEW_WORK_REGISTRATION->value),
+            $makeWork('41D', TransactionType::REVISED_REGISTRATION->value),
+        ])
+        ->export();
+
+    $lines = array_values(array_filter(preg_split("/(\r\n|\n|\r)/", trim($payload))));
+    $grhIndexes = array_keys(array_filter($lines, fn($line) => substr($line, 0, 3) === 'GRH'));
+    $grtIndexes = array_keys(array_filter($lines, fn($line) => substr($line, 0, 3) === 'GRT'));
+    $nwrIndexes = array_keys(array_filter($lines, fn($line) => substr($line, 0, 3) === 'NWR'));
+    $revIndexes = array_keys(array_filter($lines, fn($line) => substr($line, 0, 3) === 'REV'));
+
+    expect($grhIndexes)->toHaveCount(2)
+        ->and($grtIndexes)->toHaveCount(2)
+        ->and(substr($lines[$grhIndexes[0]], 3, 3))->toBe('NWR')
+        ->and(substr($lines[$grhIndexes[1]], 3, 3))->toBe('REV')
+        ->and($nwrIndexes)->toHaveCount(2)
+        ->and($revIndexes)->toHaveCount(2);
+
+    foreach ($nwrIndexes as $index) {
+        expect($index)->toBeGreaterThan($grhIndexes[0])
+            ->and($index)->toBeLessThan($grtIndexes[0]);
+    }
+
+    foreach ($revIndexes as $index) {
+        expect($index)->toBeGreaterThan($grhIndexes[1])
+            ->and($index)->toBeLessThan($grtIndexes[1]);
+    }
+});

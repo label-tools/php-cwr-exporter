@@ -2,6 +2,7 @@
 namespace LabelTools\PhpCwrExporter;
 
 use LabelTools\PhpCwrExporter\Definitions\WorkDefinition;
+use LabelTools\PhpCwrExporter\Enums\TransactionType;
 use LabelTools\PhpCwrExporter\Version\V21\Version as V21Version;
 use LabelTools\PhpCwrExporter\Version\V22\Version as V22Version;
 use LabelTools\PhpCwrExporter\Enums\SenderType;
@@ -42,9 +43,17 @@ class CwrBuilder
         return $this;
     }
 
-    public function transaction(string $code): self
+    public function transaction(TransactionType|string $code): self
     {
-        $allowed = ['NWR', 'REV', 'DEL', 'REC'];
+        if ($code instanceof TransactionType) {
+            $code = $code->value;
+        }
+
+        $allowed = [
+            TransactionType::NEW_WORK_REGISTRATION->value,
+            TransactionType::REVISED_REGISTRATION->value,
+        ];
+
         if (!in_array($code, $allowed, true)) {
             throw new \InvalidArgumentException("Transaction type must be one of: " . implode(', ', $allowed));
         }
