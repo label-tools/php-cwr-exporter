@@ -12,6 +12,7 @@ use LabelTools\PhpCwrExporter\Records\Control\TrlRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\MsgRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\AckRecord;
+use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\IswRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\NwrRecord;
 
 function buildAckRecord(array $fields, int $transactionSequence = 0, int $recordSequence = 0): string
@@ -54,6 +55,25 @@ function buildNwrRecord(string $workTitle, string $submitterWorkNumber, int $tra
     ))
         ->setRecordPrefix($transactionSequence, $recordSequence)
         ->toString();
+}
+
+function buildIswRecord(string $workTitle, string $submitterWorkNumber, string $iswc, int $transactionSequence, int $recordSequence): string
+{
+    return (new IswRecord(
+        workTitle: $workTitle,
+        submitterWorkNumber: $submitterWorkNumber,
+        mwDistributionCategory: MusicalWorkDistributionCategory::POPULAR,
+        versionType: VersionType::ORIGINAL_WORK,
+        iswc: $iswc,
+        recordedIndicator: true,
+    ))
+        ->setRecordPrefix($transactionSequence, $recordSequence)
+        ->toString();
+}
+
+function buildRawDetailRecord(string $recordType, int $transactionSequence, int $recordSequence): string
+{
+    return sprintf('%-3s%08d%08d', $recordType, $transactionSequence, $recordSequence) . 'DETAIL';
 }
 
 function buildAckPayload(array $overrides = []): string
@@ -256,6 +276,43 @@ describe('AckParser', function () {
             ->and(trim($firstAck['work']['creation_title']))->not->toBe('')
             ->and($ackWithMessage)->not->toBeNull()
             ->and($ackWithMessage['messages'][0]['message_type'])->toBe('T');
+    });
+
+    it('parses ISW files as ISWC assignment notifications', function () {
+        $hdr = (new HdrRecord(
+            senderType: SenderType::SOCIETY->value,
+            senderId: '000000021',
+            senderName: 'BMI',
+            creationDate: '20260505',
+            creationTime: '134116',
+            transmissionDate: '20260505',
+            characterSet: 'ASCII'
+        ))->toString() . str_repeat(' ', 66);
+        $grh = (new GrhRecord(TransactionType::NOTIFICATION_OF_ISWC->value, 1))->toString();
+        $isw = buildIswRecord('ANOTHER NAME', '0000000252', 'T3402983517', 0, 0);
+        $spu = buildRawDetailRecord('SPU', 0, 1);
+        $swr = buildRawDetailRecord('SWR', 0, 2);
+        $grt = (new GrtRecord(1, 1, 5))->toString();
+        $trl = (new TrlRecord(1, 1, 7))->toString();
+        $payload = implode("\r\n", [$hdr, $grh, $isw, $spu, $swr, $grt, $trl]) . "\r\n";
+
+        $parser = AckParser::auto();
+        $result = $parser->parse($payload, ['filename' => 'CW260006021_WAY.V21', 'include_payload' => true]);
+        $data = $result->toArray();
+
+        expect($data['file']['version'])->toBe('2.1')
+            ->and($data['groups'][0])->not->toHaveKey('transaction_type')
+            ->and($data['groups'][0]['group_id'])->toBe('00001')
+            ->and($data['groups'][0]['iswc_notifications'])->toHaveCount(1);
+
+        $notification = $data['groups'][0]['iswc_notifications'][0];
+        expect($notification['work']['submitter_creation_number'])->toBe('0000000252')
+            ->and($notification['work']['submitter_work_number'])->toBe('0000000252')
+            ->and($notification['work']['creation_title'])->toBe('ANOTHER NAME')
+            ->and($notification['work']['transaction_type'])->toBe('ISW')
+            ->and($notification['work']['iswc'])->toBe('T3402983517')
+            ->and(array_column($notification['details'], 'record_type'))->toBe(['SPU', 'SWR'])
+            ->and($notification['payload']['transaction'])->toStartWith('ISW');
     });
 
     it('has payload when include_payload is true', function () {

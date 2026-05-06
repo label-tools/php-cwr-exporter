@@ -126,9 +126,9 @@ $payload = CwrBuilder::v21()
     ->export();
 ```
 
-## Acknowledgment (ACK) Parsing
+## Society Response Parsing
 
-Use the ACK parser to read society acknowledgment files (ACK)
+Use the ACK parser to read society acknowledgment files (ACK) and ISWC assignment notification files (ISW).
 
 ```php
 use LabelTools\PhpCwrExporter\Acknowledgements\AckParser;
@@ -179,6 +179,22 @@ groups[]:
 ```
 
 Errors during parsing raise `AckParseException` with a stable `getErrorCode()` value for tests and downstream handling.
+
+For ISW groups, the parser returns `iswc_notifications[]` on the group:
+
+```
+groups[]:
+  group_id
+  iswc_notifications[]:
+    work:
+      submitter_creation_number
+      submitter_work_number
+      creation_title
+      transaction_type: ISW
+      iswc
+    details[]
+    payload
+```
 
 ## Data Structure
 

@@ -8,11 +8,13 @@ use LabelTools\PhpCwrExporter\Records\Record;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\HdrRecord as V21HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\MsgRecord as V21MsgRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\AckRecord as V21AckRecord;
+use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\IswRecord as V21IswRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\NwrRecord as V21NwrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Transaction\RevRecord as V21RevRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Control\HdrRecord as V22HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Detail\MsgRecord as V22MsgRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Transaction\AckRecord as V22AckRecord;
+use LabelTools\PhpCwrExporter\Version\V22\Records\Transaction\IswRecord as V22IswRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Transaction\NwrRecord as V22NwrRecord;
 use LabelTools\PhpCwrExporter\Version\V22\Records\Transaction\RevRecord as V22RevRecord;
 
@@ -104,8 +106,8 @@ final class AckParser
         }
 
         $header = $this->parseHdr($headerLine);
-        $version = $this->resolveVersion($headerLine, $header);
-        [$ackRecordClass, $msgRecordClass, $nwrRecordClass, $revRecordClass] = $this->resolveRecordClasses($version);
+        $version = $this->resolveVersion($headerLine, $header, $context['filename'] ?? null);
+        [$ackRecordClass, $msgRecordClass, $nwrRecordClass, $revRecordClass, $iswRecordClass] = $this->resolveRecordClasses($version);
 
         [$senderCode, $receiverCode] = $this->parseFilenameCodes($context['filename'] ?? null);
 
@@ -135,6 +137,7 @@ final class AckParser
         $groups = [];
         $currentGroup = null;
         $currentAck = null;
+        $currentIsw = null;
         $expectedTransactionSequence = 0;
         $hasTrailer = false;
 
@@ -152,14 +155,19 @@ final class AckParser
                         throw new AckParseException('ACK_MISSING_GRT', 'GRH encountered before closing previous group.', ['line' => $lineNumber]);
                     }
                     $group = $this->parseGrh($line, $lineNumber);
-                    if ($group['transaction_type'] !== 'ACK') {
-                        throw new AckParseException('ACK_UNSUPPORTED_GROUP_TYPE', 'Only ACK groups are supported.', ['line' => $lineNumber, 'transaction_type' => $group['transaction_type']]);
+                    if (!in_array($group['transaction_type'], ['ACK', 'ISW'], true)) {
+                        throw new AckParseException('ACK_UNSUPPORTED_GROUP_TYPE', 'Only ACK and ISW groups are supported.', ['line' => $lineNumber, 'transaction_type' => $group['transaction_type']]);
                     }
 
                     $currentGroup = [
                         'group_id' => $group['group_id'],
-                        'acknowledgements' => [],
+                        'transaction_type' => $group['transaction_type'],
                     ];
+                    if ($group['transaction_type'] === 'ACK') {
+                        $currentGroup['acknowledgements'] = [];
+                    } else {
+                        $currentGroup['iswc_notifications'] = [];
+                    }
                     $expectedTransactionSequence = 0;
                     break;
 
@@ -170,7 +178,10 @@ final class AckParser
                     if ($currentAck !== null) {
                         $this->finalizeAck($currentAck, $currentGroup, $lineNumber, $includePayload);
                     }
-                    $groups[] = $currentGroup;
+                    if ($currentIsw !== null) {
+                        $this->finalizeIsw($currentIsw, $currentGroup, $lineNumber, $includePayload);
+                    }
+                    $groups[] = $this->buildGroupPayload($currentGroup);
                     $currentGroup = null;
                     break;
 
@@ -178,8 +189,11 @@ final class AckParser
                     if ($currentAck !== null) {
                         $this->finalizeAck($currentAck, $currentGroup, $lineNumber, $includePayload);
                     }
+                    if ($currentIsw !== null) {
+                        $this->finalizeIsw($currentIsw, $currentGroup, $lineNumber, $includePayload);
+                    }
                     if ($currentGroup !== null) {
-                        $groups[] = $currentGroup;
+                        $groups[] = $this->buildGroupPayload($currentGroup);
                         $currentGroup = null;
                     }
 
@@ -195,6 +209,9 @@ final class AckParser
                 case 'ACK':
                     if ($currentGroup === null) {
                         throw new AckParseException('ACK_MISSING_GRH', 'ACK transaction must appear within a group.', ['line' => $lineNumber]);
+                    }
+                    if (($currentGroup['transaction_type'] ?? '') !== 'ACK') {
+                        throw new AckParseException('ACK_INVALID_RECORD_SEQUENCE', 'ACK transaction must appear within an ACK group.', ['line' => $lineNumber]);
                     }
 
                     if ($currentAck !== null) {
@@ -223,6 +240,44 @@ final class AckParser
                             'messages' => [],
                             'transaction' => null,
                             'exception' => null,
+                        ],
+                        'transaction_sequence' => $prefix['transaction_sequence'],
+                        'expected_record_sequence' => $prefix['record_sequence'] + 1,
+                        'last_record_sequence' => $prefix['record_sequence'],
+                    ];
+                    break;
+
+                case 'ISW':
+                    if ($currentGroup === null) {
+                        throw new AckParseException('ACK_MISSING_GRH', 'ISW transaction must appear within a group.', ['line' => $lineNumber]);
+                    }
+                    if (($currentGroup['transaction_type'] ?? '') !== 'ISW') {
+                        throw new AckParseException('ACK_INVALID_RECORD_SEQUENCE', 'ISW transaction must appear within an ISW group.', ['line' => $lineNumber]);
+                    }
+
+                    if ($currentIsw !== null) {
+                        $this->finalizeIsw($currentIsw, $currentGroup, $lineNumber, $includePayload);
+                    }
+
+                    $prefix = $this->parseRecordPrefix($line, $lineNumber);
+                    if ($prefix['record_sequence'] !== 0) {
+                        throw new AckParseException('ACK_INVALID_RECORD_SEQUENCE', 'ISW transaction header must have record sequence 0.', ['line' => $lineNumber]);
+                    }
+                    if ($prefix['transaction_sequence'] !== $expectedTransactionSequence) {
+                        throw new AckParseException('ACK_INVALID_TRANSACTION_SEQUENCE', 'ISW transaction sequence does not increment as expected.', ['line' => $lineNumber]);
+                    }
+
+                    $expectedTransactionSequence++;
+
+                    $transaction = $iswRecordClass::parseLine($line);
+                    $transaction['record_type'] = 'ISW';
+
+                    $currentIsw = [
+                        'transaction' => $transaction,
+                        'details' => [],
+                        'raw' => [
+                            'transaction' => $line,
+                            'details' => [],
                         ],
                         'transaction_sequence' => $prefix['transaction_sequence'],
                         'expected_record_sequence' => $prefix['record_sequence'] + 1,
@@ -289,14 +344,24 @@ final class AckParser
 
                 default:
                     if ($this->isDetailRecord($recordType)) {
-                        if ($currentAck === null) {
+                        if ($currentAck === null && $currentIsw === null) {
                             throw new AckParseException('ACK_DETAIL_OUT_OF_SEQUENCE', 'Detail record encountered without ACK transaction.', ['line' => $lineNumber, 'record_type' => $recordType]);
                         }
-                        if ($currentAck['transaction'] === null) {
+                        if ($currentAck !== null && $currentAck['transaction'] === null) {
                             throw new AckParseException('ACK_DETAIL_BEFORE_TRANSACTION', 'Detail records must follow NWR or REV within ACK transaction.', ['line' => $lineNumber, 'record_type' => $recordType]);
                         }
 
                         $prefix = $this->parseRecordPrefix($line, $lineNumber);
+                        if ($currentIsw !== null) {
+                            $this->assertContinuation($currentIsw, $prefix, $lineNumber, $recordType);
+                            $currentIsw['details'][] = [
+                                'record_type' => $recordType,
+                                'record_sequence' => $prefix['record_sequence'],
+                            ];
+                            $currentIsw['raw']['details'][] = $line;
+                            break;
+                        }
+
                         $this->assertContinuation($currentAck, $prefix, $lineNumber, $recordType);
                         break;
                     }
@@ -306,6 +371,9 @@ final class AckParser
 
         if ($currentAck !== null) {
             $this->finalizeAck($currentAck, $currentGroup, $lineNumber, $includePayload);
+        }
+        if ($currentIsw !== null) {
+            $this->finalizeIsw($currentIsw, $currentGroup, $lineNumber, $includePayload);
         }
 
         if ($currentGroup !== null) {
@@ -419,6 +487,20 @@ final class AckParser
         $currentAck = null;
     }
 
+    private function finalizeIsw(?array &$currentIsw, ?array &$currentGroup, int $lineNumber, bool $includePayload): void
+    {
+        if ($currentIsw === null) {
+            return;
+        }
+
+        if ($currentGroup === null) {
+            throw new AckParseException('ACK_MISSING_GRH', 'ISW transaction without group context.', ['line' => $lineNumber]);
+        }
+
+        $currentGroup['iswc_notifications'][] = $this->buildIswcNotification($currentIsw, $includePayload);
+        $currentIsw = null;
+    }
+
     private function buildAcknowledgement(array $currentAck, bool $includePayload): array
     {
         $ack = $currentAck['ack'];
@@ -459,6 +541,39 @@ final class AckParser
         return $acknowledgement;
     }
 
+    private function buildGroupPayload(array $currentGroup): array
+    {
+        unset($currentGroup['transaction_type']);
+
+        return $currentGroup;
+    }
+
+    private function buildIswcNotification(array $currentIsw, bool $includePayload): array
+    {
+        $transaction = $currentIsw['transaction'];
+        $submitterWorkNumber = $this->cleanValue($transaction['submitter_work_number'] ?? '');
+
+        $notification = [
+            'work' => [
+                'submitter_creation_number' => $submitterWorkNumber,
+                'submitter_work_number' => $submitterWorkNumber,
+                'creation_title' => $this->cleanValue($transaction['work_title'] ?? ''),
+                'transaction_type' => 'ISW',
+                'iswc' => $this->cleanValue($transaction['iswc'] ?? ''),
+            ],
+            'details' => $currentIsw['details'],
+        ];
+
+        if ($includePayload) {
+            $notification['payload'] = [
+                'transaction' => $currentIsw['raw']['transaction'],
+                'details' => $currentIsw['raw']['details'],
+            ];
+        }
+
+        return $notification;
+    }
+
     private function cleanValue(?string $value): string
     {
         return trim((string) $value);
@@ -469,7 +584,7 @@ final class AckParser
         return strtoupper(trim((string) $value));
     }
 
-    private function resolveVersion(string $headerLine, array $header): string
+    private function resolveVersion(string $headerLine, array $header, ?string $filename): string
     {
         if ($this->forcedVersion !== null) {
             return $this->forcedVersion;
@@ -480,16 +595,20 @@ final class AckParser
             return $version;
         }
 
+        if ($filename !== null && preg_match('/\.V(?<version>2[12])$/i', basename($filename), $matches)) {
+            return $matches['version'] === '22' ? '2.2' : '2.1';
+        }
+
         return strlen($headerLine) >= 167 ? '2.2' : '2.1';
     }
 
     private function resolveRecordClasses(string $version): array
     {
         if ($version === '2.2') {
-            return [V22AckRecord::class, V22MsgRecord::class, V22NwrRecord::class, V22RevRecord::class];
+            return [V22AckRecord::class, V22MsgRecord::class, V22NwrRecord::class, V22RevRecord::class, V22IswRecord::class];
         }
 
-        return [V21AckRecord::class, V21MsgRecord::class, V21NwrRecord::class, V21RevRecord::class];
+        return [V21AckRecord::class, V21MsgRecord::class, V21NwrRecord::class, V21RevRecord::class, V21IswRecord::class];
     }
 
     private function parseFilenameCodes(?string $filename): array
