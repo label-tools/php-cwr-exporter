@@ -338,8 +338,6 @@ final class AckParser
                     $exception['record_type'] = 'EXC';
                     $currentAck['exception'] = $exception;
                     $currentAck['raw']['exception'] = $line;
-
-                    $this->finalizeAck($currentAck, $currentGroup, $lineNumber, $includePayload);
                     break;
 
                 default:

@@ -186,6 +186,62 @@ describe('AckParser', function () {
             ->and($data['groups'][0]['acknowledgements'][0]['messages'][0]['record_type'])->toBe('OWR');
     });
 
+    it('accepts detail records after an EXC record', function () {
+        $hdr = (new HdrRecord(
+            senderType: SenderType::SOCIETY->value,
+            senderId: '000000021',
+            senderName: 'BMI',
+            creationDate: '20260713',
+            creationTime: '193807',
+            transmissionDate: '20260713',
+            characterSet: 'ASCII'
+        ))->toString();
+        $grh = (new GrhRecord(TransactionType::ACKNOWLEDGMENT->value, 1))->toString();
+        $ack = buildAckRecord([
+            'creation_date' => '20260608',
+            'creation_time' => '165930',
+            'original_group_id' => 1,
+            'original_transaction_sequence' => 45,
+            'original_transaction_type' => 'NWR',
+            'creation_title' => 'SOUTH REMEMBERING',
+            'submitter_creation_number' => '0000000047',
+            'recipient_creation_number' => '',
+            'processing_date' => '20260713',
+            'transaction_status' => 'RA',
+        ], 0, 0);
+        $nwr = buildNwrRecord('SOUTH REMEMBERING', '0000000047', 0, 1);
+        $spuBeforeException = buildRawDetailRecord('SPU', 0, 2);
+        $exception = substr_replace(
+            buildNwrRecord('SOUTH REMEMBERING', '0000000047', 0, 3),
+            'EXC',
+            0,
+            3
+        );
+        $spuAfterException = buildRawDetailRecord('SPU', 0, 4);
+        $swrAfterException = buildRawDetailRecord('SWR', 0, 5);
+        $grt = (new GrtRecord(1, 1, 8))->toString();
+        $trl = (new TrlRecord(1, 1, 10))->toString();
+        $payload = implode("\r\n", [
+            $hdr,
+            $grh,
+            $ack,
+            $nwr,
+            $spuBeforeException,
+            $exception,
+            $spuAfterException,
+            $swrAfterException,
+            $grt,
+            $trl,
+        ]) . "\r\n";
+
+        $parser = AckParser::v21();
+        $result = $parser->parse($payload, ['include_payload' => true]);
+        $data = $result->toArray();
+
+        expect($data['groups'][0]['acknowledgements'])->toHaveCount(1)
+            ->and($data['groups'][0]['acknowledgements'][0]['payload']['exception'])->toStartWith('EXC');
+    });
+
     it('rejects ACK records when record sequences do not continue', function () {
         $payload = buildAckPayload();
         $lines = explode("\r\n", trim($payload));
