@@ -55,7 +55,9 @@ function something()
     // ..
 }
 
-function dd(array $array)
-{
-    fwrite(STDERR, json_encode($array, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+if (!function_exists('dd')) {
+    function dd(array $array)
+    {
+        fwrite(STDERR, json_encode($array, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+    }
 }
