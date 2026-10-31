@@ -10,6 +10,12 @@ class GrtRecord extends Record
     use HasGroupId;
 
     protected static string $recordType = 'GRT'; // Always "GRT" *A{3}
+    protected const FIELD_MAP = [
+        'group_id' => [4, 5],
+        'transaction_count' => [9, 8],
+        'record_count' => [17, 8],
+    ];
+
     protected string $stringFormat = "%-3s%05d%08d%08d";
 
     protected const IDX_GROUP_ID = 2;
@@ -41,4 +47,8 @@ class GrtRecord extends Record
         return $this;
     }
 
+    public static function parseLine(string $line): array
+    {
+        return static::parseFixedWidth($line, static::FIELD_MAP);
+    }
 }

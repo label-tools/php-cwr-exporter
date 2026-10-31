@@ -138,6 +138,17 @@ abstract class Record
                 $align = $matches['align'];
                 $padWidth = (int)($matches['pad'] ?? 0);
 
+                // sprintf never truncates, so an oversized value would shift every later field.
+                if ($padWidth > 0 && mb_strlen((string) $value) > $padWidth) {
+                    throw new \InvalidArgumentException(sprintf(
+                        '%s field %s exceeds %d characters: %s',
+                        static::$recordType,
+                        $this->fieldNameForIndex($argIndex - 1),
+                        $padWidth,
+                        $value
+                    ));
+                }
+
                 if ($type === 's') {
                     // Handle string padding with multi-byte awareness
                     $valueStr = (string)$value;
@@ -158,6 +169,13 @@ abstract class Record
         }
 
         return vsprintf($newFormat, $args);
+    }
+
+    private function fieldNameForIndex(int $index): string
+    {
+        $name = array_search($index, (new \ReflectionClass($this))->getConstants(), true);
+
+        return is_string($name) ? str_replace('IDX_', '', $name) : "#{$index}";
     }
 
     protected function setAlphaNumeric($index, ?string $value, string $fieldName = 'Field', bool $allowsNonAscii = false): self

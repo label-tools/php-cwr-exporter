@@ -214,7 +214,7 @@ The `works()` method accepts an array of work definitions. Each work is an assoc
 | `copyright_date`          | `string` (YYYYMMDD)                       | No       | The date of copyright.                                                   |
 | `copyright_number`        | `string`                                  | No       | The copyright registration number.                                       |
 | `duration`                | `string` (HHMMSS)                         | No       | The duration of the work.                                                |
-| `recorded`                | `bool`                                    | No       | `true` if the work has been recorded.                                    |
+| `recorded`                | `bool\|string`                             | No       | `true`/`'Y'` recorded, `false`/`'N'` not recorded, `'U'` unknown.        |
 | `text_music_relationship` | `string`                                  | No       | The relationship between text and music.                                 |
 | `alternate_titles`        | `array`                                   | No       | An array of alternate title definitions.                                 |
 | `writers`                 | `array`                                   | Yes      | An array of writer definitions.                                          |

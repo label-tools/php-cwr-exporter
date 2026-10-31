@@ -1241,7 +1241,7 @@ it('emits SWR records before OWR records even when provided out of order for v22
         ->software('LabelTools CWR Exporter', '1.0.0')
         ->transaction(TransactionType::NEW_WORK_REGISTRATION->value)
         ->works([[
-            'submitter_work_number' => 'ORDER-OWR-FIRST',
+            'submitter_work_number' => 'ORDER-OWR-1ST',
             'title' => 'Writer Order',
             'title_type' => TitleType::ORIGINAL_TITLE,
             'distribution_category' => MusicalWorkDistributionCategory::POPULAR,

@@ -4,6 +4,7 @@ namespace LabelTools\PhpCwrExporter\Version\V21;
 
 use InvalidArgumentException;
 use LabelTools\PhpCwrExporter\Contracts\VersionInterface;
+use LabelTools\PhpCwrExporter\Definitions\PublisherDefinition;
 use LabelTools\PhpCwrExporter\Enums\TransactionType;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\GrtRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\GrhRecord;
@@ -156,12 +157,12 @@ class Version implements VersionInterface
             ))->setRecordPrefix($this->transactionSequence, $this->recordSequence)
                 ->toString();
 
-            foreach ($work->publishers ?? [] as $pubIndex => $pub) {
+            foreach (PublisherDefinition::orderChains($work->publishers ?? []) as ['publisher' => $pub, 'sequence' => $publisherSequence]) {
                 $isControlledPublisher = property_exists($pub, 'controlled') ? (bool) $pub->controlled : true;
                 $publisherRecordClass = $isControlledPublisher ? SpuRecord::class : OpuRecord::class;
 
                 $publisherRecord = (new $publisherRecordClass(
-                    publisherSequence:           $pubIndex + 1,
+                    publisherSequence:           $publisherSequence,
                     interestedPartyNumber:       $pub->interestedPartyNumber,
                     publisherName:               $pub->publisherName,
                     publisherType:               $pub->publisherType,
@@ -350,9 +351,9 @@ class Version implements VersionInterface
     private function buildPublisherMap(array $publishers): array
     {
         $map = [];
-        foreach ($publishers as $index => $publisher) {
+        foreach (PublisherDefinition::orderChains($publishers) as ['publisher' => $publisher, 'sequence' => $sequence]) {
             if (!empty($publisher->interestedPartyNumber)) {
-                $map[$publisher->interestedPartyNumber] = ['def' => $publisher, 'seq' => $index + 1];
+                $map[$publisher->interestedPartyNumber] = ['def' => $publisher, 'seq' => $sequence];
             }
         }
 

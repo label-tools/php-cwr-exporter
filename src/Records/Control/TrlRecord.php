@@ -7,6 +7,12 @@ use LabelTools\PhpCwrExporter\Records\Record;
 class TrlRecord extends Record
 {
     protected static string $recordType = 'TRL'; // Always "TRL" *A{3}
+    protected const FIELD_MAP = [
+        'group_count' => [4, 5],
+        'transaction_count' => [9, 8],
+        'record_count' => [17, 8],
+    ];
+
     protected string $stringFormat = "%-3s%05d%08d%08d";
 
     protected const IDX_GROUP_COUNT = 2;
@@ -41,5 +47,10 @@ class TrlRecord extends Record
     {
         $this->validateCount($recordCount, 'Record Count');
         return $this->setNumeric(static::getIdxFromString('IDX_RECORD_COUNT'), $recordCount, 'Record Count');
+    }
+
+    public static function parseLine(string $line): array
+    {
+        return static::parseFixedWidth($line, static::FIELD_MAP);
     }
 }

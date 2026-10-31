@@ -26,7 +26,7 @@ class WorkDefinition
         public readonly ?string $copyrightNumber = null,
         public readonly ?string $distribution_category = null,
         public readonly ?string $duration = null,
-        public readonly bool $recorded = false,
+        public readonly bool|string $recorded = false,
         public readonly string $textMusicRelationship = '',
         public readonly array $recordings = [],
         public readonly array $performingArtists = [],
@@ -60,7 +60,7 @@ class WorkDefinition
             copyrightDate: $data['copyright_date'] ?? null,
             copyrightNumber: $data['copyright_number'] ?? null,
             duration: $data['duration'] ?? null,
-            recorded: $data['recorded'] ?? false,
+            recorded: static::normalizeRecorded($data['recorded'] ?? false),
             textMusicRelationship: $data['text_music_relationship'] ?? '',
             recordings: isset($data['recordings']) && is_array($data['recordings'])
                 ? array_map(fn($recording) => RecordingDefinition::fromArray($recording), $data['recordings'])
@@ -79,6 +79,25 @@ class WorkDefinition
         );
     }
 
+
+    /**
+     * Keeps the Y/N/U flag intact: a plain bool property would turn 'N' and 'U' into true.
+     * Unknown values pass through so the NWR record rejects them.
+     */
+    private static function normalizeRecorded(mixed $value): bool|string
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        $flag = strtoupper(trim((string) $value));
+
+        return match ($flag) {
+            '1', 'Y', 'YES', 'TRUE' => 'Y',
+            '', '0', 'N', 'NO', 'FALSE' => 'N',
+            default => $flag,
+        };
+    }
 
     protected static function getEnumValue(array $data, string $enumClass, string $key, bool $isRequired = true): BackedEnum|null
     {

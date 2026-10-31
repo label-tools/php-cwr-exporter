@@ -116,8 +116,8 @@ function buildAckPayload(array $overrides = []): string
 
     $nwr = buildNwrRecord('TEST WORK', 'WORK0000000001', 0, 2);
 
-    $grt = (new GrtRecord(1, 1, 3))->toString();
-    $trl = (new TrlRecord(1, 1, 5))->toString();
+    $grt = (new GrtRecord(1, 1, 5))->toString();
+    $trl = (new TrlRecord(1, 1, 7))->toString();
 
     return implode("\r\n", [$hdr, $grh, $ack, $msg, $nwr, $grt, $trl]) . "\r\n";
 }
@@ -186,7 +186,7 @@ describe('AckParser', function () {
             ->and($data['groups'][0]['acknowledgements'][0]['messages'][0]['record_type'])->toBe('OWR');
     });
 
-    it('rejects ACK records when record sequences do not continue', function () {
+    it('warns and keeps the transaction when record sequences do not continue', function () {
         $payload = buildAckPayload();
         $lines = explode("\r\n", trim($payload));
         $lines[3] = buildMsgRecord([
@@ -199,14 +199,91 @@ describe('AckParser', function () {
         ], 0, 9); // break continuation
         $payload = implode("\r\n", $lines) . "\r\n";
 
-        $parser = AckParser::v21();
+        $acknowledgement = AckParser::v21()->parse($payload)->toArray()['groups'][0]['acknowledgements'][0];
+
+        expect($acknowledgement['messages'])->toHaveCount(1)
+            ->and($acknowledgement['warnings'][0]['code'])->toBe('ACK_RECORD_CONTINUATION')
+            ->and($acknowledgement['warnings'][0]['record_type'])->toBe('MSG');
+    });
+
+    it('accepts a society MSG that restarts the record sequence at zero', function () {
+        $lines = explode("\r\n", trim(buildAckPayload()));
+        $lines[3] = substr_replace($lines[3], '00000000', 11, 8);
+
+        $acknowledgement = AckParser::v21()->parse(implode("\r\n", $lines) . "\r\n")->toArray()['groups'][0]['acknowledgements'][0];
+
+        expect($acknowledgement['status']['transaction_status'])->not->toBe('')
+            ->and(array_column($acknowledgement['warnings'], 'code'))->toContain('ACK_RECORD_CONTINUATION');
+    });
+
+    it('warns instead of failing when the society changes the title', function () {
+        $lines = explode("\r\n", trim(buildAckPayload()));
+        $lines[4] = substr_replace($lines[4], str_pad('A DIFFERENT TITLE', 60), 19, 60);
+
+        $acknowledgement = AckParser::v21()->parse(implode("\r\n", $lines) . "\r\n")->toArray()['groups'][0]['acknowledgements'][0];
+
+        expect(array_column($acknowledgement['warnings'], 'code'))->toContain('ACK_CREATION_TITLE_MISMATCH');
+    });
+
+    it('keeps detail records after EXC inside the same acknowledgement', function () {
+        $lines = explode("\r\n", trim(buildAckPayload()));
+        $grt = array_search(true, array_map(fn ($line) => str_starts_with($line, 'GRT'), $lines), true);
+        $last = (int) substr($lines[$grt - 1], 11, 8);
+        $prefix = substr($lines[2], 3, 8);
+        $exc = 'EXC' . $prefix . sprintf('%08d', $last + 1) . substr($lines[4], 19);
+        $spu = 'SPU' . $prefix . sprintf('%08d', $last + 2) . str_repeat(' ', 120);
+        array_splice($lines, $grt, 0, [$exc, $spu]);
+
+        $result = AckParser::v21()->parse(implode("\r\n", $lines) . "\r\n", ['include_payload' => true])->toArray();
+
+        expect($result['groups'][0]['acknowledgements'])->toHaveCount(1)
+            ->and($result['groups'][0]['acknowledgements'][0]['payload']['exception'])->toBe($exc);
+    });
+
+    it('rejects a second EXC in one acknowledgement', function () {
+        $lines = explode("\r\n", trim(buildAckPayload()));
+        $grt = array_search(true, array_map(fn ($line) => str_starts_with($line, 'GRT'), $lines), true);
+        $last = (int) substr($lines[$grt - 1], 11, 8);
+        $prefix = substr($lines[2], 3, 8);
+        array_splice($lines, $grt, 0, [
+            'EXC' . $prefix . sprintf('%08d', $last + 1) . substr($lines[4], 19),
+            'EXC' . $prefix . sprintf('%08d', $last + 2) . substr($lines[4], 19),
+        ]);
 
         try {
-            $parser->parse($payload);
+            AckParser::v21()->parse(implode("\r\n", $lines) . "\r\n");
             $this->fail('Expected AckParseException not thrown.');
         } catch (AckParseException $exception) {
-            expect($exception->getErrorCode())->toBe('ACK_RECORD_CONTINUATION');
+            expect($exception->getErrorCode())->toBe('ACK_EXC_OUT_OF_SEQUENCE');
         }
+    });
+
+    it('accepts spec detail records such as ARI inside an ACK', function () {
+        $lines = explode("\r\n", trim(buildAckPayload()));
+        $grt = array_search(true, array_map(fn ($line) => str_starts_with($line, 'GRT'), $lines), true);
+        $last = (int) substr($lines[$grt - 1], 11, 8);
+        array_splice($lines, $grt, 0, ['ARI' . substr($lines[2], 3, 8) . sprintf('%08d', $last + 1) . '   ']);
+
+        $result = AckParser::v21()->parse(implode("\r\n", $lines) . "\r\n");
+
+        expect($result->groups[0]['acknowledgements'])->toHaveCount(1);
+    });
+
+    it('reports wrong trailer counts as file warnings', function () {
+        $lines = explode("\r\n", trim(buildAckPayload()));
+        $lines[count($lines) - 1] = 'TRL' . '00009' . '00000099' . '00000099';
+
+        $warnings = AckParser::v21()->parse(implode("\r\n", $lines) . "\r\n")->warnings;
+
+        expect(array_unique(array_column($warnings, 'code')))->toBe(['ACK_FILE_COUNT_MISMATCH'])
+            ->and($warnings)->toHaveCount(3);
+    });
+
+    it('has no warnings for a clean ACK file', function () {
+        $result = AckParser::v21()->parse(buildAckPayload());
+
+        expect($result->warnings)->toBe([])
+            ->and($result->groups[0]['acknowledgements'][0]['warnings'])->toBe([]);
     });
 
     it('rejects ACK records when correlation keys are missing', function () {

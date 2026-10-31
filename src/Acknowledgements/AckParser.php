@@ -4,6 +4,8 @@ namespace LabelTools\PhpCwrExporter\Acknowledgements;
 
 use InvalidArgumentException;
 use LabelTools\PhpCwrExporter\Records\Control\GrhRecord;
+use LabelTools\PhpCwrExporter\Records\Control\GrtRecord;
+use LabelTools\PhpCwrExporter\Records\Control\TrlRecord;
 use LabelTools\PhpCwrExporter\Records\Record;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Control\HdrRecord as V21HdrRecord;
 use LabelTools\PhpCwrExporter\Version\V21\Records\Detail\MsgRecord as V21MsgRecord;
@@ -28,9 +30,24 @@ final class AckParser
         'SWT',
         'PWR',
         'OWR',
+        'NPN',
+        'NWN',
         'ALT',
+        'NAT',
+        'EWT',
+        'NET',
+        'VER',
+        'NVT',
         'PER',
+        'NPR',
         'REC',
+        'ORN',
+        'INS',
+        'IND',
+        'COM',
+        'NCT',
+        'NOW',
+        'ARI',
     ];
 
     private ?string $forcedVersion;
@@ -140,6 +157,12 @@ final class AckParser
         $currentIsw = null;
         $expectedTransactionSequence = 0;
         $hasTrailer = false;
+        $warnings = [];
+        $fileRecords = 1; // HDR
+        $fileTransactions = 0;
+        $groupCount = 0;
+        $groupRecords = 0;
+        $groupTransactions = 0;
 
         foreach ($lines as $index => $line) {
             $lineNumber = $index + 2;
@@ -148,6 +171,8 @@ final class AckParser
             }
 
             $recordType = substr($line, 0, 3);
+            $fileRecords++;
+            $groupRecords++;
 
             switch ($recordType) {
                 case 'GRH':
@@ -169,6 +194,9 @@ final class AckParser
                         $currentGroup['iswc_notifications'] = [];
                     }
                     $expectedTransactionSequence = 0;
+                    $groupCount++;
+                    $groupRecords = 1;
+                    $groupTransactions = 0;
                     break;
 
                 case 'GRT':
@@ -181,6 +209,9 @@ final class AckParser
                     if ($currentIsw !== null) {
                         $this->finalizeIsw($currentIsw, $currentGroup, $lineNumber, $includePayload);
                     }
+                    $trailer = GrtRecord::parseLine($line);
+                    $this->checkControlCount($warnings, 'ACK_GROUP_COUNT_MISMATCH', 'GRT transaction count', $trailer['transaction_count'], $groupTransactions, $lineNumber);
+                    $this->checkControlCount($warnings, 'ACK_GROUP_COUNT_MISMATCH', 'GRT record count', $trailer['record_count'], $groupRecords, $lineNumber);
                     $groups[] = $this->buildGroupPayload($currentGroup);
                     $currentGroup = null;
                     break;
@@ -203,6 +234,10 @@ final class AckParser
                             throw new AckParseException('ACK_TRAILING_DATA', 'Data found after TRL record.', ['line' => $lineNumber + 1]);
                         }
                     }
+                    $trailer = TrlRecord::parseLine($line);
+                    $this->checkControlCount($warnings, 'ACK_FILE_COUNT_MISMATCH', 'TRL group count', $trailer['group_count'], $groupCount, $lineNumber);
+                    $this->checkControlCount($warnings, 'ACK_FILE_COUNT_MISMATCH', 'TRL transaction count', $trailer['transaction_count'], $fileTransactions, $lineNumber);
+                    $this->checkControlCount($warnings, 'ACK_FILE_COUNT_MISMATCH', 'TRL record count', $trailer['record_count'], $fileRecords, $lineNumber);
                     $hasTrailer = true;
                     break 2;
 
@@ -227,6 +262,8 @@ final class AckParser
                     }
 
                     $expectedTransactionSequence++;
+                    $groupTransactions++;
+                    $fileTransactions++;
 
                     $ackData = $ackRecordClass::parseLine($line);
 
@@ -235,6 +272,7 @@ final class AckParser
                         'messages' => [],
                         'transaction' => null,
                         'exception' => null,
+                        'warnings' => [],
                         'raw' => [
                             'ack' => $line,
                             'messages' => [],
@@ -268,6 +306,8 @@ final class AckParser
                     }
 
                     $expectedTransactionSequence++;
+                    $groupTransactions++;
+                    $fileTransactions++;
 
                     $transaction = $iswRecordClass::parseLine($line);
                     $transaction['record_type'] = 'ISW';
@@ -275,6 +315,7 @@ final class AckParser
                     $currentIsw = [
                         'transaction' => $transaction,
                         'details' => [],
+                        'warnings' => [],
                         'raw' => [
                             'transaction' => $line,
                             'details' => [],
@@ -291,7 +332,7 @@ final class AckParser
                     }
 
                     $prefix = $this->parseRecordPrefix($line, $lineNumber);
-                    $this->assertContinuation($currentAck, $prefix, $lineNumber, 'MSG');
+                    $this->trackContinuation($currentAck, $prefix, $lineNumber, 'MSG');
 
                     $message = $msgRecordClass::parseLine($line);
                     $currentAck['messages'][] = [
@@ -315,7 +356,7 @@ final class AckParser
                     }
 
                     $prefix = $this->parseRecordPrefix($line, $lineNumber);
-                    $this->assertContinuation($currentAck, $prefix, $lineNumber, $recordType);
+                    $this->trackContinuation($currentAck, $prefix, $lineNumber, $recordType);
 
                     $transaction = $recordType === 'REV'
                         ? $revRecordClass::parseLine($line)
@@ -327,20 +368,18 @@ final class AckParser
                     break;
 
                 case 'EXC':
-                    if ($currentAck === null || $currentAck['transaction'] === null) {
+                    if ($currentAck === null || $currentAck['transaction'] === null || $currentAck['exception'] !== null) {
                         throw new AckParseException('ACK_EXC_OUT_OF_SEQUENCE', 'EXC record must follow NWR or REV within ACK transaction.', ['line' => $lineNumber]);
                     }
 
                     $prefix = $this->parseRecordPrefix($line, $lineNumber);
-                    $this->assertContinuation($currentAck, $prefix, $lineNumber, 'EXC');
+                    $this->trackContinuation($currentAck, $prefix, $lineNumber, 'EXC');
 
                     $exception = $nwrRecordClass::parseLine($line);
                     $exception['record_type'] = 'EXC';
                     $currentAck['exception'] = $exception;
                     $currentAck['raw']['exception'] = $line;
-
-                    $this->finalizeAck($currentAck, $currentGroup, $lineNumber, $includePayload);
-                    break;
+                    break; // EXC detail records may follow; the next ACK or GRT closes the transaction.
 
                 default:
                     if ($this->isDetailRecord($recordType)) {
@@ -353,7 +392,7 @@ final class AckParser
 
                         $prefix = $this->parseRecordPrefix($line, $lineNumber);
                         if ($currentIsw !== null) {
-                            $this->assertContinuation($currentIsw, $prefix, $lineNumber, $recordType);
+                            $this->trackContinuation($currentIsw, $prefix, $lineNumber, $recordType);
                             $currentIsw['details'][] = [
                                 'record_type' => $recordType,
                                 'record_sequence' => $prefix['record_sequence'],
@@ -362,7 +401,7 @@ final class AckParser
                             break;
                         }
 
-                        $this->assertContinuation($currentAck, $prefix, $lineNumber, $recordType);
+                        $this->trackContinuation($currentAck, $prefix, $lineNumber, $recordType);
                         break;
                     }
                     throw new AckParseException('ACK_UNSUPPORTED_RECORD', 'Unsupported record type encountered in ACK file.', ['line' => $lineNumber, 'record_type' => $recordType]);
@@ -384,7 +423,7 @@ final class AckParser
             throw new AckParseException('ACK_MISSING_TRL', 'File trailer (TRL) not found before end of file.', ['line' => $lineNumber]);
         }
 
-        return new AckParseResult($file, $groups);
+        return new AckParseResult($file, $groups, $warnings);
     }
 
     private function parseHdr(string $line): array
@@ -412,7 +451,7 @@ final class AckParser
         }
     }
 
-    private function assertContinuation(array &$currentAck, array $prefix, int $lineNumber, string $recordType): void
+    private function trackContinuation(array &$currentAck, array $prefix, int $lineNumber, string $recordType): void
     {
         if ($prefix['transaction_sequence'] !== $currentAck['transaction_sequence']) {
             throw new AckParseException('ACK_SEQUENCE_CONTINUATION', 'Transaction sequence must remain constant within ACK transaction.', ['line' => $lineNumber, 'record_type' => $recordType]);
@@ -426,11 +465,24 @@ final class AckParser
         }
 
         if ($prefix['record_sequence'] !== $currentAck['expected_record_sequence']) {
-            throw new AckParseException('ACK_RECORD_CONTINUATION', 'Record sequence must continue within ACK transaction.', ['line' => $lineNumber, 'record_type' => $recordType]);
+            // Societies number these differently, so keep the transaction and report it.
+            $currentAck['warnings'][] = $this->warning('ACK_RECORD_CONTINUATION', 'Record sequence does not continue within transaction.', $lineNumber, ['record_type' => $recordType]);
         }
 
         $currentAck['last_record_sequence'] = $prefix['record_sequence'];
         $currentAck['expected_record_sequence'] = $prefix['record_sequence'] + 1;
+    }
+
+    private function warning(string $code, string $message, int $lineNumber, array $context = []): array
+    {
+        return ['code' => $code, 'message' => $message, 'line' => $lineNumber] + $context;
+    }
+
+    private function checkControlCount(array &$warnings, string $code, string $field, string $declared, int $actual, int $lineNumber): void
+    {
+        if ((int) $declared !== $actual) {
+            $warnings[] = $this->warning($code, "{$field} does not match the records in the file.", $lineNumber, ['declared' => (int) $declared, 'actual' => $actual]);
+        }
     }
 
     private function finalizeAck(?array &$currentAck, ?array &$currentGroup, int $lineNumber, bool $includePayload): void
@@ -474,7 +526,8 @@ final class AckParser
         $creationTitle = $this->normalizeValue($ack['creation_title']);
         $workTitle = $this->normalizeValue($currentAck['transaction']['work_title']);
         if ($creationTitle !== '' && $workTitle !== '' && $creationTitle !== $workTitle) {
-            throw new AckParseException('ACK_CREATION_TITLE_MISMATCH', 'ACK creation title must match transaction title.', ['line' => $lineNumber]);
+            // Societies normalize titles (BMI turns an apostrophe into a space); submitter # is the match key.
+            $currentAck['warnings'][] = $this->warning('ACK_CREATION_TITLE_MISMATCH', 'ACK creation title differs from transaction title.', $lineNumber);
         }
 
         $submitterCreation = $this->normalizeValue($ack['submitter_creation_number']);
@@ -527,6 +580,7 @@ final class AckParser
                 'processing_date' => $this->cleanValue($ack['processing_date']),
             ],
             'messages' => $currentAck['messages'],
+            'warnings' => $currentAck['warnings'],
         ];
 
         if ($includePayload) {
@@ -562,6 +616,7 @@ final class AckParser
                 'iswc' => $this->cleanValue($transaction['iswc'] ?? ''),
             ],
             'details' => $currentIsw['details'],
+            'warnings' => $currentIsw['warnings'],
         ];
 
         if ($includePayload) {

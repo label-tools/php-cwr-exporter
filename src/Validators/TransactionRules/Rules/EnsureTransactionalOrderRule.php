@@ -10,25 +10,26 @@ class EnsureTransactionalOrderRule extends AbstractTransactionRule
 {
     /**
      * Coarse global ordering buckets (Rule 18-style).
+     * SPU and SPT share a bucket because the chain hierarchy repeats (SPU, SPT, SPU, SPT).
      * Key point: SPT must be strictly BEFORE OPU (not equal).
      */
     private const RECORD_ORDER = [
         'NWR' => 1,
 
         'SPU' => 2,
-        'SPT' => 3,
+        'SPT' => 2,
 
-        'OPU' => 4,
+        'OPU' => 3,
 
-        'SWR' => 5,
-        'SWT' => 5,
-        'PWR' => 5,
+        'SWR' => 4,
+        'SWT' => 4,
+        'PWR' => 4,
 
-        'OWR' => 6,
+        'OWR' => 5,
 
-        'ALT' => 7,
-        'PER' => 8,
-        'REC' => 9,
+        'ALT' => 6,
+        'PER' => 7,
+        'REC' => 8,
     ];
 
     /**

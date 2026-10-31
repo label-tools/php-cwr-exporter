@@ -109,6 +109,42 @@ class PublisherDefinition
         );
     }
 
+    /**
+     * Groups publishers into chains and orders them for emission: controlled chains first.
+     * E and PA start a chain; AM, SE, ES and AQ join the chain before them.
+     * A chain never mixes SPU and OPU, so a change of control also starts a new one.
+     * shortcut: a PA always starts its own chain, add an explicit sequence if a PA must join an existing one.
+     *
+     * @param array<int, object> $publishers
+     * @return array<int, array{publisher: object, sequence: int}>
+     */
+    public static function orderChains(array $publishers): array
+    {
+        $chains = [];
+        $current = -1;
+        foreach ($publishers as $publisher) {
+            $controlled = (bool) ($publisher->controlled ?? true);
+            $type = $publisher->publisherType instanceof PublisherType ? $publisher->publisherType : PublisherType::tryFrom((string) $publisher->publisherType);
+            $startsChain = in_array($type, [PublisherType::ORIGINAL_PUBLISHER, PublisherType::INCOME_PARTICIPANT], true);
+
+            if ($current < 0 || $startsChain || $chains[$current]['controlled'] !== $controlled) {
+                $chains[++$current] = ['controlled' => $controlled, 'publishers' => []];
+            }
+            $chains[$current]['publishers'][] = $publisher;
+        }
+
+        usort($chains, fn (array $a, array $b) => $b['controlled'] <=> $a['controlled']);
+
+        $ordered = [];
+        foreach ($chains as $index => $chain) {
+            foreach ($chain['publishers'] as $publisher) {
+                $ordered[] = ['publisher' => $publisher, 'sequence' => $index + 1];
+            }
+        }
+
+        return $ordered;
+    }
+
     private static function normalizeBool(mixed $value): bool
     {
         if (is_bool($value)) {
